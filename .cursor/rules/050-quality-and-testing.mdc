@@ -1,0 +1,22 @@
+---
+description: Engineering quality bar — type safety, validation, structured logging, health checks, retries/timeouts, tests, and running tests after changes.
+globs:
+alwaysApply: true
+---
+
+# Quality & Testing
+
+- Use strong typing: TypeScript on the frontend, Python type hints + Pydantic models on the
+  backend.
+- Validate all external input at the boundary (API requests, retailer feed payloads).
+- Use structured (JSON) logging; do not leave ad-hoc `print`/`console.log` debugging in place.
+- Every deployable service must expose a health check once it exists.
+- Network calls (retailer APIs/feeds, internal services) must use explicit timeouts and retries
+  with backoff — never unbounded blocking calls.
+- New business logic must be accompanied by new or updated unit/integration tests in the same
+  change.
+- After implementing a change, run the relevant test suite for the affected area before
+  considering the task done. If tests cannot be run (e.g. missing environment), state that
+  explicitly rather than silently skipping verification.
+- At the end of a task, report: files created, files modified, tests executed (and their
+  results), and any remaining issues or known gaps. This reporting is required, not optional.

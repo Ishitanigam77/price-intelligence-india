@@ -1,0 +1,33 @@
+---
+description: Enforces phase-by-phase development for PriceRadar India — never implement future phases without explicit instruction.
+globs:
+alwaysApply: true
+---
+
+# Phase Gate
+
+PriceRadar India is built strictly **phase by phase**, as defined in `ROADMAP.md`.
+
+- Treat the current phase as whatever the user's most recent instruction explicitly scopes.
+  Do not infer a broader scope from the overall project vision described in
+  `PROJECT_ARCHITECTURE.md`, `ROADMAP.md`, or prior conversation.
+- **Never implement a future phase's deliverables** unless the user explicitly asks for that
+  phase or explicitly asks to pull it forward. This includes, but is not limited to:
+  - Database models / ORM schema (Phase 1+)
+  - Real retailer adapters or any retailer-specific integration code (Phase 2+)
+  - Normalization or matching logic (Phase 3+)
+  - Price intelligence / effective price calculation (Phase 4+)
+  - Frontend application code (Phase 5+)
+  - Authentication wiring (Phase 5+)
+  - Watchlists / alerts / notifications (Phase 6+)
+  - Sale-event intelligence (Phase 7+)
+  - ML training/inference code or trained model artifacts (Phase 8+)
+  - Recommendation engine logic (Phase 9+)
+  - Terraform, Dockerfiles with real service definitions, or CI/CD pipelines (Phase 11+)
+- If a requested task appears to require work belonging to a later phase, stop, explain which
+  phase that work belongs to, and ask for explicit confirmation before proceeding — do not
+  silently implement it.
+- When a phase's explicitly requested scope is complete, **stop and wait** for the next
+  instruction rather than continuing into unrequested work, even if the next logical step seems
+  obvious.
+- Consult `ROADMAP.md` to determine which phase a piece of work belongs to before starting.
