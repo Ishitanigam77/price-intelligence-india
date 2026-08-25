@@ -1,0 +1,24 @@
+# app/api/v1/
+
+The versioned `/api/v1/` API surface, mounted by `app.main.create_app` under
+`Settings.api_v1_prefix` (default `/api/v1`). `__init__.py` aggregates every route module's
+router into a single `api_router`; adding a new versioned resource means adding a module here
+and including its router there — nothing else needs to change.
+
+**Status**: FastAPI backend application foundation.
+
+- `health.py` — `GET /api/v1/health` (liveness) and `GET /api/v1/health/ready` (readiness,
+  reporting PostgreSQL and Redis availability independently; HTTP 503 if either is down).
+- `products.py` — read-only routes over `Product`/`ProductVariant` (list/get, filter by
+  category/brand, list variants for a product).
+- `retailers.py` — read-only routes over `Retailer`/`Seller` (list/get, list sellers for a
+  retailer).
+- `prices.py` — read-only routes over `PriceSnapshot` via `app.services.price_service`
+  (latest observation, history).
+- `deals.py` — foundation-only placeholder: always returns an empty page. Deal detection
+  depends on price-drop detection (Phase 4) and sale-event intelligence (Phase 7), neither of
+  which exist yet.
+
+No retailer scraping, product matching, price comparison, discount prediction, recommendation,
+or ML logic lives here — every route is a thin, typed wrapper over an existing Phase 1
+repository (or, for `prices.py`, a small service composing two repositories).
