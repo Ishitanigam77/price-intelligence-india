@@ -1,7 +1,9 @@
 # PROJECT_ARCHITECTURE.md — PriceRadar India
 
-> Status: **Phase 0 — Scaffolding only.** No business logic, models, or integrations exist yet.
-> This document describes the target architecture the codebase will grow into, phase by phase.
+> Status: **Phase 1 — Core Domain Model & Database Foundation implemented** (see
+> `backend/README.md`). Retailer integrations, matching, pricing, ML, and other later-phase
+> logic described below are still targets, not yet built. This document describes the target
+> architecture the codebase will grow into, phase by phase.
 
 ## 1. Vision
 
@@ -137,6 +139,15 @@ Rules:
 
 See `DATA_FLOW.md` for how data moves through these entities, and `RETAILER_ARCHITECTURE.md`
 for how retailer adapters populate them.
+
+> **Phase 1 naming note**: the implemented SQLAlchemy models use `RetailerProduct` for
+> "Retailer Listing" (a `ProductVariant` as offered by a specific `Retailer`) and `PriceSnapshot`
+> for "Price Observation". `Seller` is implemented as its own entity (scoped to a `Retailer`)
+> and referenced directly from `PriceSnapshot`, since a given `RetailerProduct` can have
+> multiple sellers' offers recorded over time. Phase 1 also adds `Category`, `Brand`, and
+> `ProductIdentifier` (GTIN/EAN/UPC/MPN/...), which this conceptual model didn't originally
+> enumerate but which are needed for product lookup and future cross-retailer matching. See
+> `backend/app/db/models/` for the authoritative schema.
 
 ## 6. Price Data Model (Conceptual)
 

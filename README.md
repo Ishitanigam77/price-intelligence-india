@@ -5,10 +5,10 @@ network of Indian online retailers, identifies identical products/variants acros
 price history, detects genuine price drops and sale events, and recommends whether to
 **BUY_NOW**, **WAIT**, or **WATCH**.
 
-> **Status: Phase 0 — Project Scaffolding.** No business logic, database models, retailer
-> integrations, ML models, or authentication exist yet. This repository currently contains
-> only documentation, directory structure, and Cursor project rules that govern how the
-> project will be built, phase by phase.
+> **Status: Phase 1 — Core Domain Model & Database Foundation.** The domain model, PostgreSQL
+> schema, Alembic migrations, and a minimal FastAPI health-check skeleton exist (see
+> `backend/README.md`). Retailer integrations, matching, price intelligence, ML models,
+> authentication, notifications, and the frontend do **not** exist yet — see `ROADMAP.md`.
 
 ## Why This Exists
 
@@ -75,8 +75,10 @@ never fabricates retailer data.
 └── .gitignore
 ```
 
-Each directory currently contains only a `README.md` describing its intended purpose — no
-implementation code exists yet.
+Directories not yet populated with implementation code (`retailer_adapters/`, `collectors/`,
+`normalization/`, `matching/`, `pricing/`, `sales/`, `recommendation/`, `notifications/`,
+`workers/`, `frontend/`, `ml/`, `infrastructure/`, ...) currently contain only a `README.md`
+describing their intended purpose.
 
 ## Development Process
 
@@ -87,9 +89,9 @@ that AI-assisted contributions follow the same process.
 
 ## Getting Started
 
-There is no runnable application yet — Phase 0 is documentation and scaffolding only. Once
-Phase 1 introduces the backend skeleton and database, this section will be updated with setup
-instructions.
+The backend now has a working database schema and a minimal FastAPI skeleton. See
+[`backend/README.md`](./backend/README.md) for local setup, running migrations, running the
+API, and running tests. There is no frontend yet (Phase 5+).
 
 ## License
 
