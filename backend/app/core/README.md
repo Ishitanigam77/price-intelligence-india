@@ -1,9 +1,23 @@
 # app/core/
 
 Shared, cross-cutting configuration and utilities: settings loading (from environment
-variables / Azure Key Vault), shared exceptions, and other concerns used across layers.
+variables / Azure Key Vault), structured logging, Redis connection management, and other
+concerns used across layers.
 
-**Status**: `config.py` implemented in **Phase 1** — a `pydantic-settings`-based `Settings`
-class reading `ENVIRONMENT`, `LOG_LEVEL`, `API_HOST`, `API_PORT`, and `DATABASE_URL` from the
-environment (see `.env.example`). No secrets are hardcoded. Extended incrementally as later
-phases need more settings (Redis, Celery, Clerk, retailer credentials, ...).
+**Status**:
+
+- `config.py` — a `pydantic-settings`-based `Settings` class. Phase 1 added `ENVIRONMENT`,
+  `LOG_LEVEL`, `API_HOST`, `API_PORT`, `DATABASE_URL`. The FastAPI backend application
+  foundation added: `LOG_FORMAT`, `API_V1_PREFIX`, `CORS_ALLOWED_ORIGINS`/
+  `CORS_ALLOW_CREDENTIALS`, database pool sizing (`DB_POOL_SIZE`, `DB_MAX_OVERFLOW`,
+  `DB_POOL_TIMEOUT`, `DB_POOL_RECYCLE`), and Redis (`REDIS_URL`, `REDIS_MAX_CONNECTIONS`,
+  `REDIS_SOCKET_TIMEOUT`, `REDIS_SOCKET_CONNECT_TIMEOUT`). No secrets are hardcoded — see
+  `.env.example`.
+- `logging.py` — structured (JSON by default) logging configuration, applied once per process
+  by the application factory (`app.main.create_app`).
+- `redis.py` — Redis connection pool/client management and a `check_redis_connection` health
+  check, consumed by `app.api.deps.get_redis` and `app.api.v1.health`. Infrastructure only — no
+  caching business logic, distributed locks, or queues (those belong to later phases).
+
+Extended incrementally as later phases need more settings (Celery, Clerk, retailer
+credentials, ...).

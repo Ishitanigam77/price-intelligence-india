@@ -5,10 +5,13 @@ network of Indian online retailers, identifies identical products/variants acros
 price history, detects genuine price drops and sale events, and recommends whether to
 **BUY_NOW**, **WAIT**, or **WATCH**.
 
-> **Status: Phase 1 — Core Domain Model & Database Foundation.** The domain model, PostgreSQL
-> schema, Alembic migrations, and a minimal FastAPI health-check skeleton exist (see
-> `backend/README.md`). Retailer integrations, matching, price intelligence, ML models,
-> authentication, notifications, and the frontend do **not** exist yet — see `ROADMAP.md`.
+> **Status: Phase 1 — Core Domain Model & Database Foundation**, plus a **FastAPI backend
+> application foundation** (application factory, `/api/v1/` versioned routing, Redis
+> infrastructure, centralized exception handling, structured logging, CORS, and local Docker
+> Compose support — see `backend/README.md`). Retailer integrations, matching, price
+> intelligence, ML models, authentication, notifications, and the frontend do **not** exist
+> yet — see `ROADMAP.md`. (Note: `ROADMAP.md`'s own "Phase 2" is reserved for the Retailer
+> Adapter Framework, which is separate from and not part of this application-foundation work.)
 
 ## Why This Exists
 
@@ -40,10 +43,14 @@ never fabricates retailer data.
 .
 ├── frontend/                  # Next.js + TypeScript + Tailwind CSS app (Phase 5+)
 ├── backend/
+│   ├── Dockerfile, docker-entrypoint.sh   # Production-oriented backend image
 │   ├── app/
-│   │   ├── api/                 # FastAPI routers (Phase 1+)
+│   │   ├── api/                 # FastAPI routers, DTOs, deps, centralized error handling
+│   │   │   └── v1/                # Versioned API: health, products, retailers, prices, deals
+│   │   ├── schemas/              # Pydantic API request/response DTOs (separate from ORM models)
+│   │   ├── services/             # Thin service-layer boundaries (only where genuinely needed)
 │   │   ├── auth/                # Clerk token verification (Phase 5+)
-│   │   ├── core/                # Settings, shared config, cross-cutting utilities
+│   │   ├── core/                # Settings, logging, Redis client management
 │   │   ├── domain/               # Product / Variant / Listing / Seller / Observation entities (Phase 1)
 │   │   ├── repositories/         # Data access layer (Phase 1+)
 │   │   ├── db/                   # SQLAlchemy session/base setup (Phase 1+)
@@ -68,7 +75,7 @@ never fabricates retailer data.
 │   └── notebooks/                # Exploratory analysis
 ├── infrastructure/
 │   ├── terraform/                 # Azure infrastructure as code (Phase 11)
-│   ├── docker/                    # Dockerfiles / compose (introduced per-service, per-phase)
+│   ├── docker/                    # docker-compose.yml: local dev stack (backend+Postgres+Redis)
 │   └── pipelines/                 # Azure DevOps pipeline definitions (Phase 11)
 ├── .cursor/rules/                 # Cursor project rules enforcing the phase-by-phase process
 ├── .env.example                   # Documented environment variables (no real secrets)
@@ -77,8 +84,10 @@ never fabricates retailer data.
 
 Directories not yet populated with implementation code (`retailer_adapters/`, `collectors/`,
 `normalization/`, `matching/`, `pricing/`, `sales/`, `recommendation/`, `notifications/`,
-`workers/`, `frontend/`, `ml/`, `infrastructure/`, ...) currently contain only a `README.md`
-describing their intended purpose.
+`workers/`, `frontend/`, `ml/`, `infrastructure/terraform/`, `infrastructure/pipelines/`, ...)
+currently contain only a `README.md` describing their intended purpose.
+`infrastructure/docker/` now contains the local development Docker Compose file described
+above.
 
 ## Development Process
 
@@ -89,9 +98,10 @@ that AI-assisted contributions follow the same process.
 
 ## Getting Started
 
-The backend now has a working database schema and a minimal FastAPI skeleton. See
-[`backend/README.md`](./backend/README.md) for local setup, running migrations, running the
-API, and running tests. There is no frontend yet (Phase 5+).
+The backend now has a working database schema and a production-quality FastAPI application
+foundation (versioned API, Redis, Docker). See [`backend/README.md`](./backend/README.md) for
+local setup, running migrations, running the API (locally or via Docker Compose), and running
+tests. There is no frontend yet (Phase 5+).
 
 ## License
 

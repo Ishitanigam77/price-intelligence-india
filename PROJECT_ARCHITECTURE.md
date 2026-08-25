@@ -1,9 +1,11 @@
 # PROJECT_ARCHITECTURE.md — PriceRadar India
 
-> Status: **Phase 1 — Core Domain Model & Database Foundation implemented** (see
-> `backend/README.md`). Retailer integrations, matching, pricing, ML, and other later-phase
-> logic described below are still targets, not yet built. This document describes the target
-> architecture the codebase will grow into, phase by phase.
+> Status: **Phase 1 — Core Domain Model & Database Foundation implemented**, plus a **FastAPI
+> backend application foundation** (application factory, `/api/v1/` versioned routing, Redis
+> infrastructure, centralized exception handling, Docker support — see `backend/README.md`).
+> Retailer integrations, matching, pricing, ML, and other later-phase business logic described
+> below are still targets, not yet built. This document describes the target architecture the
+> codebase will grow into, phase by phase.
 
 ## 1. Vision
 

@@ -15,6 +15,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -68,3 +69,25 @@ def db_session(db_engine: Engine) -> Generator[Session, None, None]:
 def unique_suffix() -> str:
     """A short unique string to keep test-created slugs/names collision-free."""
     return uuid.uuid4().hex[:8]
+
+
+@pytest.fixture()
+def client(db_session: Session) -> Generator[TestClient, None, None]:
+    """A `TestClient` for the real app, with `get_db` overridden to the per-test `db_session`.
+
+    This is what lets API-layer tests see data created via `db_session`/factories (and have it
+    rolled back afterwards) without the API route and the test both needing to commit through
+    the process-wide engine.
+    """
+    from app.db.session import get_db
+    from app.main import app as fastapi_app
+
+    def _override_get_db() -> Generator[Session, None, None]:
+        yield db_session
+
+    fastapi_app.dependency_overrides[get_db] = _override_get_db
+    try:
+        with TestClient(fastapi_app) as test_client:
+            yield test_client
+    finally:
+        fastapi_app.dependency_overrides.pop(get_db, None)
