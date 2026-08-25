@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Generic, Protocol, TypeVar, cast
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Mapped, Session
 
 from app.db.base import Base
@@ -34,6 +34,15 @@ class BaseRepository(Generic[ModelType]):
         audited_model = cast(type[_HasCreatedAt], self.model)
         stmt = select(self.model).order_by(audited_model.created_at).limit(limit).offset(offset)
         return list(self.session.scalars(stmt).all())
+
+    def count(self) -> int:
+        """Total number of rows for this model, ignoring pagination.
+
+        Used by API list endpoints (`app/api/v1/`) to populate a `Page`'s `total` field
+        alongside `list(...)`.
+        """
+        stmt = select(func.count()).select_from(self.model)
+        return int(self.session.scalar(stmt) or 0)
 
     def add(self, entity: ModelType) -> ModelType:
         self.session.add(entity)

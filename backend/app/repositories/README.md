@@ -5,7 +5,10 @@ SQLAlchemy/query details from the domain and API layers.
 
 **Status**: implemented in **Phase 1 — Core Domain Model & Database Foundation**.
 
-`base.py` defines a generic `BaseRepository` (get by id, list, add, delete); one repository per
-entity subclasses it and adds entity-specific lookups (e.g. `get_by_slug`,
+`base.py` defines a generic `BaseRepository` (get by id, list, add, delete, and — added for the
+FastAPI backend application foundation's paginated API list endpoints — `count`); one
+repository per entity subclasses it and adds entity-specific lookups (e.g. `get_by_slug`,
 `list_for_retailer`, `latest_for_retailer_product`). `PriceSnapshotRepository` deliberately has
 no update method — Price Observations are immutable; corrections are new snapshots.
+
+Consumed directly by `app/api/v1/` routes via the dependency providers in `app/api/deps.py`.
