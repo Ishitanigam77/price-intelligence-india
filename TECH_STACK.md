@@ -1,8 +1,9 @@
 # TECH_STACK.md — PriceRadar India
 
-> Status: Phase 0. This document records the *chosen* technology stack and the rationale for
-> each choice. It does not imply any of these have been wired up yet — see `ROADMAP.md` for
-> when each piece is actually introduced.
+> Status: Phase 1. This document records the *chosen* technology stack and the rationale for
+> each choice. As of Phase 1, PostgreSQL, SQLAlchemy, Alembic, and a minimal FastAPI skeleton
+> are wired up (see `backend/README.md`); everything else below is still a target — see
+> `ROADMAP.md` for when each remaining piece is introduced.
 
 ## Frontend
 
