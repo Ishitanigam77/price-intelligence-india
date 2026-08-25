@@ -1,0 +1,73 @@
+# Local development stack for the PriceRadar India backend: FastAPI app + PostgreSQL + Redis.
+#
+# Usage (from the repository root):
+#   cp .env.example .env            # then edit .env with your own local values
+#   docker compose -f infrastructure/docker/docker-compose.yml up --build
+#
+# This is a *local development* compose file only — it is not a production deployment
+# artifact. Production hosting/orchestration (Azure) is introduced in a later phase
+# (`ROADMAP.md` Phase 11). No secrets are hardcoded here: every credential is sourced from the
+# `.env` file (never committed) via `env_file`, falling back to the same non-secret local
+# placeholder values documented in `.env.example`.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-priceradar_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-priceradar}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - priceradar_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-priceradar_app} -d ${POSTGRES_DB:-priceradar}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-priceradar_app}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-priceradar}
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  priceradar_postgres_data:
+    # Persists PostgreSQL data across `docker compose down`/`up` cycles in local development.
+    # Use `docker compose down -v` to discard it entirely.
