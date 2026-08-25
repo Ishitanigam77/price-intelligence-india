@@ -1,14 +1,22 @@
 """Generic base repository shared by every entity-specific repository."""
 
 import uuid
-from typing import Generic, TypeVar
+from datetime import datetime
+from typing import Generic, Protocol, TypeVar, cast
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Mapped, Session
 
 from app.db.base import Base
 
 ModelType = TypeVar("ModelType", bound=Base)
+
+
+class _HasCreatedAt(Protocol):
+    """Structural type asserting a model exposes `created_at` (every Phase 1 model does, via
+    `TimestampMixin` or an explicit column — see `app/db/models/mixins.py`)."""
+
+    created_at: Mapped[datetime]
 
 
 class BaseRepository(Generic[ModelType]):
@@ -23,7 +31,8 @@ class BaseRepository(Generic[ModelType]):
         return self.session.get(self.model, entity_id)
 
     def list(self, *, limit: int = 100, offset: int = 0) -> list[ModelType]:
-        stmt = select(self.model).order_by(self.model.created_at).limit(limit).offset(offset)
+        audited_model = cast(type[_HasCreatedAt], self.model)
+        stmt = select(self.model).order_by(audited_model.created_at).limit(limit).offset(offset)
         return list(self.session.scalars(stmt).all())
 
     def add(self, entity: ModelType) -> ModelType:

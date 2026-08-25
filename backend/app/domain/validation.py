@@ -62,8 +62,22 @@ def validate_country_code(value: str) -> str:
 
 
 def validate_non_negative_amount(value: Decimal | None, *, field_name: str) -> Decimal | None:
-    """Ensure a monetary amount is `None` or non-negative."""
+    """Ensure an optional monetary amount is `None` or non-negative (e.g. MRP, fees)."""
     if value is not None and value < 0:
+        raise NegativeAmountError(f"{field_name} must not be negative, got {value}.")
+    return value
+
+
+def validate_required_non_negative_amount(value: Decimal | None, *, field_name: str) -> Decimal:
+    """Ensure a *required* monetary amount is present and non-negative (e.g. displayed price).
+
+    Unlike `validate_non_negative_amount`, `None` is rejected here rather than passed through —
+    a required amount that is missing should fail fast with a clear domain error instead of
+    silently reaching the database's NOT NULL constraint.
+    """
+    if value is None:
+        raise NegativeAmountError(f"{field_name} is required and must not be None.")
+    if value < 0:
         raise NegativeAmountError(f"{field_name} must not be negative, got {value}.")
     return value
 

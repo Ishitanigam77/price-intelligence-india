@@ -24,7 +24,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from app.db.base import Base
 from app.db.models.mixins import UUIDPrimaryKeyMixin
 from app.domain.enums import AvailabilityStatus, ConfidenceLevel, SourceType
-from app.domain.validation import validate_currency_code, validate_non_negative_amount
+from app.domain.validation import (
+    validate_currency_code,
+    validate_non_negative_amount,
+    validate_required_non_negative_amount,
+)
 
 if TYPE_CHECKING:
     from app.db.models.retailer_product import RetailerProduct
@@ -130,7 +134,7 @@ class PriceSnapshot(UUIDPrimaryKeyMixin, Base):
 
     @validates("displayed_price")
     def _validate_displayed_price(self, key: str, value: Decimal) -> Decimal:
-        return validate_non_negative_amount(value, field_name="displayed_price")
+        return validate_required_non_negative_amount(value, field_name="displayed_price")
 
     @validates("effective_price")
     def _validate_effective_price(self, key: str, value: Decimal | None) -> Decimal | None:

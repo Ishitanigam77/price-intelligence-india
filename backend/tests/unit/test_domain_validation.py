@@ -18,6 +18,7 @@ from app.domain.validation import (
     validate_country_code,
     validate_currency_code,
     validate_non_negative_amount,
+    validate_required_non_negative_amount,
     validate_slug,
 )
 
@@ -79,6 +80,24 @@ class TestValidateNonNegativeAmount:
     def test_rejects_negative(self) -> None:
         with pytest.raises(NegativeAmountError):
             validate_non_negative_amount(Decimal("-1"), field_name="mrp")
+
+
+class TestValidateRequiredNonNegativeAmount:
+    def test_allows_zero_and_positive(self) -> None:
+        assert validate_required_non_negative_amount(
+            Decimal("0"), field_name="displayed_price"
+        ) == Decimal("0")
+        assert validate_required_non_negative_amount(
+            Decimal("10.50"), field_name="displayed_price"
+        ) == Decimal("10.50")
+
+    def test_rejects_none(self) -> None:
+        with pytest.raises(NegativeAmountError):
+            validate_required_non_negative_amount(None, field_name="displayed_price")
+
+    def test_rejects_negative(self) -> None:
+        with pytest.raises(NegativeAmountError):
+            validate_required_non_negative_amount(Decimal("-1"), field_name="displayed_price")
 
 
 class TestNormalizeVariantAttributes:
