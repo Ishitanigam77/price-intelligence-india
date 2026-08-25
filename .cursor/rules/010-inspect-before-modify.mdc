@@ -1,0 +1,19 @@
+---
+description: Always inspect existing repository state before creating or modifying files; never unnecessarily rewrite working modules.
+globs:
+alwaysApply: true
+---
+
+# Inspect Before You Modify
+
+- Always inspect the current state of the relevant files/directories before creating or
+  editing anything. Do not assume a file, module, class, or directory does or doesn't exist —
+  check first (read the file, list the directory, or search the codebase).
+- Never rewrite a working module "for style," "for cleanliness," or out of general preference
+  unless the task explicitly calls for a refactor. Prefer the smallest change that correctly
+  accomplishes the requested task.
+- When extending existing functionality, follow the existing patterns, naming conventions, and
+  directory structure already present in the repository rather than introducing a competing
+  approach.
+- Before adding a new directory or top-level concept, check `PROJECT_ARCHITECTURE.md` and the
+  existing directory layout to see whether it already has a designated home.

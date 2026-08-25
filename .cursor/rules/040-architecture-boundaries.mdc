@@ -1,0 +1,25 @@
+---
+description: Maintain layered architecture boundaries and retailer-adapter isolation so adding retailer 50 or 100 never requires rewriting the core engine.
+globs:
+alwaysApply: true
+---
+
+# Architecture Boundaries
+
+- Respect the layering defined in `PROJECT_ARCHITECTURE.md`: Frontend → API → Domain/Services
+  → Repositories → Database, with retailer adapters, collectors, normalization, matching,
+  pricing, sale-event intelligence, recommendation, and notifications as distinct modules.
+- Dependencies flow one direction only. Domain logic (`backend/app/domain/`,
+  `backend/app/pricing/`, `backend/app/matching/`, `backend/app/sales/`,
+  `backend/app/recommendation/`) must never import from `backend/app/api/` or from any specific
+  retailer adapter package.
+- All retailer-specific code must live inside `backend/app/retailer_adapters/<retailer_slug>/`
+  and implement the common adapter interface defined in `RETAILER_ARCHITECTURE.md`. Adding a
+  new retailer must never require modifying `normalization/`, `matching/`, `pricing/`,
+  `sales/`, or `recommendation/`. If it seems to require that, treat it as a signal the adapter
+  interface itself needs a deliberate, reviewed change — not a one-off workaround for a single
+  retailer.
+- Do not introduce retailer-specific conditionals (e.g. `if retailer == "..."`) inside core
+  engine modules.
+- Keep Product / Product Variant / Retailer Listing / Seller / Price Observation as distinct
+  entities (see `PROJECT_ARCHITECTURE.md` §5). Never merge different variants of a product.

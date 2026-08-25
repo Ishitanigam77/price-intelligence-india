@@ -1,0 +1,29 @@
+---
+description: Legitimate-data-only policy for retailer integrations — never bypass anti-bot/auth/rate-limit/robots protections, never fabricate retailer data.
+globs:
+alwaysApply: true
+---
+
+# Retailer & Data Integrity
+
+These constraints are absolute and apply regardless of what a task otherwise asks for:
+
+- Never write, suggest, or scaffold code intended to bypass CAPTCHA, authentication, anti-bot
+  systems, access controls, rate limits, `robots.txt` restrictions, or any retailer's terms of
+  service. If a task implicitly or explicitly requires this, decline that part and explain why.
+- Only use legitimate data sources for retailer integrations: official APIs, affiliate/partner
+  APIs or feeds, product/structured feeds, or other integrations a retailer has explicitly
+  permitted. Playwright/browser automation is only acceptable for a specific, named, permitted
+  integration that genuinely requires it — never as a generic scraping tool.
+- Never fabricate, invent, guess, or "fill in" real retailer names, prices, availability, URLs,
+  or other product data. If real data isn't available, use clearly-labeled placeholder/fixture
+  data in tests, and say so explicitly.
+- Every retailer integration must be isolated behind the common retailer adapter interface (see
+  `RETAILER_ARCHITECTURE.md`). Core logic (normalization, matching, pricing, sale-event
+  intelligence, recommendation) must never branch on a specific retailer's identity.
+- Every Price Observation must carry: retailer, seller, source URL, observation timestamp,
+  displayed price, MRP (where available), effective price (where calculable), availability,
+  source type, and a data freshness/confidence indicator. Never omit provenance fields to save
+  time.
+- Never merge or blur observed, calculated, and predicted values. Predicted values must always
+  be clearly labeled as predictions.
