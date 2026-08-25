@@ -7,15 +7,16 @@ collectors, background workers, and all price/product intelligence modules.
 SQLAlchemy models, Alembic migrations, repositories), plus a **FastAPI backend application
 foundation** — application factory, startup/shutdown lifecycle, `/api/v1/` versioned routing,
 Redis infrastructure, centralized exception handling, structured logging, CORS, and Docker
-support. Retailer adapters, collectors, normalization, matching, pricing intelligence,
-sale-event intelligence, recommendation, notifications, and auth are **not** implemented yet —
-see `../ROADMAP.md`.
+support — and the **retailer adapter framework** (common interface, registry, execution
+helpers, and three fixture-backed mock adapters). Collectors, real retailer integrations,
+normalization, matching, pricing intelligence, sale-event intelligence, recommendation,
+notifications, and auth are **not** implemented yet — see `../ROADMAP.md`.
 
 > **Note on phase numbering**: `../ROADMAP.md` reserves "Phase 2" for the Retailer Adapter
-> Framework, which is **not** part of this application-foundation work and has not been
-> started. The application foundation described here was explicitly requested and scoped as
-> its own increment, deepening the minimal Phase 1 FastAPI skeleton into a production-quality
-> API foundation without pulling forward any retailer-adapter, matching, pricing, or ML logic.
+> Framework. That framework is implemented here (`app/retailer_adapters/`). A separate
+> FastAPI application-foundation increment (application factory, `/api/v1/`, Redis, Docker)
+> was merged independently and is also present. Matching, pricing, and ML logic remain
+> later-phase work.
 
 ## Layout
 
@@ -31,14 +32,16 @@ see `../ROADMAP.md`.
   `price_service.py`, which distinguishes "listing not found" from "listing has no
   observations yet").
 - `app/auth/` — Clerk token verification (Phase 5+)
-- `app/core/` — settings (env-var driven: API, database, Redis, CORS, logging), structured
-  logging setup, and Redis connection/client management.
+- `app/core/` — settings (env-var driven: API, database, Redis, CORS, logging, and retailer
+  adapter defaults), structured logging setup, and Redis connection/client management.
 - `app/domain/` — framework-independent entities' invariants: enums, exceptions, validation
 - `app/repositories/` — data access layer over the SQLAlchemy models
 - `app/db/` — SQLAlchemy declarative base, session/engine (pool-configurable), and ORM models
   (`app/db/models/`)
-- `app/retailer_adapters/` — common adapter interface + per-retailer adapters (Phase 2+)
-- `app/collectors/` — orchestrates data acquisition via adapters (Phase 2+)
+- `app/retailer_adapters/` — common adapter interface, registry, execution helpers, and
+  fixture-backed mock adapters (Phase 2). Real retailer integrations are later.
+- `app/collectors/` — orchestrates data acquisition via adapters (later; the adapter
+  framework is in place)
 - `app/normalization/` — raw listing → common normalized shape (Phase 3)
 - `app/matching/` — product/variant matching engine (Phase 3)
 - `app/pricing/` — price intelligence: effective price, history, drops (Phase 4)
@@ -46,7 +49,7 @@ see `../ROADMAP.md`.
 - `app/recommendation/` — BUY_NOW / WAIT / WATCH engine (Phase 9)
 - `app/notifications/` — watchlist & price alert dispatch (Phase 6)
 - `app/workers/` — Celery app, tasks, schedules (Phase 2+)
-- `app/observability/` — structured logging, health checks, metrics
+- `app/observability/` — structured JSON logging, correlation IDs, metrics seams
 - `alembic/` — database migrations
 - `Dockerfile`, `docker-entrypoint.sh`, `.dockerignore` — production-oriented backend image
 - `scripts/seed_dev_data.py` — seeds clearly-fake development data for manually validating the

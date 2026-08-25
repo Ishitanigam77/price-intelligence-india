@@ -26,11 +26,13 @@
 ## Phase 2 — Retailer Adapter Framework
 
 - Define the common retailer adapter interface (contract every retailer integration must
-  implement).
-- Implement one reference adapter against a legitimate, permitted data source (official API or
-  affiliate feed) to validate the interface — not a scraped integration.
+  implement). **Implemented** (`backend/app/retailer_adapters/base/`).
+- Validate the interface with fixture-backed mock adapters (no live network calls, no real
+  retailer). **Implemented** (`mock_retailer_a/b/c`). A reference adapter against a
+  legitimate permitted data source is deferred until a real retailer is onboarded.
 - Collector orchestration skeleton (how collectors invoke adapters and hand off raw data).
-- Adapter-level tests using recorded/fixture data (no live network calls in CI).
+  **Not in this increment** — the framework's `RetailerFleet` / registry are the call
+  surface collectors will use; Celery scheduling belongs with workers.
 
 ## Phase 3 — Product Normalization & Matching
 

@@ -8,10 +8,11 @@ price history, detects genuine price drops and sale events, and recommends wheth
 > **Status: Phase 1 — Core Domain Model & Database Foundation**, plus a **FastAPI backend
 > application foundation** (application factory, `/api/v1/` versioned routing, Redis
 > infrastructure, centralized exception handling, structured logging, CORS, and local Docker
-> Compose support — see `backend/README.md`). Retailer integrations, matching, price
-> intelligence, ML models, authentication, notifications, and the frontend do **not** exist
-> yet — see `ROADMAP.md`. (Note: `ROADMAP.md`'s own "Phase 2" is reserved for the Retailer
-> Adapter Framework, which is separate from and not part of this application-foundation work.)
+> Compose support — see `backend/README.md`) and the **retailer adapter framework** with
+> fixture-backed mock adapters (see `backend/app/retailer_adapters/` and
+> `RETAILER_ARCHITECTURE.md`). Real retailer integrations, matching, price intelligence, ML
+> models, authentication, notifications, and the frontend do **not** exist yet — see
+> `ROADMAP.md`.
 
 ## Why This Exists
 

@@ -1,7 +1,8 @@
 # DATA_FLOW.md — PriceRadar India
 
-> Describes how data is intended to flow through the system end to end. This is a design
-> reference for future phases — no part of this pipeline is implemented in Phase 0.
+> Describes how data is intended to flow through the system end to end. Phase 2 implements
+> the retailer adapter stage (common interface + mock adapters). Later stages remain a
+> design reference until their phases begin.
 
 ## 1. High-Level Flow
 

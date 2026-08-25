@@ -2,8 +2,9 @@
 
 Phase 2 scope: a production-quality application *foundation* — factory function, startup/
 shutdown lifecycle, versioned routing (`/api/v1/`), CORS, and centralized exception handling.
-Search, comparison, watchlist, and other business endpoints are introduced in later phases (see
-`ROADMAP.md`).
+The retailer adapter framework lives under `app/retailer_adapters/` and is not wired into HTTP
+routes in this increment. Search, comparison, watchlist, and other business endpoints are
+introduced in later phases (see `ROADMAP.md`).
 """
 
 import logging

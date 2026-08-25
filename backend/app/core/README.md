@@ -11,8 +11,10 @@ concerns used across layers.
   foundation added: `LOG_FORMAT`, `API_V1_PREFIX`, `CORS_ALLOWED_ORIGINS`/
   `CORS_ALLOW_CREDENTIALS`, database pool sizing (`DB_POOL_SIZE`, `DB_MAX_OVERFLOW`,
   `DB_POOL_TIMEOUT`, `DB_POOL_RECYCLE`), and Redis (`REDIS_URL`, `REDIS_MAX_CONNECTIONS`,
-  `REDIS_SOCKET_TIMEOUT`, `REDIS_SOCKET_CONNECT_TIMEOUT`). No secrets are hardcoded — see
-  `.env.example`.
+  `REDIS_SOCKET_TIMEOUT`, `REDIS_SOCKET_CONNECT_TIMEOUT`). The retailer adapter framework
+  added framework-wide defaults (`RETAILER_ADAPTER_DEFAULT_*`, `RETAILER_ADAPTERS_DISABLED`).
+  No secrets are hardcoded — see `.env.example`. Per-retailer credentials are added only
+  alongside a real adapter, never speculatively.
 - `logging.py` — structured (JSON by default) logging configuration, applied once per process
   by the application factory (`app.main.create_app`).
 - `redis.py` — Redis connection pool/client management and a `check_redis_connection` health

@@ -15,10 +15,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Environment-driven application configuration.
 
-    Settings needed by Phase 1 (database + minimal API skeleton) and Phase 2 (FastAPI backend
-    foundation: API app config, Redis, CORS, DB pool sizing, logging) are defined here. Later
-    phases add their own settings (Celery, Clerk, retailer credentials, ...) alongside the
-    functionality that consumes them, per `.env.example`.
+    Settings needed by Phase 1 (database + minimal API skeleton), the FastAPI backend
+    foundation (API app config, Redis, CORS, DB pool sizing, logging), and the retailer
+    adapter framework defaults are defined here. Later phases add their own settings (Celery,
+    Clerk, per-retailer credentials, ...) alongside the functionality that consumes them, per
+    `.env.example`.
     """
 
     model_config = SettingsConfigDict(
@@ -56,6 +57,16 @@ class Settings(BaseSettings):
     redis_socket_timeout: float = 5.0
     redis_socket_connect_timeout: float = 5.0
 
+    # Framework-wide retailer adapter defaults. Individual adapters override these per retailer
+    # (see `app/retailer_adapters/base/config.py`); these are only the starting values, chosen
+    # to be conservative rather than aggressive.
+    retailer_adapter_default_timeout_seconds: float = 10.0
+    retailer_adapter_default_max_attempts: int = 3
+    retailer_adapter_default_requests_per_minute: int = 60
+    retailer_adapter_default_max_concurrent_requests: int = 1
+    #: Comma-separated retailer IDs to switch off globally, regardless of per-adapter config.
+    retailer_adapters_disabled: str = ""
+
     @field_validator("log_level")
     @classmethod
     def _validate_log_level(cls, value: str) -> str:
@@ -81,6 +92,13 @@ class Settings(BaseSettings):
         requests rather than silently allowing all of them.
         """
         return [origin.strip() for origin in self.cors_allowed_origins.split(",") if origin.strip()]
+
+    @property
+    def disabled_retailer_ids(self) -> frozenset[str]:
+        """Retailer IDs disabled via `RETAILER_ADAPTERS_DISABLED`."""
+        return frozenset(
+            entry.strip() for entry in self.retailer_adapters_disabled.split(",") if entry.strip()
+        )
 
 
 @lru_cache
