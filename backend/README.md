@@ -3,20 +3,40 @@
 Python + FastAPI backend: API layer, domain/business logic, repositories, retailer adapters,
 collectors, background workers, and all price/product intelligence modules.
 
-**Status**: **Phase 1 — Core Domain Model & Database Foundation** implemented. The domain
-model, SQLAlchemy models, Alembic migrations, repositories, and a minimal FastAPI health-check
-skeleton exist. Retailer adapters, collectors, normalization, matching, pricing intelligence,
+**Status**: **Phase 1 — Core Domain Model & Database Foundation** implemented (domain model,
+SQLAlchemy models, Alembic migrations, repositories), plus a **FastAPI backend application
+foundation** — application factory, startup/shutdown lifecycle, `/api/v1/` versioned routing,
+Redis infrastructure, centralized exception handling, structured logging, CORS, and Docker
+support. Retailer adapters, collectors, normalization, matching, pricing intelligence,
 sale-event intelligence, recommendation, notifications, and auth are **not** implemented yet —
 see `../ROADMAP.md`.
 
+> **Note on phase numbering**: `../ROADMAP.md` reserves "Phase 2" for the Retailer Adapter
+> Framework, which is **not** part of this application-foundation work and has not been
+> started. The application foundation described here was explicitly requested and scoped as
+> its own increment, deepening the minimal Phase 1 FastAPI skeleton into a production-quality
+> API foundation without pulling forward any retailer-adapter, matching, pricing, or ML logic.
+
 ## Layout
 
-- `app/api/` — FastAPI routers (health check only in Phase 1)
+- `app/api/` — FastAPI routers and DTOs. `health.py` is the unversioned Phase 1 liveness/
+  readiness check (kept for backward compatibility / simple orchestrator probes); `v1/` is the
+  versioned API (see below). `deps.py` wires repositories/services into routes via dependency
+  injection; `errors.py` is the centralized exception handling.
+- `app/api/v1/` — `/api/v1/` routers: `health` (liveness + per-dependency readiness),
+  `products`, `retailers`, `prices`, `deals`. Read-only foundations over the Phase 1
+  repositories — no matching/pricing/recommendation business logic.
+- `app/schemas/` — Pydantic request/response DTOs, kept separate from the SQLAlchemy models.
+- `app/services/` — thin service-layer boundaries, added only where genuinely needed (e.g.
+  `price_service.py`, which distinguishes "listing not found" from "listing has no
+  observations yet").
 - `app/auth/` — Clerk token verification (Phase 5+)
-- `app/core/` — settings (env-var driven) and cross-cutting utilities
+- `app/core/` — settings (env-var driven: API, database, Redis, CORS, logging), structured
+  logging setup, and Redis connection/client management.
 - `app/domain/` — framework-independent entities' invariants: enums, exceptions, validation
 - `app/repositories/` — data access layer over the SQLAlchemy models
-- `app/db/` — SQLAlchemy declarative base, session/engine, and ORM models (`app/db/models/`)
+- `app/db/` — SQLAlchemy declarative base, session/engine (pool-configurable), and ORM models
+  (`app/db/models/`)
 - `app/retailer_adapters/` — common adapter interface + per-retailer adapters (Phase 2+)
 - `app/collectors/` — orchestrates data acquisition via adapters (Phase 2+)
 - `app/normalization/` — raw listing → common normalized shape (Phase 3)
@@ -28,9 +48,13 @@ see `../ROADMAP.md`.
 - `app/workers/` — Celery app, tasks, schedules (Phase 2+)
 - `app/observability/` — structured logging, health checks, metrics
 - `alembic/` — database migrations
+- `Dockerfile`, `docker-entrypoint.sh`, `.dockerignore` — production-oriented backend image
 - `scripts/seed_dev_data.py` — seeds clearly-fake development data for manually validating the
   schema (not used by the automated test suite)
 - `tests/unit/`, `tests/integration/` — test suites
+
+See also `../infrastructure/docker/docker-compose.yml` for the local development stack
+(backend + PostgreSQL + Redis).
 
 ## Local Setup
 
@@ -42,7 +66,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
-cp ../.env.example ../.env   # then edit ../.env with your local DB credentials
+cp ../.env.example ../.env   # then edit ../.env with your local DB/Redis credentials
 ```
 
 Create the database and (optionally) a dedicated app role, matching whatever you put in
@@ -53,6 +77,18 @@ createuser priceradar_app --pwprompt
 createdb priceradar --owner=priceradar_app
 createdb priceradar_test --owner=priceradar_app   # used by the integration test suite
 ```
+
+### Redis
+
+A local Redis instance is required for the readiness check and for the Redis connectivity
+tests. Install/run it however you prefer, e.g.:
+
+```bash
+sudo apt-get install redis-server && sudo service redis-server start
+# or: docker run --rm -p 6379:6379 redis:7-alpine
+```
+
+`REDIS_URL` (see `.env.example`) defaults to `redis://localhost:6379/0`.
 
 ## Running Migrations
 
@@ -65,25 +101,52 @@ alembic downgrade base     # roll back everything (verifies migrations are fully
 alembic revision --autogenerate -m "describe your change"   # generate a new migration
 ```
 
+No Phase 2 schema changes were introduced — the existing Phase 1 migration
+(`0001_phase1_core_domain_schema`) is unchanged.
+
 ## Running the API
 
 ```bash
 uvicorn app.main:app --reload --host $API_HOST --port $API_PORT
 ```
 
-`GET /health` is a liveness check; `GET /health/ready` additionally verifies the database is
-reachable.
+- `GET /health` / `GET /health/ready` — Phase 1 liveness/readiness (unversioned, kept for
+  backward compatibility and simple container/orchestrator probes).
+- `GET /api/v1/health` / `GET /api/v1/health/ready` — versioned liveness/readiness. Readiness
+  reports PostgreSQL and Redis availability independently and returns HTTP 503 (with a
+  structured body identifying which dependency is down) if either is unreachable.
+- `GET /api/v1/products`, `/api/v1/retailers`, `/api/v1/prices/...`, `/api/v1/deals` — Phase 2
+  read-only API foundation over the Phase 1 domain model (see `app/api/v1/`).
+- Interactive API docs: `GET /docs` (Swagger UI), `GET /redoc` (ReDoc), `GET /openapi.json`.
 
 ## Running Tests
 
 Integration tests run against a real PostgreSQL database (set `TEST_DATABASE_URL`, or rely on
 the `priceradar_test` default matching `.env.example`) and automatically migrate it to `head`
-before the suite runs.
+before the suite runs. A local Redis instance (`REDIS_URL`, default
+`redis://localhost:6379/0`) is required for the Redis/readiness tests.
 
 ```bash
 pytest                 # unit + integration tests
-pytest tests/unit       # domain validation only, no database needed
+pytest tests/unit       # domain validation + settings, no database/Redis needed
 ```
+
+## Docker / Docker Compose
+
+A production-oriented `Dockerfile` (multi-stage build, non-root user, container health check)
+lives at `backend/Dockerfile`. For local development, `infrastructure/docker/docker-compose.yml`
+brings up the backend alongside PostgreSQL (with a persistent volume) and Redis:
+
+```bash
+cp .env.example .env   # from the repo root; edit with your own local values
+cd infrastructure/docker
+docker compose up --build
+```
+
+The backend container applies Alembic migrations on startup by default (see
+`docker-entrypoint.sh`); set `RUN_DB_MIGRATIONS=false` to disable that (e.g. when migrations are
+run as their own deployment step). This is local development tooling only — production
+Azure/Kubernetes deployment is out of scope until `../ROADMAP.md` Phase 11.
 
 ## Seeding Fake Development Data
 
