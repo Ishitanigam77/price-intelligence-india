@@ -49,7 +49,8 @@ class Settings(BaseSettings):
     db_pool_timeout: int = 30
     db_pool_recycle: int = 1800
 
-    # -- Redis (cache/session infrastructure only in Phase 2; Celery broker use is Phase 2+) ----
+    # -- Redis (connection/client infrastructure only; caching logic, Celery broker/result-
+    # backend usage, queues, and distributed locks are introduced in later phases) -----------
     redis_url: str = "redis://localhost:6379/0"
     redis_max_connections: int = 20
     redis_socket_timeout: float = 5.0
