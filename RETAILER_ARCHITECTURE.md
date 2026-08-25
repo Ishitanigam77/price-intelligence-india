@@ -2,8 +2,9 @@
 
 > This document defines how retailers are integrated so that the network can grow from a
 > handful of retailers to 100+ without changes to the core comparison, matching, or pricing
-> engines. No retailer adapters are implemented in Phase 0 — this document defines the contract
-> they will follow when introduced.
+> engines. The common adapter interface, registry, configuration, standardized models, and
+> three fixture-backed mock adapters are implemented (see `backend/app/retailer_adapters/`).
+> No real retailer integration exists yet — mocks are in-process fixtures, not network clients.
 
 ## 1. Design Goal
 
@@ -57,8 +58,10 @@ Each retailer adapter will implement a common interface responsible for:
 5. **Health reporting** — expose whether the adapter's most recent calls succeeded, latency,
    and error state, feeding the retailer health/data-freshness features of the product.
 
-The adapter interface itself is *not* implemented in Phase 0. It will be defined precisely in
-Phase 2, informed by the first reference integration.
+The adapter interface itself is implemented in `backend/app/retailer_adapters/base/`. Mock
+adapters in `mock_retailer_a/`, `mock_retailer_b/`, and `mock_retailer_c/` validate the
+contract against invented fixture data. Real retailer integrations are a later phase and
+must use a legitimate access method (see §2).
 
 ## 4. Directory Convention (Target)
 
@@ -112,7 +115,7 @@ retailers' native APIs are, they both ultimately populate the same Price Observa
 
 ## 7. Explicit Non-Goals
 
-- This document does not define any concrete retailer integration. No real retailer name,
-  endpoint, or data has been added to the codebase as of Phase 0.
+- This document does not define any concrete *real* retailer integration. Mock adapters use
+  invented fixture data and `*.example.test` URLs; they are not stand-ins for a named retailer.
 - This document does not authorize scraping. Any future adapter must be justified by a
   legitimate access method before implementation begins.

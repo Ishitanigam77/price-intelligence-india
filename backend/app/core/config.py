@@ -14,9 +14,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Environment-driven application configuration.
 
-    Only settings actually needed by Phase 1 (database + minimal API skeleton) are defined
-    here. Later phases add their own settings (Redis, Celery, Clerk, retailer credentials, ...)
-    alongside the functionality that consumes them, per `.env.example`.
+    Only settings actually needed by the phases implemented so far (database + minimal API
+    skeleton, retailer adapter framework defaults) are defined here. Later phases add their own
+    settings (Redis, Celery, Clerk, per-retailer credentials, ...) alongside the functionality
+    that consumes them, per `.env.example`.
     """
 
     model_config = SettingsConfigDict(
@@ -33,9 +34,26 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://priceradar_app:changeme@localhost:5432/priceradar"
 
+    # Framework-wide retailer adapter defaults. Individual adapters override these per retailer
+    # (see `app/retailer_adapters/base/config.py`); these are only the starting values, chosen
+    # to be conservative rather than aggressive.
+    retailer_adapter_default_timeout_seconds: float = 10.0
+    retailer_adapter_default_max_attempts: int = 3
+    retailer_adapter_default_requests_per_minute: int = 60
+    retailer_adapter_default_max_concurrent_requests: int = 1
+    #: Comma-separated retailer IDs to switch off globally, regardless of per-adapter config.
+    retailer_adapters_disabled: str = ""
+
     @property
     def is_production(self) -> bool:
         return self.environment.lower() == "production"
+
+    @property
+    def disabled_retailer_ids(self) -> frozenset[str]:
+        """Retailer IDs disabled via `RETAILER_ADAPTERS_DISABLED`."""
+        return frozenset(
+            entry.strip() for entry in self.retailer_adapters_disabled.split(",") if entry.strip()
+        )
 
 
 @lru_cache

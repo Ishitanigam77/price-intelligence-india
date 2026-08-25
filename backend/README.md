@@ -3,11 +3,12 @@
 Python + FastAPI backend: API layer, domain/business logic, repositories, retailer adapters,
 collectors, background workers, and all price/product intelligence modules.
 
-**Status**: **Phase 1 — Core Domain Model & Database Foundation** implemented. The domain
-model, SQLAlchemy models, Alembic migrations, repositories, and a minimal FastAPI health-check
-skeleton exist. Retailer adapters, collectors, normalization, matching, pricing intelligence,
-sale-event intelligence, recommendation, notifications, and auth are **not** implemented yet —
-see `../ROADMAP.md`.
+**Status**: **Phase 2 — Retailer Adapter Framework** implemented (on top of Phase 1). The
+domain model, SQLAlchemy models, Alembic migrations, repositories, a minimal FastAPI
+health-check skeleton, the retailer adapter framework, and three fixture-backed mock
+adapters exist. Collectors, real retailer integrations, matching, pricing intelligence,
+sale-event intelligence, recommendation, notifications, and auth are **not** implemented
+yet — see `../ROADMAP.md`.
 
 ## Layout
 
@@ -17,8 +18,8 @@ see `../ROADMAP.md`.
 - `app/domain/` — framework-independent entities' invariants: enums, exceptions, validation
 - `app/repositories/` — data access layer over the SQLAlchemy models
 - `app/db/` — SQLAlchemy declarative base, session/engine, and ORM models (`app/db/models/`)
-- `app/retailer_adapters/` — common adapter interface + per-retailer adapters (Phase 2+)
-- `app/collectors/` — orchestrates data acquisition via adapters (Phase 2+)
+- `app/retailer_adapters/` — common adapter interface, registry, mock adapters (Phase 2)
+- `app/collectors/` — orchestrates data acquisition via adapters (later; framework is in place)
 - `app/normalization/` — raw listing → common normalized shape (Phase 3)
 - `app/matching/` — product/variant matching engine (Phase 3)
 - `app/pricing/` — price intelligence: effective price, history, drops (Phase 4)
@@ -26,7 +27,7 @@ see `../ROADMAP.md`.
 - `app/recommendation/` — BUY_NOW / WAIT / WATCH engine (Phase 9)
 - `app/notifications/` — watchlist & price alert dispatch (Phase 6)
 - `app/workers/` — Celery app, tasks, schedules (Phase 2+)
-- `app/observability/` — structured logging, health checks, metrics
+- `app/observability/` — structured JSON logging, correlation IDs, metrics seams
 - `alembic/` — database migrations
 - `scripts/seed_dev_data.py` — seeds clearly-fake development data for manually validating the
   schema (not used by the automated test suite)
