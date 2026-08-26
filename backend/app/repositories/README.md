@@ -8,7 +8,8 @@ SQLAlchemy/query details from the domain and API layers.
 `base.py` defines a generic `BaseRepository` (get by id, list, add, delete, and — added for the
 FastAPI backend application foundation's paginated API list endpoints — `count`); one
 repository per entity subclasses it and adds entity-specific lookups (e.g. `get_by_slug`,
-`list_for_retailer`, `latest_for_retailer_product`). `PriceSnapshotRepository` deliberately has
-no update method — Price Observations are immutable; corrections are new snapshots.
+`get_by_name`, `list_for_retailer`, `latest_for_retailer_product`, `get_by_type_and_value`).
+`PriceSnapshotRepository` deliberately has no update method — Price Observations are
+immutable; corrections are new snapshots.
 
 Consumed directly by `app/api/v1/` routes via the dependency providers in `app/api/deps.py`.

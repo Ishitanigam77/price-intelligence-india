@@ -1,10 +1,10 @@
 """FastAPI application entrypoint and factory.
 
-Phase 2 scope: a production-quality application *foundation* — factory function, startup/
-shutdown lifecycle, versioned routing (`/api/v1/`), CORS, and centralized exception handling.
-The retailer adapter framework lives under `app/retailer_adapters/` and is not wired into HTTP
-routes in this increment. Search, comparison, watchlist, and other business endpoints are
-introduced in later phases (see `ROADMAP.md`).
+Application factory, startup/shutdown lifecycle, versioned routing (`/api/v1/`), CORS,
+centralized exception handling, and (Phase 4) product discovery wiring: mock retailer adapters
+are discovered and registered at startup so `GET /api/v1/products/search` can query them
+through the existing `RetailerRegistry`. Search, comparison, watchlist, and other later-phase
+business endpoints remain out of scope (see `ROADMAP.md`).
 """
 
 import logging
@@ -20,6 +20,8 @@ from app.api.v1 import api_router as api_v1_router
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
 from app.core.redis import close_redis_pool, get_redis_pool
+from app.observability.metrics import NullMetricsSink
+from app.retailer_adapters.wiring import build_retailer_registry
 
 logger = logging.getLogger(__name__)
 
@@ -28,13 +30,20 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Application startup/shutdown lifecycle.
 
-    Startup: warms the Redis connection pool so the first request doesn't pay that cost.
-    Shutdown: releases the Redis connection pool. The SQLAlchemy engine (`app.db.session`) is
-    process-scoped by design (per Phase 1) and does not need explicit disposal here.
+    Startup: warms the Redis connection pool and registers retailer adapters of the configured
+    kinds (fixture-backed mocks by default). Shutdown: releases the Redis connection pool. The
+    SQLAlchemy engine (`app.db.session`) is process-scoped by design (per Phase 1) and does not
+    need explicit disposal here.
     """
     settings = get_settings()
     logger.info("Starting PriceRadar India API (environment=%s).", settings.environment)
     get_redis_pool()
+    metrics_sink = getattr(app.state, "metrics_sink", None) or NullMetricsSink()
+    app.state.metrics_sink = metrics_sink
+    if getattr(app.state, "retailer_registry", None) is None:
+        app.state.retailer_registry = build_retailer_registry(
+            settings=settings, metrics_sink=metrics_sink
+        )
     try:
         yield
     finally:

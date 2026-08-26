@@ -25,12 +25,11 @@ notifications, and auth are **not** implemented yet — see `../ROADMAP.md`.
   versioned API (see below). `deps.py` wires repositories/services into routes via dependency
   injection; `errors.py` is the centralized exception handling.
 - `app/api/v1/` — `/api/v1/` routers: `health` (liveness + per-dependency readiness),
-  `products`, `retailers`, `prices`, `deals`. Read-only foundations over the Phase 1
-  repositories — no matching/pricing/recommendation business logic.
+  `products` (catalogue + `GET /products/search` discovery), `retailers`, `prices`, `deals`.
 - `app/schemas/` — Pydantic request/response DTOs, kept separate from the SQLAlchemy models.
-- `app/services/` — thin service-layer boundaries, added only where genuinely needed (e.g.
-  `price_service.py`, which distinguishes "listing not found" from "listing has no
-  observations yet").
+- `app/services/` — thin service-layer boundaries, added only where genuinely needed:
+  `price_service.py` (listing vs observation existence) and `product_discovery_service.py`
+  (retailer-agnostic search → normalize → persist → respond).
 - `app/auth/` — Clerk token verification (Phase 5+)
 - `app/core/` — settings (env-var driven: API, database, Redis, CORS, logging, and retailer
   adapter defaults), structured logging setup, and Redis connection/client management.
@@ -118,8 +117,8 @@ uvicorn app.main:app --reload --host $API_HOST --port $API_PORT
 - `GET /api/v1/health` / `GET /api/v1/health/ready` — versioned liveness/readiness. Readiness
   reports PostgreSQL and Redis availability independently and returns HTTP 503 (with a
   structured body identifying which dependency is down) if either is unreachable.
-- `GET /api/v1/products`, `/api/v1/retailers`, `/api/v1/prices/...`, `/api/v1/deals` — Phase 2
-  read-only API foundation over the Phase 1 domain model (see `app/api/v1/`).
+- `GET /api/v1/products`, `/api/v1/products/search`, `/api/v1/retailers`, `/api/v1/prices/...`,
+  `/api/v1/deals` — catalogue foundation plus Phase 4 product discovery (see `app/api/v1/`).
 - Interactive API docs: `GET /docs` (Swagger UI), `GET /redoc` (ReDoc), `GET /openapi.json`.
 
 ## Running Tests

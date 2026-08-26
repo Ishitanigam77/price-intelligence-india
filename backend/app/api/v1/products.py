@@ -1,23 +1,76 @@
-"""Product API routes: read-only foundation over the Phase 1 `Product`/`ProductVariant` models.
+"""Product API routes: read-only catalogue plus on-demand product discovery.
 
-Per Phase 2 scope, this module only exposes the data already captured by the Phase 1 schema
-(via `ProductRepository`/`ProductVariantRepository`) — no matching, price comparison, or
-recommendation logic. Different variants are always returned as distinct resources, never
-merged (`PROJECT_ARCHITECTURE.md` §5).
+Catalogue routes (`GET /products`, `GET /products/{id}`, ...) expose the Phase 1
+`Product`/`ProductVariant` models via repositories. Discovery (`GET /products/search`)
+fans out to enabled retailer adapters through `ProductDiscoveryService` and is the Phase 4
+write path that persists newly observed listings. Different variants are always returned as
+distinct resources, never merged (`PROJECT_ARCHITECTURE.md` §5).
 """
 
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError as PydanticValidationError
 
-from app.api.deps import ProductRepositoryDep, ProductVariantRepositoryDep
+from app.api.deps import (
+    ProductDiscoveryServiceDep,
+    ProductRepositoryDep,
+    ProductVariantRepositoryDep,
+)
 from app.api.errors import NotFoundError
 from app.schemas.common import Page
+from app.schemas.discovery import ProductSearchPage
 from app.schemas.pagination import PaginationParams, pagination_params
 from app.schemas.product import ProductRead, ProductVariantRead
 
 router = APIRouter(prefix="/products", tags=["products"])
+
+
+@router.get("/search", response_model=ProductSearchPage)
+async def search_products(
+    service: ProductDiscoveryServiceDep,
+    pagination: Annotated[PaginationParams, Depends(pagination_params)],
+    q: Annotated[
+        str,
+        Query(
+            min_length=1,
+            max_length=500,
+            description="Search text passed to every enabled retailer adapter.",
+        ),
+    ],
+    category: Annotated[
+        str | None,
+        Query(description="Optional category slug used to scope which adapters are consulted."),
+    ] = None,
+) -> ProductSearchPage:
+    """Discover products across enabled retailers and persist the observed listings.
+
+    Individual retailer failures are isolated: successful retailers still contribute results.
+    """
+    text = q.strip()
+    if not text:
+        raise RequestValidationError(
+            [
+                {
+                    "type": "string_too_short",
+                    "loc": ("query", "q"),
+                    "msg": "Search text must not be blank.",
+                    "input": q,
+                    "ctx": {"min_length": 1},
+                }
+            ]
+        )
+    try:
+        return await service.search(
+            text=text,
+            category=category,
+            limit=pagination.limit,
+            offset=pagination.offset,
+        )
+    except PydanticValidationError as exc:
+        raise RequestValidationError(exc.errors()) from exc
 
 
 @router.get("", response_model=Page[ProductRead])

@@ -33,6 +33,7 @@ def test_create_app_mounts_every_v1_resource_route() -> None:
     paths = _all_route_paths(app)
 
     assert any(path.startswith("/api/v1/products") for path in paths)
+    assert "/api/v1/products/search" in paths
     assert any(path.startswith("/api/v1/retailers") for path in paths)
     assert any(path.startswith("/api/v1/prices") for path in paths)
     assert "/api/v1/deals" in paths

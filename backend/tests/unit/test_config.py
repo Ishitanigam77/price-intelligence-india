@@ -56,6 +56,28 @@ def test_cors_allowed_origins_list_is_empty_when_unset() -> None:
     assert settings.cors_allowed_origins_list == []
 
 
+def test_disabled_retailer_ids_parses_comma_separated_values() -> None:
+    settings = Settings(
+        _env_file=None, retailer_adapters_disabled="mock-retailer-a, mock-retailer-c"
+    )
+    assert settings.disabled_retailer_ids == frozenset({"mock-retailer-a", "mock-retailer-c"})
+
+
+def test_retailer_adapter_kinds_default_to_mock() -> None:
+    settings = Settings(_env_file=None)
+    assert settings.retailer_adapter_kind_values == ("mock",)
+
+
+def test_retailer_adapter_kinds_parses_comma_separated_values() -> None:
+    settings = Settings(_env_file=None, retailer_adapter_kinds="mock, integration")
+    assert settings.retailer_adapter_kind_values == ("mock", "integration")
+
+
+def test_invalid_retailer_adapter_kind_is_rejected() -> None:
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, retailer_adapter_kinds="scraping")
+
+
 def test_database_url_and_redis_url_never_default_to_a_wildcard_or_empty_secret() -> None:
     """Sanity check that defaults are non-secret placeholders, never blank/production values."""
     settings = Settings(_env_file=None)
