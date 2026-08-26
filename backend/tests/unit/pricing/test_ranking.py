@@ -117,7 +117,7 @@ def test_delivery_information_tie_break_prefers_known_fee() -> None:
         offer(
             offer_id="known-delivery",
             displayed_price="800.00",
-            delivery_fee="40.00",
+            delivery_fee="0.00",
             seller_info=seller(first_party=True),
             retailer_slug="fictional-mart-b",
             retailer_id=RETAILER_B,
@@ -125,6 +125,7 @@ def test_delivery_information_tie_break_prefers_known_fee() -> None:
     )
     assert result.lowest_verified_offer is not None
     assert result.lowest_verified_offer.offer_id == "known-delivery"
+    assert result.lowest_verified_offer.effective_price == Decimal("800.00")
     assert result.ranking.criterion is RankingCriterion.DELIVERY
 
 

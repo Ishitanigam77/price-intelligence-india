@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
 from app.domain.enums import (
     AdjustmentEligibility,
@@ -52,8 +52,6 @@ class PriceAdjustment(_FrozenModel):
     eligibility: AdjustmentEligibility
     observed_at: datetime | None
     confidence: ConfidenceLevel
-    #: Explicit flag so callers never have to re-derive applicability.
-    affects_effective_price: bool = False
 
     @field_validator("source")
     @classmethod
@@ -78,16 +76,15 @@ class PriceAdjustment(_FrozenModel):
             raise ValueError("Adjustment observed_at must be timezone-aware.")
         return value
 
-    @model_validator(mode="after")
-    def _set_affects_effective_price(self) -> PriceAdjustment:
-        may_apply = (
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def affects_effective_price(self) -> bool:
+        """True only when this adjustment is verified-eligible to change effective_price."""
+        return (
             self.eligibility is AdjustmentEligibility.VERIFIED_ELIGIBLE
             and self.amount is not None
             and self.kind in (_PROMOTIONAL_KINDS | _FEE_KINDS)
         )
-        if self.affects_effective_price == may_apply:
-            return self
-        return self.model_copy(update={"affects_effective_price": may_apply})
 
 
 class SellerSnapshot(_FrozenModel):

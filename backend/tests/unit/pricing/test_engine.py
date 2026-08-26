@@ -263,6 +263,7 @@ def test_stale_observation_lowers_confidence_and_is_labeled() -> None:
             offer(
                 offer_id="stale",
                 displayed_price="500.00",
+                delivery_fee="0.00",
                 observed_at=NOW - timedelta(hours=72),
                 observation_confidence=ConfidenceLevel.HIGH,
             )
