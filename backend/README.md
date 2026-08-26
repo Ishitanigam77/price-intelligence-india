@@ -9,14 +9,15 @@ foundation** — application factory, startup/shutdown lifecycle, `/api/v1/` ver
 Redis infrastructure, centralized exception handling, structured logging, CORS, and Docker
 support — and the **retailer adapter framework** (common interface, registry, execution
 helpers, and three fixture-backed mock adapters). Collectors, real retailer integrations,
-normalization, matching, pricing intelligence, sale-event intelligence, recommendation,
-notifications, and auth are **not** implemented yet — see `../ROADMAP.md`.
+pricing intelligence, sale-event intelligence, recommendation, notifications, and auth are
+**not** implemented yet — see `../ROADMAP.md`. The **product identity matching engine**
+(`app/matching/`) is implemented and is independent of FastAPI routes and of specific
+retailer adapters.
 
 > **Note on phase numbering**: `../ROADMAP.md` reserves "Phase 2" for the Retailer Adapter
 > Framework. That framework is implemented here (`app/retailer_adapters/`). A separate
 > FastAPI application-foundation increment (application factory, `/api/v1/`, Redis, Docker)
-> was merged independently and is also present. Matching, pricing, and ML logic remain
-> later-phase work.
+> was merged independently and is also present. Pricing and ML logic remain later-phase work.
 
 ## Layout
 
@@ -42,7 +43,9 @@ notifications, and auth are **not** implemented yet — see `../ROADMAP.md`.
 - `app/collectors/` — orchestrates data acquisition via adapters (later; the adapter
   framework is in place)
 - `app/normalization/` — raw listing → common normalized shape (Phase 3)
-- `app/matching/` — product/variant matching engine (Phase 3)
+- `app/matching/` — product/variant matching engine (this increment): four-stage pipeline
+  (exact identifiers, normalized attributes, title/token similarity, embeddings). Independent
+  of FastAPI routes and of specific retailer adapters.
 - `app/pricing/` — price intelligence: effective price, history, drops (Phase 4)
 - `app/sales/` — sale-event intelligence (Phase 7)
 - `app/recommendation/` — BUY_NOW / WAIT / WATCH engine (Phase 9)
