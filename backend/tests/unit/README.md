@@ -8,6 +8,8 @@ they cover, starting in **Phase 1**.
 - `test_config.py` (FastAPI backend application foundation) covers `app.core.config.Settings`:
   defaults, `log_level` validation, and `cors_allowed_origins_list` parsing.
 - `observability/` — JSON logging, correlation IDs, metrics sink.
+- `matching/` — product identity matching engine: identifier/attribute/title/embedding stages,
+  classification, evaluation precision/recall, and core-domain isolation.
 - `retailer_adapters/` — adapter contract, registry, config, timeout/retry, rate limits,
   mock retailers, normalization, extensibility, and core-domain isolation.
 

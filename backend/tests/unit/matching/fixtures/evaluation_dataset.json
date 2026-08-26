@@ -1,0 +1,526 @@
+{
+  "description": "Fictional evaluation pairs for the PriceRadar India matching engine. No real retailer names, prices, or identifiers.",
+  "positive_class": "SAME_PRODUCT",
+  "pairs": [
+    {
+      "id": "identical-products-different-titles",
+      "expected": "SAME_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-MOB-1001",
+        "source_url": "https://mock-retailer-a.example.test/product/A-MOB-1001",
+        "title": "Fictional Orchard Aurora 5G Smartphone (128 GB, Midnight)",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "gtin", "value": "0000000001001"}],
+        "variant_attributes": {"storage": "128 GB", "color": "Midnight", "model": "Aurora 5G"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-b",
+        "retailer_sku": "B-ALT-1001",
+        "source_url": "https://mock-retailer-b.example.test/i/B-ALT-1001",
+        "title": "Aurora 5G 128GB Midnight — Fictional Orchard",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "gtin", "value": "0000000001001"}],
+        "variant_attributes": {"storage": "128GB", "colour": "Midnight", "model": "Aurora 5G"}
+      }
+    },
+    {
+      "id": "retailer-naming-differences-gtin-vs-mpn",
+      "expected": "SAME_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-MOB-1001",
+        "source_url": "https://mock-retailer-a.example.test/product/A-MOB-1001",
+        "title": "Fictional Orchard Aurora 5G Smartphone (128 GB, Midnight)",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "gtin", "value": "00-0000-001001"}],
+        "variant_attributes": {"storage": "128 GB", "color": "Midnight", "model": "Aurora 5G"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-b",
+        "retailer_sku": "880011",
+        "source_url": "https://mock-retailer-b.example.test/i/880011",
+        "title": "Aurora 5G (128GB, Midnight) - Fictional Orchard",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "mpn", "value": "FO-AUR-128-MID"}],
+        "variant_attributes": {"storage": "128GB", "colour": "Midnight", "model": "Aurora 5G"}
+      }
+    },
+    {
+      "id": "spelling-differences",
+      "expected": "SAME_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-SPELL-1",
+        "source_url": "https://mock-retailer-a.example.test/product/A-SPELL-1",
+        "title": "Fictional Orchard Aurora 5G Smartphone 128GB Midnight",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "ean", "value": "0000000001001"}],
+        "variant_attributes": {"storage": "128 GB", "color": "Midnight", "model": "Aurora 5G"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-c",
+        "retailer_sku": "C-SPELL-1",
+        "source_url": "https://mock-retailer-c.example.test/item/C-SPELL-1",
+        "title": "Fictional Orchard Aurora 5G Smartphne 128 GB Midnight",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "ean", "value": "0000000001001"}],
+        "variant_attributes": {"storage": "128GB", "color": "Midnight", "model": "Aurora 5G"}
+      }
+    },
+    {
+      "id": "attribute-match-no-identifiers-same-model",
+      "expected": "SAME_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-NOID-1",
+        "source_url": "https://mock-retailer-a.example.test/product/A-NOID-1",
+        "title": "Fictional Wavecrest Buds Pro Wireless Earbuds Charcoal",
+        "brand_name": "Fictional Wavecrest",
+        "brand_slug": "fictional-wavecrest",
+        "category_slug": "audio",
+        "identifiers": [],
+        "variant_attributes": {"color": "Charcoal", "form_factor": "In Ear", "model": "Buds Pro"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-c",
+        "retailer_sku": "C/AUD/0004",
+        "source_url": "https://mock-retailer-c.example.test/item/C/AUD/0004",
+        "title": "Fictional Wavecrest Buds Pro",
+        "brand_name": "Fictional Wavecrest",
+        "brand_slug": "fictional-wavecrest",
+        "category_slug": "audio",
+        "identifiers": [],
+        "variant_attributes": {"colour": "Charcoal", "form_factor": "In Ear", "model": "Buds Pro"}
+      }
+    },
+    {
+      "id": "exact-upc-ean-equivalent",
+      "expected": "SAME_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-UPC-1",
+        "source_url": "https://mock-retailer-a.example.test/product/A-UPC-1",
+        "title": "Fictional Ridgeline Notebook 14 16GB 512GB Slate",
+        "brand_name": "Fictional Ridgeline",
+        "brand_slug": "fictional-ridgeline",
+        "category_slug": "laptops",
+        "identifiers": [{"identifier_type": "upc", "value": "123456789012"}],
+        "variant_attributes": {"ram": "16 GB", "storage": "512 GB", "color": "Slate", "model": "Notebook 14"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-b",
+        "retailer_sku": "B-EAN-1",
+        "source_url": "https://mock-retailer-b.example.test/i/B-EAN-1",
+        "title": "Ridgeline Notebook 14 (16GB RAM, 512GB SSD) - Fictional Ridgeline",
+        "brand_name": "Fictional Ridgeline",
+        "brand_slug": "fictional-ridgeline",
+        "category_slug": "laptops",
+        "identifiers": [{"identifier_type": "ean", "value": "0123456789012"}],
+        "variant_attributes": {"ram": "16GB", "storage": "512GB SSD", "colour": "Slate", "model": "Notebook 14"}
+      }
+    },
+    {
+      "id": "isbn-hyphenation-match",
+      "expected": "SAME_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-BOOK-1",
+        "source_url": "https://mock-retailer-a.example.test/product/A-BOOK-1",
+        "title": "Fictional Field Guide to Made-Up Birds Hardcover",
+        "brand_name": "Fictional Press",
+        "brand_slug": "fictional-press",
+        "category_slug": "books",
+        "identifiers": [{"identifier_type": "isbn", "value": "978-0-123456-47-2"}],
+        "variant_attributes": {"format": "hardcover", "model": "Field Guide to Made-Up Birds"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-b",
+        "retailer_sku": "B-BOOK-1",
+        "source_url": "https://mock-retailer-b.example.test/i/B-BOOK-1",
+        "title": "Field Guide to Made-Up Birds (Hardcover) Fictional Press",
+        "brand_name": "Fictional Press",
+        "brand_slug": "fictional-press",
+        "category_slug": "books",
+        "identifiers": [{"identifier_type": "isbn", "value": "9780123456472"}],
+        "variant_attributes": {"format": "hardcover", "model": "Field Guide to Made-Up Birds"}
+      }
+    },
+    {
+      "id": "different-storage",
+      "expected": "DIFFERENT_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-MOB-1001",
+        "source_url": "https://mock-retailer-a.example.test/product/A-MOB-1001",
+        "title": "Fictional Orchard Aurora 5G Smartphone (128 GB, Midnight)",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "gtin", "value": "0000000001001"}],
+        "variant_attributes": {"storage": "128 GB", "color": "Midnight", "model": "Aurora 5G"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-b",
+        "retailer_sku": "880042",
+        "source_url": "https://mock-retailer-b.example.test/i/880042",
+        "title": "Aurora 5G (256GB, Midnight) - Fictional Orchard",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "mpn", "value": "FO-AUR-256-MID"}],
+        "variant_attributes": {"storage": "256GB", "colour": "Midnight", "model": "Aurora 5G"}
+      }
+    },
+    {
+      "id": "different-ram",
+      "expected": "DIFFERENT_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-b",
+        "retailer_sku": "915003",
+        "source_url": "https://mock-retailer-b.example.test/i/915003",
+        "title": "Ridgeline Notebook 14 (16GB RAM, 512GB SSD) - Fictional Ridgeline",
+        "brand_name": "Fictional Ridgeline",
+        "brand_slug": "fictional-ridgeline",
+        "category_slug": "laptops",
+        "identifiers": [{"identifier_type": "mpn", "value": "FR-NB14-16-512"}],
+        "variant_attributes": {"ram": "16GB", "storage": "512GB", "color": "Slate", "model": "Notebook 14"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-NB-8",
+        "source_url": "https://mock-retailer-a.example.test/product/A-NB-8",
+        "title": "Fictional Ridgeline Notebook 14 (8GB RAM, 512GB SSD) Slate",
+        "brand_name": "Fictional Ridgeline",
+        "brand_slug": "fictional-ridgeline",
+        "category_slug": "laptops",
+        "identifiers": [{"identifier_type": "mpn", "value": "FR-NB14-8-512"}],
+        "variant_attributes": {"ram": "8 GB", "storage": "512 GB", "color": "Slate", "model": "Notebook 14"}
+      }
+    },
+    {
+      "id": "different-colors",
+      "expected": "DIFFERENT_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-MOB-BLK",
+        "source_url": "https://mock-retailer-a.example.test/product/A-MOB-BLK",
+        "title": "Fictional Orchard Aurora 5G Smartphone (128 GB, Black)",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [],
+        "variant_attributes": {"storage": "128 GB", "color": "Black", "model": "Aurora 5G"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-b",
+        "retailer_sku": "B-MOB-WHT",
+        "source_url": "https://mock-retailer-b.example.test/i/B-MOB-WHT",
+        "title": "Aurora 5G (128GB, White) - Fictional Orchard",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [],
+        "variant_attributes": {"storage": "128GB", "colour": "White", "model": "Aurora 5G"}
+      }
+    },
+    {
+      "id": "different-generations",
+      "expected": "DIFFERENT_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-GEN-2",
+        "source_url": "https://mock-retailer-a.example.test/product/A-GEN-2",
+        "title": "Fictional Ridgeline Air Purifier 300 Gen 2 White",
+        "brand_name": "Fictional Ridgeline",
+        "brand_slug": "fictional-ridgeline",
+        "category_slug": "home-appliances",
+        "identifiers": [],
+        "variant_attributes": {"capacity": "300 sq ft", "color": "White", "generation": "2", "model": "Air Purifier 300"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-c",
+        "retailer_sku": "C-GEN-3",
+        "source_url": "https://mock-retailer-c.example.test/item/C-GEN-3",
+        "title": "Fictional Ridgeline Air Purifier 300 Generation 3 White",
+        "brand_name": "Fictional Ridgeline",
+        "brand_slug": "fictional-ridgeline",
+        "category_slug": "home-appliances",
+        "identifiers": [],
+        "variant_attributes": {"capacity": "300 sq ft", "colour": "White", "generation": "3", "model": "Air Purifier 300"}
+      }
+    },
+    {
+      "id": "different-sizes-capacities",
+      "expected": "DIFFERENT_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-c",
+        "retailer_sku": "C/HOM/0121",
+        "source_url": "https://mock-retailer-c.example.test/item/C/HOM/0121",
+        "title": "Fictional Hearthline Air Purifier 300",
+        "brand_name": "Fictional Hearthline",
+        "brand_slug": "fictional-hearthline",
+        "category_slug": "home-appliances",
+        "identifiers": [],
+        "variant_attributes": {"capacity": "300 sq ft", "color": "White", "model": "Air Purifier 300"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-HOM-500",
+        "source_url": "https://mock-retailer-a.example.test/product/A-HOM-500",
+        "title": "Fictional Hearthline Air Purifier 500 White",
+        "brand_name": "Fictional Hearthline",
+        "brand_slug": "fictional-hearthline",
+        "category_slug": "home-appliances",
+        "identifiers": [],
+        "variant_attributes": {"capacity": "500 sq ft", "color": "White", "model": "Air Purifier 500"}
+      }
+    },
+    {
+      "id": "accessory-vs-main-product",
+      "expected": "DIFFERENT_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-MOB-1001",
+        "source_url": "https://mock-retailer-a.example.test/product/A-MOB-1001",
+        "title": "Fictional Orchard Aurora 5G Smartphone (128 GB, Midnight)",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [],
+        "variant_attributes": {"storage": "128 GB", "color": "Midnight", "model": "Aurora 5G"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-b",
+        "retailer_sku": "B-CASE-1",
+        "source_url": "https://mock-retailer-b.example.test/i/B-CASE-1",
+        "title": "Protective Case Cover for Fictional Orchard Aurora 5G Midnight",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobile-accessories",
+        "identifiers": [],
+        "variant_attributes": {"color": "Midnight", "model": "Aurora 5G Case"}
+      }
+    },
+    {
+      "id": "conflicting-gtin-same-title",
+      "expected": "DIFFERENT_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-GTIN-1",
+        "source_url": "https://mock-retailer-a.example.test/product/A-GTIN-1",
+        "title": "Fictional Orchard Aurora 5G Smartphone (128 GB, Midnight)",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "gtin", "value": "0000000001001"}],
+        "variant_attributes": {"storage": "128 GB", "color": "Midnight", "model": "Aurora 5G"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-b",
+        "retailer_sku": "B-GTIN-2",
+        "source_url": "https://mock-retailer-b.example.test/i/B-GTIN-2",
+        "title": "Fictional Orchard Aurora 5G Smartphone (128 GB, Midnight)",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "gtin", "value": "0000000001999"}],
+        "variant_attributes": {"storage": "128 GB", "color": "Midnight", "model": "Aurora 5G"}
+      }
+    },
+    {
+      "id": "identifier-match-variant-conflict-needs-review",
+      "expected": "NEEDS_REVIEW",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-CONFLICT-1",
+        "source_url": "https://mock-retailer-a.example.test/product/A-CONFLICT-1",
+        "title": "Fictional Orchard Aurora 5G Smartphone (128 GB, Midnight)",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "gtin", "value": "0000000007777"}],
+        "variant_attributes": {"storage": "128 GB", "color": "Midnight", "model": "Aurora 5G"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-b",
+        "retailer_sku": "B-CONFLICT-1",
+        "source_url": "https://mock-retailer-b.example.test/i/B-CONFLICT-1",
+        "title": "Fictional Orchard Aurora 5G Smartphone (256 GB, Midnight)",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "ean", "value": "0000000007777"}],
+        "variant_attributes": {"storage": "256 GB", "color": "Midnight", "model": "Aurora 5G"}
+      }
+    },
+    {
+      "id": "missing-identifiers-ambiguous-generic-titles",
+      "expected": "NEEDS_REVIEW",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-GEN-TITLE-1",
+        "source_url": "https://mock-retailer-a.example.test/product/A-GEN-TITLE-1",
+        "title": "Wireless Earbuds In Ear Charcoal",
+        "brand_name": null,
+        "brand_slug": null,
+        "category_slug": "audio",
+        "identifiers": [],
+        "variant_attributes": {"color": "Charcoal"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-c",
+        "retailer_sku": "C-GEN-TITLE-1",
+        "source_url": "https://mock-retailer-c.example.test/item/C-GEN-TITLE-1",
+        "title": "Wireless Earbuds In-Ear Charcoal",
+        "brand_name": null,
+        "brand_slug": null,
+        "category_slug": "audio",
+        "identifiers": [],
+        "variant_attributes": {"colour": "Charcoal"}
+      }
+    },
+    {
+      "id": "possible-match-brand-without-model",
+      "expected": "POSSIBLE_MATCH",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-POSS-1",
+        "source_url": "https://mock-retailer-a.example.test/product/A-POSS-1",
+        "title": "Fictional Orchard graphite",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "audio",
+        "identifiers": [],
+        "variant_attributes": {"color": "Graphite"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-b",
+        "retailer_sku": "B-POSS-1",
+        "source_url": "https://mock-retailer-b.example.test/i/B-POSS-1",
+        "title": "Fictional Orchard graphite",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "audio",
+        "identifiers": [],
+        "variant_attributes": {"colour": "Graphite"}
+      }
+    },
+    {
+      "id": "unrelated-products",
+      "expected": "DIFFERENT_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-MOB-1001",
+        "source_url": "https://mock-retailer-a.example.test/product/A-MOB-1001",
+        "title": "Fictional Orchard Aurora 5G Smartphone (128 GB, Midnight)",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "gtin", "value": "0000000001001"}],
+        "variant_attributes": {"storage": "128 GB", "color": "Midnight", "model": "Aurora 5G"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-c",
+        "retailer_sku": "C/HOM/0121",
+        "source_url": "https://mock-retailer-c.example.test/item/C/HOM/0121",
+        "title": "Fictional Hearthline Air Purifier 300",
+        "brand_name": "Fictional Hearthline",
+        "brand_slug": "fictional-hearthline",
+        "category_slug": "home-appliances",
+        "identifiers": [],
+        "variant_attributes": {"capacity": "300 sq ft", "color": "White", "model": "Air Purifier 300"}
+      }
+    },
+    {
+      "id": "mpn-normalized-match",
+      "expected": "SAME_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-MPN-1",
+        "source_url": "https://mock-retailer-a.example.test/product/A-MPN-1",
+        "title": "Fictional Orchard Aurora 5G 128GB Midnight",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "mpn", "value": "FO-AUR-128-MID"}],
+        "variant_attributes": {"storage": "128 GB", "color": "Midnight", "model": "Aurora 5G"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-b",
+        "retailer_sku": "B-MPN-1",
+        "source_url": "https://mock-retailer-b.example.test/i/B-MPN-1",
+        "title": "Aurora 5G 128 GB Midnight Fictional Orchard",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "mpn", "value": "fo aur 128 mid"}],
+        "variant_attributes": {"storage": "128GB", "color": "Midnight", "model": "Aurora 5G"}
+      }
+    },
+    {
+      "id": "model-number-identifier-match",
+      "expected": "SAME_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-MODEL-1",
+        "source_url": "https://mock-retailer-a.example.test/product/A-MODEL-1",
+        "title": "Fictional Orchard Nova Mini 64GB Starlight",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "model_number", "value": "NOVA-MINI-64-SL"}],
+        "variant_attributes": {"storage": "64 GB", "color": "Starlight", "model": "Nova Mini"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-b",
+        "retailer_sku": "B-MODEL-1",
+        "source_url": "https://mock-retailer-b.example.test/i/B-MODEL-1",
+        "title": "Nova Mini (64GB, Starlight) Fictional Orchard",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "mobiles",
+        "identifiers": [{"identifier_type": "model_number", "value": "nova mini 64 sl"}],
+        "variant_attributes": {"storage": "64GB", "colour": "Starlight", "model": "Nova Mini"}
+      }
+    },
+    {
+      "id": "title-only-similar-must-not-merge",
+      "expected": "DIFFERENT_PRODUCT",
+      "left": {
+        "retailer_id": "mock-retailer-a",
+        "retailer_sku": "A-TITLE-1",
+        "source_url": "https://mock-retailer-a.example.test/product/A-TITLE-1",
+        "title": "Pocket lantern compact travel light graphite",
+        "brand_name": "Fictional Orchard",
+        "brand_slug": "fictional-orchard",
+        "category_slug": "home",
+        "identifiers": [],
+        "variant_attributes": {"color": "Graphite", "model": "Pocket Lantern"}
+      },
+      "right": {
+        "retailer_id": "mock-retailer-b",
+        "retailer_sku": "B-TITLE-1",
+        "source_url": "https://mock-retailer-b.example.test/i/B-TITLE-1",
+        "title": "Pocket lantern compact travel light graphite",
+        "brand_name": "Fictional Hearthline",
+        "brand_slug": "fictional-hearthline",
+        "category_slug": "home",
+        "identifiers": [],
+        "variant_attributes": {"color": "Graphite", "model": "Pocket Lantern"}
+      }
+    }
+  ]
+}
