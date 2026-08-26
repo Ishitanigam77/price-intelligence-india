@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from collections.abc import Iterator
 from decimal import Decimal
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -453,21 +453,26 @@ class TestObservability:
     async def test_structured_logging_is_generated(
         self,
         discovery_service: ProductDiscoveryService,
-        caplog: pytest.LogCaptureFixture,
     ) -> None:
-        with caplog.at_level(logging.INFO):
+        with (
+            patch("app.services.product_discovery_service.logger") as discovery_logger,
+            patch("app.retailer_adapters.base.execution.logger") as adapter_logger,
+        ):
             await discovery_service.search(text="aurora", limit=50, offset=0)
-        messages = [record.getMessage() for record in caplog.records]
-        assert "product_discovery.search_started" in messages
-        assert "product_discovery.search_completed" in messages
-        assert "product_discovery.listing_persisted" in messages
-        assert "retailer_adapter.operation_succeeded" in messages
-        started = next(
-            record
-            for record in caplog.records
-            if record.getMessage() == "product_discovery.search_started"
+
+        info_messages = [call.args[0] for call in discovery_logger.info.call_args_list]
+        assert "product_discovery.search_started" in info_messages
+        assert "product_discovery.search_completed" in info_messages
+        assert "product_discovery.listing_persisted" in info_messages
+        started_extras = next(
+            call.kwargs["extra"]
+            for call in discovery_logger.info.call_args_list
+            if call.args[0] == "product_discovery.search_started"
         )
-        assert getattr(started, "query_text", None) == "aurora"
+        assert started_extras["query_text"] == "aurora"
+        assert "correlation_id" in started_extras
+        adapter_messages = [call.args[0] for call in adapter_logger.info.call_args_list]
+        assert "retailer_adapter.operation_succeeded" in adapter_messages
 
     async def test_metrics_hooks_are_invoked(
         self, discovery_service: ProductDiscoveryService, metrics_sink: InMemoryMetricsSink
