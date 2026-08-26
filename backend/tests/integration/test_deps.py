@@ -17,12 +17,14 @@ from app.api.deps import (
     get_category_repository,
     get_price_service,
     get_price_snapshot_repository,
+    get_product_discovery_service,
     get_product_repository,
     get_product_variant_repository,
     get_retailer_product_repository,
     get_retailer_repository,
     get_seller_repository,
 )
+from app.observability.metrics import NullMetricsSink
 from app.repositories.brand_repository import BrandRepository
 from app.repositories.category_repository import CategoryRepository
 from app.repositories.price_snapshot_repository import PriceSnapshotRepository
@@ -31,7 +33,9 @@ from app.repositories.product_variant_repository import ProductVariantRepository
 from app.repositories.retailer_product_repository import RetailerProductRepository
 from app.repositories.retailer_repository import RetailerRepository
 from app.repositories.seller_repository import SellerRepository
+from app.retailer_adapters.base.registry import RetailerRegistry
 from app.services.price_service import PriceService
+from app.services.product_discovery_service import ProductDiscoveryService
 
 
 def test_repository_provider_functions_bind_the_given_session(db_session: Session) -> None:
@@ -57,6 +61,13 @@ def test_get_price_service_composes_the_two_repositories_it_needs(db_session: Se
     assert isinstance(service, PriceService)
     assert service._retailer_product_repo is retailer_product_repo
     assert service._price_snapshot_repo is snapshot_repo
+
+
+def test_get_product_discovery_service_binds_session_and_registry(db_session: Session) -> None:
+    registry = RetailerRegistry()
+    service = get_product_discovery_service(db_session, registry, NullMetricsSink())
+    assert isinstance(service, ProductDiscoveryService)
+    assert service.registry is registry
 
 
 def test_db_session_dependency_alias_resolves_through_fastapi_di() -> None:

@@ -66,6 +66,11 @@ class Settings(BaseSettings):
     retailer_adapter_default_max_concurrent_requests: int = 1
     #: Comma-separated retailer IDs to switch off globally, regardless of per-adapter config.
     retailer_adapters_disabled: str = ""
+    #: Comma-separated adapter kinds to instantiate at startup (`mock`, `integration`).
+    #: Phase 4 product discovery uses the existing fixture-backed mock adapters only; real
+    #: integrations are a later phase. Production should switch this to `integration` once
+    #: legitimate retailer adapters exist.
+    retailer_adapter_kinds: str = "mock"
 
     @field_validator("log_level")
     @classmethod
@@ -75,6 +80,19 @@ class Settings(BaseSettings):
         if normalized not in allowed:
             raise ValueError(f"log_level must be one of {sorted(allowed)}, got {value!r}.")
         return normalized
+
+    @field_validator("retailer_adapter_kinds")
+    @classmethod
+    def _validate_retailer_adapter_kinds(cls, value: str) -> str:
+        allowed = {"mock", "integration"}
+        for entry in value.split(","):
+            token = entry.strip().lower()
+            if token and token not in allowed:
+                raise ValueError(
+                    f"retailer_adapter_kinds entries must be one of {sorted(allowed)}, "
+                    f"got {token!r}."
+                )
+        return value
 
     @property
     def is_production(self) -> bool:
@@ -99,6 +117,16 @@ class Settings(BaseSettings):
         return frozenset(
             entry.strip() for entry in self.retailer_adapters_disabled.split(",") if entry.strip()
         )
+
+    @property
+    def retailer_adapter_kind_values(self) -> tuple[str, ...]:
+        """Adapter kinds to register at startup (`mock` and/or `integration`)."""
+        kinds = tuple(
+            entry.strip().lower()
+            for entry in self.retailer_adapter_kinds.split(",")
+            if entry.strip()
+        )
+        return kinds if kinds else ("mock",)
 
 
 @lru_cache

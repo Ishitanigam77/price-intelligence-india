@@ -28,9 +28,9 @@ mock_retailer_b/          # affiliate-feed shaped mock (string amounts, MPNs, ma
 mock_retailer_c/          # product-feed shaped mock (nested entries, no identifiers)
 ```
 
-Core modules (`normalization/`, `matching/`, `pricing/`, `sales/`, `recommendation/`) never
-import from a specific `mock_retailer_*` (or future real-retailer) package. They depend on
-`base/` only. Adding a retailer means implementing `RetailerAdapter` and registering it.
+Adding a retailer means implementing `RetailerAdapter` and registering it. Process startup
+(`app/retailer_adapters/wiring.py`) discovers adapter packages by convention and registers
+them with the `RetailerRegistry`; product discovery never imports a specific adapter package.
 
 Mock adapters read in-process fixtures; they make no network calls and represent no real
 retailer. Real integrations are a later phase and must use a legitimate access method.

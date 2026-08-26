@@ -39,9 +39,18 @@ SessionLocal: sessionmaker[Session] = sessionmaker(
 
 
 def get_db() -> Generator[Session, None, None]:
-    """FastAPI-style dependency yielding a session and guaranteeing it is closed."""
+    """FastAPI-style dependency yielding a session, committing on success, always closed.
+
+    Write paths (product discovery persistence) require a commit at the end of a successful
+    request. Failures roll back so a partial persist never becomes visible. Test suites that
+    need transaction isolation override this dependency rather than relying on this commit.
+    """
     db = SessionLocal()
     try:
         yield db
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()

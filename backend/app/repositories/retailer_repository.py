@@ -13,6 +13,10 @@ class RetailerRepository(BaseRepository[Retailer]):
         stmt = select(Retailer).where(Retailer.slug == slug)
         return self.session.scalars(stmt).first()
 
+    def get_by_name(self, name: str) -> Retailer | None:
+        stmt = select(Retailer).where(Retailer.name == name)
+        return self.session.scalars(stmt).first()
+
     def list_active(self) -> list[Retailer]:
         stmt = select(Retailer).where(Retailer.is_active.is_(True))
         return list(self.session.scalars(stmt).all())

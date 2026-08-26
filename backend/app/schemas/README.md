@@ -12,6 +12,8 @@ application foundation.
 - `product.py`, `retailer.py`, `price.py` — read schemas mirroring the Phase 1 `Product`/
   `ProductVariant`/`Brand`/`Category`, `Retailer`/`Seller`, and `PriceSnapshot` models,
   respectively, but as plain DTOs independent of SQLAlchemy.
+- `discovery.py` — search-result DTOs for `GET /api/v1/products/search` (product, variant,
+  retailer, seller, observed price/availability, source URL, observation timestamp).
 - `deal.py` — an intentionally empty placeholder schema; there is no `Deal` entity yet (see
   `ROADMAP.md` Phase 4/7).
 

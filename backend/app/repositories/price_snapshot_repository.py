@@ -21,6 +21,23 @@ class PriceSnapshotRepository(BaseRepository[PriceSnapshot]):
         """Insert a new, immutable price/availability observation."""
         return self.add(snapshot)
 
+    def get_by_observation_key(
+        self,
+        retailer_product_id: uuid.UUID,
+        observed_at: datetime,
+        seller_id: uuid.UUID | None,
+    ) -> PriceSnapshot | None:
+        """Look up a snapshot by the uniqueness key used to keep observations immutable."""
+        stmt = select(PriceSnapshot).where(
+            PriceSnapshot.retailer_product_id == retailer_product_id,
+            PriceSnapshot.observed_at == observed_at,
+        )
+        if seller_id is None:
+            stmt = stmt.where(PriceSnapshot.seller_id.is_(None))
+        else:
+            stmt = stmt.where(PriceSnapshot.seller_id == seller_id)
+        return self.session.scalars(stmt).first()
+
     def latest_for_retailer_product(self, retailer_product_id: uuid.UUID) -> PriceSnapshot | None:
         stmt = (
             select(PriceSnapshot)

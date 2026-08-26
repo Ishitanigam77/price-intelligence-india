@@ -1,19 +1,21 @@
 """Shared FastAPI dependencies for the API layer.
 
-Wires the existing Phase 1 repositories into the API via dependency injection, so routers never
-construct a `Session` or a repository directly. Keeping this in one place also means the
+Wires the existing Phase 1 repositories, the process `RetailerRegistry`, and the services that
+compose them into the API via dependency injection, so routers never construct a `Session`, a
+repository, or a retailer adapter directly. Keeping this in one place also means the
 request-scoped database session (`app.db.session.get_db`) is defined exactly once and reused by
 every route module.
 """
 
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Request
 from redis import Redis
 from sqlalchemy.orm import Session
 
 from app.core.redis import get_redis
 from app.db.session import get_db
+from app.observability.metrics import MetricsSink, NullMetricsSink
 from app.repositories.brand_repository import BrandRepository
 from app.repositories.category_repository import CategoryRepository
 from app.repositories.price_snapshot_repository import PriceSnapshotRepository
@@ -22,7 +24,9 @@ from app.repositories.product_variant_repository import ProductVariantRepository
 from app.repositories.retailer_product_repository import RetailerProductRepository
 from app.repositories.retailer_repository import RetailerRepository
 from app.repositories.seller_repository import SellerRepository
+from app.retailer_adapters.base.registry import RetailerRegistry
 from app.services.price_service import PriceService
+from app.services.product_discovery_service import ProductDiscoveryService
 
 DbSession = Annotated[Session, Depends(get_db)]
 RedisClient = Annotated[Redis, Depends(get_redis)]
@@ -84,3 +88,33 @@ def get_price_service(
 
 
 PriceServiceDep = Annotated[PriceService, Depends(get_price_service)]
+
+
+def get_retailer_registry(request: Request) -> RetailerRegistry:
+    """Return the process-wide registry populated at application startup."""
+    registry = getattr(request.app.state, "retailer_registry", None)
+    if not isinstance(registry, RetailerRegistry):
+        raise RuntimeError("Retailer registry has not been initialized.")
+    return registry
+
+
+def get_metrics_sink(request: Request) -> MetricsSink:
+    sink = getattr(request.app.state, "metrics_sink", None)
+    return sink if isinstance(sink, MetricsSink) else NullMetricsSink()
+
+
+RetailerRegistryDep = Annotated[RetailerRegistry, Depends(get_retailer_registry)]
+MetricsSinkDep = Annotated[MetricsSink, Depends(get_metrics_sink)]
+
+
+def get_product_discovery_service(
+    db: DbSession,
+    registry: RetailerRegistryDep,
+    metrics_sink: MetricsSinkDep,
+) -> ProductDiscoveryService:
+    return ProductDiscoveryService(db, registry, metrics_sink=metrics_sink)
+
+
+ProductDiscoveryServiceDep = Annotated[
+    ProductDiscoveryService, Depends(get_product_discovery_service)
+]
