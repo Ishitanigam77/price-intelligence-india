@@ -8,16 +8,17 @@ SQLAlchemy models, Alembic migrations, repositories), plus a **FastAPI backend a
 foundation** — application factory, startup/shutdown lifecycle, `/api/v1/` versioned routing,
 Redis infrastructure, centralized exception handling, structured logging, CORS, and Docker
 support — and the **retailer adapter framework** (common interface, registry, execution
-helpers, and three fixture-backed mock adapters). Collectors, real retailer integrations,
-pricing intelligence, sale-event intelligence, recommendation, notifications, and auth are
-**not** implemented yet — see `../ROADMAP.md`. The **product identity matching engine**
-(`app/matching/`) is implemented and is independent of FastAPI routes and of specific
-retailer adapters.
+helpers, and three fixture-backed mock adapters). The **product identity matching engine**
+(`app/matching/`) and **price comparison engine** (`app/pricing/`,
+`GET /api/v1/products/{product_id}/prices`) are implemented. Collectors, real retailer
+integrations, sale-event intelligence, recommendation, notifications, and auth are **not**
+implemented yet — see `../ROADMAP.md`.
 
 > **Note on phase numbering**: `../ROADMAP.md` reserves "Phase 2" for the Retailer Adapter
 > Framework. That framework is implemented here (`app/retailer_adapters/`). A separate
 > FastAPI application-foundation increment (application factory, `/api/v1/`, Redis, Docker)
-> was merged independently and is also present. Pricing and ML logic remain later-phase work.
+> was merged independently and is also present. Sale-event intelligence, recommendation, and
+> ML remain later-phase work.
 
 ## Layout
 
@@ -46,7 +47,8 @@ retailer adapters.
 - `app/matching/` — product/variant matching engine (this increment): four-stage pipeline
   (exact identifiers, normalized attributes, title/token similarity, embeddings). Independent
   of FastAPI routes and of specific retailer adapters.
-- `app/pricing/` — price intelligence: effective price, history, drops (Phase 4)
+- `app/pricing/` — price comparison engine: verified effective price, deterministic ranking,
+  data freshness (Phase 6)
 - `app/sales/` — sale-event intelligence (Phase 7)
 - `app/recommendation/` — BUY_NOW / WAIT / WATCH engine (Phase 9)
 - `app/notifications/` — watchlist & price alert dispatch (Phase 6)
@@ -120,8 +122,9 @@ uvicorn app.main:app --reload --host $API_HOST --port $API_PORT
 - `GET /api/v1/health` / `GET /api/v1/health/ready` — versioned liveness/readiness. Readiness
   reports PostgreSQL and Redis availability independently and returns HTTP 503 (with a
   structured body identifying which dependency is down) if either is unreachable.
-- `GET /api/v1/products`, `/api/v1/products/search`, `/api/v1/retailers`, `/api/v1/prices/...`,
-  `/api/v1/deals` — catalogue foundation plus Phase 4 product discovery (see `app/api/v1/`).
+- `GET /api/v1/products`, `/api/v1/products/search`, `/api/v1/products/{id}/prices`,
+  `/api/v1/retailers`, `/api/v1/prices/...`, `/api/v1/deals` — catalogue foundation, Phase 4
+  product discovery, and Phase 6 price comparison (see `app/api/v1/`).
 - Interactive API docs: `GET /docs` (Swagger UI), `GET /redoc` (ReDoc), `GET /openapi.json`.
 
 ## Running Tests

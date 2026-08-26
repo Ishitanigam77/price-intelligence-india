@@ -10,6 +10,8 @@ FastAPI backend application foundation's paginated API list endpoints — `count
 repository per entity subclasses it and adds entity-specific lookups (e.g. `get_by_slug`,
 `get_by_name`, `list_for_retailer`, `latest_for_retailer_product`, `get_by_type_and_value`).
 `PriceSnapshotRepository` deliberately has no update method — Price Observations are
-immutable; corrections are new snapshots.
+immutable; corrections are new snapshots. `PriceAdjustmentRepository` stores promotional
+adjustment provenance (coupon / payment discount / cashback) for the Phase 6 comparison
+engine; it likewise has no update method.
 
 Consumed directly by `app/api/v1/` routes via the dependency providers in `app/api/deps.py`.

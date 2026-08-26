@@ -14,6 +14,8 @@ application foundation.
   respectively, but as plain DTOs independent of SQLAlchemy.
 - `discovery.py` — search-result DTOs for `GET /api/v1/products/search` (product, variant,
   retailer, seller, observed price/availability, source URL, observation timestamp).
+- `comparison.py` — DTOs for `GET /api/v1/products/{product_id}/prices` (offers, verified
+  effective price, ranking reason, data freshness, adjustment provenance).
 - `deal.py` — an intentionally empty placeholder schema; there is no `Deal` entity yet (see
   `ROADMAP.md` Phase 4/7).
 

@@ -6,12 +6,17 @@ Deliberately exposes no update method: Price Observations are immutable
 """
 
 import uuid
+from collections.abc import Sequence
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
 
 from app.db.models.price_snapshot import PriceSnapshot
+from app.db.models.retailer_product import RetailerProduct
 from app.repositories.base import BaseRepository
+
+_NO_SELLER_SENTINEL = uuid.UUID("00000000-0000-0000-0000-000000000000")
 
 
 class PriceSnapshotRepository(BaseRepository[PriceSnapshot]):
@@ -62,4 +67,35 @@ class PriceSnapshotRepository(BaseRepository[PriceSnapshot]):
         if until is not None:
             stmt = stmt.where(PriceSnapshot.observed_at <= until)
         stmt = stmt.order_by(PriceSnapshot.observed_at.asc()).limit(limit)
+        return list(self.session.scalars(stmt).all())
+
+    def latest_per_seller_for_retailer_products(
+        self, retailer_product_ids: Sequence[uuid.UUID]
+    ) -> list[PriceSnapshot]:
+        """Latest observation per (listing, seller), with seller/listing/adjustments loaded.
+
+        Uses PostgreSQL `DISTINCT ON`. Listings with no snapshots are not returned — the
+        comparison service adds those as missing-observation offers separately.
+        """
+        if not retailer_product_ids:
+            return []
+        seller_key = func.coalesce(PriceSnapshot.seller_id, _NO_SELLER_SENTINEL)
+        stmt = (
+            select(PriceSnapshot)
+            .where(PriceSnapshot.retailer_product_id.in_(tuple(retailer_product_ids)))
+            .distinct(PriceSnapshot.retailer_product_id, seller_key)
+            .order_by(
+                PriceSnapshot.retailer_product_id,
+                seller_key,
+                PriceSnapshot.observed_at.desc(),
+            )
+            .options(
+                selectinload(PriceSnapshot.seller),
+                selectinload(PriceSnapshot.adjustments),
+                selectinload(PriceSnapshot.retailer_product).selectinload(RetailerProduct.retailer),
+                selectinload(PriceSnapshot.retailer_product).selectinload(
+                    RetailerProduct.product_variant
+                ),
+            )
+        )
         return list(self.session.scalars(stmt).all())

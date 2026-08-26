@@ -11,6 +11,7 @@ from decimal import Decimal
 from app.db.models import (
     Brand,
     Category,
+    PriceAdjustment,
     PriceSnapshot,
     Product,
     ProductIdentifier,
@@ -19,7 +20,14 @@ from app.db.models import (
     RetailerProduct,
     Seller,
 )
-from app.domain.enums import AvailabilityStatus, ConfidenceLevel, ProductIdentifierType, SourceType
+from app.domain.enums import (
+    AdjustmentEligibility,
+    AdjustmentKind,
+    AvailabilityStatus,
+    ConfidenceLevel,
+    ProductIdentifierType,
+    SourceType,
+)
 
 
 def make_category(*, name: str = "Mobiles", slug: str | None = None, **kwargs) -> Category:
@@ -99,6 +107,29 @@ def make_price_snapshot(
         observed_at=observed_at or datetime.now(UTC),
         availability=availability,
         source_type=source_type,
+        confidence=confidence,
+        **kwargs,
+    )
+
+
+def make_price_adjustment(
+    snapshot: PriceSnapshot,
+    *,
+    kind: AdjustmentKind = AdjustmentKind.COUPON,
+    amount: Decimal | str | None = "50.00",
+    source: str = "test.observed_coupon",
+    eligibility: AdjustmentEligibility = AdjustmentEligibility.VERIFIED_ELIGIBLE,
+    confidence: ConfidenceLevel = ConfidenceLevel.HIGH,
+    observed_at: datetime | None = None,
+    **kwargs,
+) -> PriceAdjustment:
+    return PriceAdjustment(
+        price_snapshot=snapshot,
+        kind=kind,
+        amount=None if amount is None else Decimal(amount),
+        source=source,
+        eligibility=eligibility,
+        observed_at=observed_at or snapshot.observed_at,
         confidence=confidence,
         **kwargs,
     )

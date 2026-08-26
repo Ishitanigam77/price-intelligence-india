@@ -12,5 +12,6 @@ separately under `../../alembic/` and must be kept in sync with these models.
   `db_pool_recycle`) is also read from `Settings`, added as part of the FastAPI backend
   application foundation.
 - `models/` — one module per entity: `Category`, `Brand`, `Product`, `ProductVariant`,
-  `ProductIdentifier`, `Retailer`, `Seller`, `RetailerProduct`, `PriceSnapshot`. See each
-  module's docstring for the reasoning behind its shape and constraints.
+  `ProductIdentifier`, `Retailer`, `Seller`, `RetailerProduct`, `PriceSnapshot`,
+  `PriceAdjustment`. See each module's docstring for the reasoning behind its shape and
+  constraints.
