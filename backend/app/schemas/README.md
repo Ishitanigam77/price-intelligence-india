@@ -16,6 +16,8 @@ application foundation.
   retailer, seller, observed price/availability, source URL, observation timestamp).
 - `comparison.py` — DTOs for `GET /api/v1/products/{product_id}/prices` (offers, verified
   effective price, ranking reason, data freshness, adjustment provenance).
+- `history.py` — DTOs for `GET /api/v1/products/{product_id}/history` (observed snapshots plus
+  calculated aggregates; insufficient history is explicit; predicted values are absent).
 - `deal.py` — an intentionally empty placeholder schema; there is no `Deal` entity yet (see
   `ROADMAP.md` Phase 4/7).
 

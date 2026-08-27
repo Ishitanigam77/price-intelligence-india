@@ -40,3 +40,43 @@ class RankingCriterion(StrEnum):
     SELLER_QUALITY = "seller_quality"
     DELIVERY = "delivery"
     NO_APPLICABLE_OFFER = "no_applicable_offer"
+
+
+class ValueKind(StrEnum):
+    """Provenance label for a numeric value (`PROJECT_ARCHITECTURE.md` §6).
+
+    Phase 7 historical intelligence returns OBSERVED points and CALCULATED aggregates.
+    PREDICTED is defined so callers can assert it is never produced here (Phase 8).
+    """
+
+    OBSERVED = "OBSERVED"
+    CALCULATED = "CALCULATED"
+    PREDICTED = "PREDICTED"
+
+
+class MetricStatus(StrEnum):
+    """Whether a historical aggregate could be computed from stored observations."""
+
+    AVAILABLE = "available"
+    INSUFFICIENT_HISTORY = "insufficient_history"
+
+
+class InsufficientReasonCode(StrEnum):
+    """Machine-readable reason a calculation was withheld rather than fabricated."""
+
+    NO_QUALIFYING_OBSERVATIONS = "no_qualifying_observations"
+    NO_OBSERVATIONS_IN_WINDOW = "no_observations_in_window"
+    BELOW_MINIMUM_OBSERVATION_COUNT = "below_minimum_observation_count"
+    NO_CURRENT_PRICE = "no_current_price"
+    NO_COMPARISON_BASELINE = "no_comparison_baseline"
+    ZERO_TIME_SPAN = "zero_time_span"
+    ZERO_BASELINE_PRICE = "zero_baseline_price"
+
+
+class TrendDirection(StrEnum):
+    """Deterministic historical trend from observed prices. Not a forecast."""
+
+    RISING = "rising"
+    FALLING = "falling"
+    STABLE = "stable"
+    INSUFFICIENT_HISTORY = "insufficient_history"

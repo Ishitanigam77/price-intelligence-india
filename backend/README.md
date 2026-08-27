@@ -47,8 +47,8 @@ implemented yet — see `../ROADMAP.md`.
 - `app/matching/` — product/variant matching engine (this increment): four-stage pipeline
   (exact identifiers, normalized attributes, title/token similarity, embeddings). Independent
   of FastAPI routes and of specific retailer adapters.
-- `app/pricing/` — price comparison engine: verified effective price, deterministic ranking,
-  data freshness (Phase 6)
+- `app/pricing/` — price comparison engine (Phase 6) and historical price intelligence
+  (Phase 7: window averages, extrema, percentile, volatility, drop detection, trend)
 - `app/sales/` — sale-event intelligence (Phase 7)
 - `app/recommendation/` — BUY_NOW / WAIT / WATCH engine (Phase 9)
 - `app/notifications/` — watchlist & price alert dispatch (Phase 6)
@@ -123,8 +123,9 @@ uvicorn app.main:app --reload --host $API_HOST --port $API_PORT
   reports PostgreSQL and Redis availability independently and returns HTTP 503 (with a
   structured body identifying which dependency is down) if either is unreachable.
 - `GET /api/v1/products`, `/api/v1/products/search`, `/api/v1/products/{id}/prices`,
-  `/api/v1/retailers`, `/api/v1/prices/...`, `/api/v1/deals` — catalogue foundation, Phase 4
-  product discovery, and Phase 6 price comparison (see `app/api/v1/`).
+  `/api/v1/products/{id}/history`, `/api/v1/retailers`, `/api/v1/prices/...`, `/api/v1/deals` —
+  catalogue foundation, Phase 4 product discovery, Phase 6 price comparison, and Phase 7
+  historical price intelligence (see `app/api/v1/`).
 - Interactive API docs: `GET /docs` (Swagger UI), `GET /redoc` (ReDoc), `GET /openapi.json`.
 
 ## Running Tests

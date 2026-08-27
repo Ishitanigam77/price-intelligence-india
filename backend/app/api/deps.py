@@ -26,6 +26,7 @@ from app.repositories.retailer_repository import RetailerRepository
 from app.repositories.seller_repository import SellerRepository
 from app.retailer_adapters.base.registry import RetailerRegistry
 from app.services.price_comparison_service import PriceComparisonService
+from app.services.price_history_service import PriceHistoryService
 from app.services.price_service import PriceService
 from app.services.product_discovery_service import ProductDiscoveryService
 
@@ -129,3 +130,13 @@ def get_price_comparison_service(
 
 
 PriceComparisonServiceDep = Annotated[PriceComparisonService, Depends(get_price_comparison_service)]
+
+
+def get_price_history_service(
+    db: DbSession,
+    metrics_sink: MetricsSinkDep,
+) -> PriceHistoryService:
+    return PriceHistoryService(db, metrics_sink=metrics_sink)
+
+
+PriceHistoryServiceDep = Annotated[PriceHistoryService, Depends(get_price_history_service)]

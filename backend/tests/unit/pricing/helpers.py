@@ -13,6 +13,8 @@ from app.domain.enums import (
 )
 from app.pricing.config import PricingConfig
 from app.pricing.engine import PriceComparisonEngine
+from app.pricing.history import PriceHistoryEngine
+from app.pricing.history_models import HistoricalObservationPoint
 from app.pricing.models import OfferInput, PriceAdjustment, SellerSnapshot
 
 NOW = datetime(2026, 8, 26, 12, 0, tzinfo=UTC)
@@ -110,3 +112,59 @@ def offer(
 
 def engine(config: PricingConfig | None = None) -> PriceComparisonEngine:
     return PriceComparisonEngine(config=config or PricingConfig(_env_file=None), clock=lambda: NOW)
+
+
+def history_point(
+    *,
+    snapshot_id: UUID | None = None,
+    product_id: UUID | None = None,
+    variant_id: UUID = VARIANT_A,
+    retailer_id: UUID = RETAILER_A,
+    retailer_slug: str = "fictional-mart-a",
+    retailer_name: str = "Fictional Mart A",
+    listing_id: UUID | None = None,
+    seller_id: UUID | None = None,
+    displayed_price: Decimal | str = "999.00",
+    effective_price: Decimal | str | None = None,
+    mrp: Decimal | str | None = None,
+    observed_at: datetime = NOW,
+    created_at: datetime | None = None,
+    confidence: ConfidenceLevel = ConfidenceLevel.HIGH,
+    availability: AvailabilityStatus = AvailabilityStatus.IN_STOCK,
+    source_url: str | None = "https://fictional-mart-a.example.test/p/1",
+    source_type: SourceType = SourceType.PRODUCT_FEED,
+    currency: str = "INR",
+) -> HistoricalObservationPoint:
+    def _dec(value: Decimal | str | None) -> Decimal | None:
+        if value is None:
+            return None
+        return value if isinstance(value, Decimal) else Decimal(value)
+
+    displayed = (
+        displayed_price if isinstance(displayed_price, Decimal) else Decimal(displayed_price)
+    )
+    return HistoricalObservationPoint(
+        snapshot_id=snapshot_id or uuid4(),
+        product_id=product_id or uuid4(),
+        product_variant_id=variant_id,
+        variant_key="color=black|storage=128gb",
+        retailer_id=retailer_id,
+        retailer_slug=retailer_slug,
+        retailer_name=retailer_name,
+        retailer_product_id=listing_id or uuid4(),
+        seller_id=seller_id,
+        source_url=source_url,
+        source_type=source_type,
+        observed_at=observed_at,
+        created_at=created_at if created_at is not None else observed_at,
+        currency=currency,
+        displayed_price=displayed,
+        effective_price=_dec(effective_price),
+        mrp=_dec(mrp),
+        availability=availability,
+        confidence=confidence,
+    )
+
+
+def history_engine(config: PricingConfig | None = None) -> PriceHistoryEngine:
+    return PriceHistoryEngine(config=config or PricingConfig(_env_file=None), clock=lambda: NOW)

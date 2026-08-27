@@ -16,6 +16,7 @@ from app.api.deps import (
     get_brand_repository,
     get_category_repository,
     get_price_comparison_service,
+    get_price_history_service,
     get_price_service,
     get_price_snapshot_repository,
     get_product_discovery_service,
@@ -36,6 +37,7 @@ from app.repositories.retailer_repository import RetailerRepository
 from app.repositories.seller_repository import SellerRepository
 from app.retailer_adapters.base.registry import RetailerRegistry
 from app.services.price_comparison_service import PriceComparisonService
+from app.services.price_history_service import PriceHistoryService
 from app.services.price_service import PriceService
 from app.services.product_discovery_service import ProductDiscoveryService
 
@@ -68,6 +70,11 @@ def test_get_price_service_composes_the_two_repositories_it_needs(db_session: Se
 def test_get_price_comparison_service_binds_session(db_session: Session) -> None:
     service = get_price_comparison_service(db_session, NullMetricsSink())
     assert isinstance(service, PriceComparisonService)
+
+
+def test_get_price_history_service_binds_session(db_session: Session) -> None:
+    service = get_price_history_service(db_session, NullMetricsSink())
+    assert isinstance(service, PriceHistoryService)
 
 
 def test_get_product_discovery_service_binds_session_and_registry(db_session: Session) -> None:

@@ -12,6 +12,12 @@ def test_defaults_are_sane() -> None:
     assert config.stale_after_hours == 24.0
     assert config.fresh_within_seconds == 6.0 * 3600
     assert config.stale_after_seconds == 24.0 * 3600
+    assert config.trend_stable_percent == 2.0
+    assert config.min_observations_for_average == 1
+    assert config.min_observations_for_extrema == 1
+    assert config.min_observations_for_volatility == 2
+    assert config.min_observations_for_percentile == 2
+    assert config.min_observations_for_trend == 2
 
 
 def test_stale_window_cannot_be_narrower_than_fresh_window() -> None:
