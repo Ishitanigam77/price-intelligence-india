@@ -84,10 +84,7 @@ export function PriceHistoryView({ productId, initialVariantId }: PriceHistoryVi
         <p className="text-sm font-semibold uppercase tracking-wide text-brand">Price history</p>
         <h1 className="font-display text-4xl text-ink">{product.name}</h1>
         <p className="max-w-3xl text-ink-muted">
-          Historical observations returned by{" "}
-          <code className="text-ink">GET /api/v1/products/{productId}/history</code>. Aggregates are
-          calculated from qualifying observed snapshots. Predicted values are not generated and are
-          not shown.
+          Price history is based on recorded prices. Forecasts are not shown.
         </p>
         <div className="flex flex-wrap gap-2">
           <ValueKindBadge kind="OBSERVED" />
@@ -133,8 +130,8 @@ export function PriceHistoryView({ productId, initialVariantId }: PriceHistoryVi
 
       {!selected ? (
         <EmptyState
-          title="No historical variants"
-          description="The history API returned no variant series for this product."
+          title="No price history is available"
+          description="No price history is available for this product."
         />
       ) : (
         <>
@@ -144,8 +141,8 @@ export function PriceHistoryView({ productId, initialVariantId }: PriceHistoryVi
               description={
                 selected.qualifying_observation_count === 0
                   ? (selected.average_7d.insufficient?.reason ??
-                    "There are not enough qualifying observed snapshots to calculate historical statistics.")
-                  : "At least two qualifying observations are required before a chart is shown. Individual metrics below still report insufficient-history reasons from the API."
+                    "There are not enough recorded prices to calculate historical statistics.")
+                  : "At least two recorded prices are required before a chart is shown."
               }
             />
           ) : (
@@ -169,17 +166,16 @@ export function PriceHistoryView({ productId, initialVariantId }: PriceHistoryVi
           </div>
 
           <p className="text-sm text-ink-muted">
-            {selected.qualifying_observation_count} qualifying observation
-            {selected.qualifying_observation_count === 1 ? "" : "s"};{" "}
-            {selected.excluded_unverified_observation_count} unverified observation
-            {selected.excluded_unverified_observation_count === 1 ? "" : "s"} excluded from
-            calculations.
+            {selected.qualifying_observation_count} recorded price
+            {selected.qualifying_observation_count === 1 ? "" : "s"} used for calculations;{" "}
+            {selected.excluded_unverified_observation_count} unverified price
+            {selected.excluded_unverified_observation_count === 1 ? "" : "s"} excluded.
           </p>
 
           {observations.length === 0 ? (
             <EmptyState
-              title="No observations returned"
-              description="The backend stored no price observations for this variant."
+              title="No recorded prices"
+              description="No recorded prices are available for this variant."
             />
           ) : (
             <div className="overflow-x-auto rounded-2xl border border-paper-muted bg-paper-card">
@@ -222,7 +218,7 @@ export function PriceHistoryView({ productId, initialVariantId }: PriceHistoryVi
           )}
           {qualifying.length === 0 && observations.length > 0 ? (
             <p className="text-sm text-ink-muted">
-              Observations exist but none currently qualify for calculations.
+              Recorded prices are present, but none currently qualify for calculations.
             </p>
           ) : null}
         </>

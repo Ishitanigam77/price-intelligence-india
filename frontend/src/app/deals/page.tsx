@@ -12,8 +12,7 @@ export default function DealsPage() {
       <header className="space-y-2">
         <h1 className="font-display text-4xl text-ink">Deals</h1>
         <p className="max-w-2xl text-ink-muted">
-          Only deals produced by the backend are shown. This page never fabricates discounts or
-          retailer promotions.
+          Only verified deals are shown. Discounts are never invented.
         </p>
       </header>
       <DealsView />

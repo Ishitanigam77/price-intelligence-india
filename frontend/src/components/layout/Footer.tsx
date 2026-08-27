@@ -52,9 +52,7 @@ export function Footer() {
         <div>
           <p className="text-sm font-semibold">Data integrity</p>
           <p className="mt-2 text-sm text-white/70">
-            No live consumer-retailer integrations are claimed. Enabled adapters today are
-            fixture-backed mocks used to validate the platform. Availability and prices are never
-            invented in this UI.
+            This release does not claim live marketplace integrations. Prices are never invented.
           </p>
         </div>
       </div>

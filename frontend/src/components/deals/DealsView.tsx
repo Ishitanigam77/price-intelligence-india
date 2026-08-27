@@ -22,10 +22,7 @@ export function DealsView() {
 
   if (total === 0 || items.length === 0) {
     return (
-      <EmptyState
-        title="Coming soon / No verified deals available"
-        description="GET /api/v1/deals currently returns an empty page. PriceRadar does not invent deals or markdowns. When verified deal detection is implemented on the backend, this page will list those results."
-      />
+      <EmptyState title="No verified deals yet." description="Discounts are never invented." />
     );
   }
 

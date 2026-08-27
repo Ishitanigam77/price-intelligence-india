@@ -41,14 +41,14 @@ describe("Product details rendering", () => {
     );
   });
 
-  it("renders retailer offers from the comparison API", async () => {
+  it("renders retailer offers with seller, prices, and retailer site link", async () => {
     render(<ProductDetailsView productId={productFixture.id} />);
 
     expect(
       await screen.findByRole("heading", { name: "Fictional Mock Mart A" }),
     ).toBeInTheDocument();
     expect(screen.getByText(/Seller: Fictional Mock Mart A/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open retailer source URL" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "View on retailer site" })).toHaveAttribute(
       "href",
       "https://mock-retailer-a.example.test/A-MOB-1001",
     );

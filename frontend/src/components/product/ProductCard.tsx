@@ -51,10 +51,10 @@ export function ProductCard({ card, className }: ProductCardProps) {
       <div
         className="flex min-h-40 items-center justify-center bg-paper-muted px-4 py-8 text-center"
         role="img"
-        aria-label={`${card.product.name}: no product image is provided by the API`}
+        aria-label={`${card.product.name}: no product photo available`}
       >
         <p className="text-sm text-ink-muted">
-          No product image provided by the API.
+          No product photo available.
           <span className="mt-1 block text-xs">Placeholder — not a retailer photo.</span>
         </p>
       </div>

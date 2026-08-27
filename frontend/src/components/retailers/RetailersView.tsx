@@ -26,8 +26,8 @@ export function RetailersView() {
   if (total === 0 || items.length === 0) {
     return (
       <EmptyState
-        title="No retailers in the registry yet"
-        description="GET /api/v1/retailers returned an empty page. Retailer names are not invented for this UI. Fixture-backed mock retailers may appear here after a product search persists them."
+        title="No retailers to show yet."
+        description="Retailer names are not invented for this page."
       />
     );
   }
@@ -40,7 +40,6 @@ export function RetailersView() {
           className="rounded-2xl border border-paper-muted bg-paper-card p-5 shadow-card"
         >
           <h2 className="font-display text-2xl text-ink">{retailer.name}</h2>
-          <p className="mt-1 text-sm text-ink-muted">Slug: {retailer.slug}</p>
           <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
             <div>
               <dt className="text-xs uppercase tracking-wide text-ink-muted">Country</dt>
@@ -62,7 +61,7 @@ export function RetailersView() {
             </a>
           ) : (
             <p className="mt-4 text-sm text-ink-muted">
-              No website URL is stored for this retailer.
+              No website is available for this retailer.
             </p>
           )}
         </li>

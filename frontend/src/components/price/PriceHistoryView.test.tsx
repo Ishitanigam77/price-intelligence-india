@@ -32,7 +32,7 @@ describe("Historical price data rendering", () => {
     expect(screen.getByText("Volatility")).toBeInTheDocument();
     expect(screen.getByText("Percentage change")).toBeInTheDocument();
     expect(screen.getByText("Trend")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: /Historical observed prices/ })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /Historical recorded prices/ })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: "Displayed" })).toBeInTheDocument();
     expect(screen.getByText("Predicted · not available")).toBeInTheDocument();
   });
@@ -47,7 +47,7 @@ describe("Historical price data rendering", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText("Insufficient history").length).toBeGreaterThan(0);
     expect(
-      screen.queryByRole("img", { name: /Historical observed prices/ }),
+      screen.queryByRole("img", { name: /Historical recorded prices/ }),
     ).not.toBeInTheDocument();
     expect(screen.getAllByText(/No qualifying observations/).length).toBeGreaterThan(0);
   });

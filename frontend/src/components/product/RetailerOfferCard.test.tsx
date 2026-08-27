@@ -16,7 +16,7 @@ describe("RetailerOfferCard", () => {
     expect(screen.getByRole("heading", { name: "Fictional Mock Mart A" })).toBeInTheDocument();
     expect(screen.getByText(/Seller: Fictional Mock Mart A/)).toBeInTheDocument();
     expect(screen.getByText("In stock")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open retailer source URL" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View on retailer site" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View price history" })).toBeInTheDocument();
     expect(screen.getByText(/Data freshness: Fresh/)).toBeInTheDocument();
   });

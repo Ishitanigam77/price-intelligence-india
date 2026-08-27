@@ -17,7 +17,8 @@ describe("Deals page", () => {
   it("shows a coming-soon empty state instead of fabricated deals", async () => {
     render(<DealsView />);
     expect(
-      await screen.findByRole("heading", { name: /Coming soon \/ No verified deals available/ }),
+      await screen.findByRole("heading", { name: "No verified deals yet." }),
     ).toBeInTheDocument();
+    expect(screen.getByText("Discounts are never invented.")).toBeInTheDocument();
   });
 });

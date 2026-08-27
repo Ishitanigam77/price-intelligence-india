@@ -23,6 +23,7 @@ describe("Home search interaction", () => {
     await user.click(screen.getByRole("button", { name: "Search" }));
 
     expect(navigationState.push).toHaveBeenCalledWith("/search?q=aurora");
+    expect(screen.getByText(/Compare prices from supported Indian retailers/)).toBeInTheDocument();
   });
 
   it("shows a validation error instead of navigating when the query is blank", async () => {

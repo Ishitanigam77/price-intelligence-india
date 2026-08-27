@@ -11,4 +11,15 @@ describe("Home page", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
   });
+
+  it("uses consumer-facing feature copy without API endpoints", () => {
+    render(<HomePage />);
+    expect(
+      screen.getByRole("heading", { name: "Search products across Indian retailers" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Compare verified prices" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "View price history" })).toBeInTheDocument();
+    expect(screen.queryByText(/\/api\/v1\//)).not.toBeInTheDocument();
+    expect(screen.queryByText(/observed listings/i)).not.toBeInTheDocument();
+  });
 });

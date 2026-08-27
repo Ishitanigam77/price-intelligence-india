@@ -12,8 +12,7 @@ export default function RetailersPage() {
       <header className="space-y-2">
         <h1 className="font-display text-4xl text-ink">Retailers</h1>
         <p className="max-w-2xl text-ink-muted">
-          This list comes from the backend retailer registry. It is not a claim of live integrations
-          with consumer marketplaces.
+          This list is not a claim of live integrations with consumer marketplaces.
         </p>
       </header>
       <RetailersView />

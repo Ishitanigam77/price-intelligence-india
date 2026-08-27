@@ -17,7 +17,6 @@ interface RetailerOfferCardProps {
 
 export function RetailerOfferCard({ offer, priceHistoryHref, className }: RetailerOfferCardProps) {
   const sellerName = offer.seller.name ?? "Seller not specified";
-  const effectiveKind = offer.effective_price != null ? "CALCULATED" : "CALCULATED";
 
   return (
     <article
@@ -55,7 +54,7 @@ export function RetailerOfferCard({ offer, priceHistoryHref, className }: Retail
           label="Effective price"
           amount={offer.effective_price}
           currency={offer.currency}
-          kind={effectiveKind}
+          kind="CALCULATED"
           size="sm"
         />
       </div>
@@ -114,10 +113,10 @@ export function RetailerOfferCard({ offer, priceHistoryHref, className }: Retail
             rel="noreferrer noopener"
             className="inline-flex min-h-11 items-center justify-center rounded-xl border border-brand px-4 text-sm font-semibold text-brand hover:bg-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
-            Open retailer source URL
+            View on retailer site
           </a>
         ) : (
-          <p className="text-sm text-ink-muted">No source URL was provided for this offer.</p>
+          <p className="text-sm text-ink-muted">No retailer link is available for this offer.</p>
         )}
         {priceHistoryHref ? (
           <Link

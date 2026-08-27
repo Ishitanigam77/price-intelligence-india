@@ -48,7 +48,7 @@ export function MetricCard({ title, metric, currency = "INR", className }: Metri
         <p className="mt-2 text-xs text-ink-muted">{metric.insufficient.reason}</p>
       ) : (
         <p className="mt-2 text-xs text-ink-muted">
-          {metric.observation_count} qualifying observation
+          {metric.observation_count} recorded price
           {metric.observation_count === 1 ? "" : "s"}
         </p>
       )}

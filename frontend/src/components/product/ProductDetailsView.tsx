@@ -137,7 +137,7 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
           </div>
         </fieldset>
       ) : (
-        <p className="text-sm text-ink-muted">No variants were returned for this product.</p>
+        <p className="text-sm text-ink-muted">No variants are available for this product.</p>
       )}
 
       <section className="grid gap-6 rounded-2xl bg-paper-card p-5 shadow-card lg:grid-cols-2">
@@ -167,13 +167,13 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
         <div className="flex flex-wrap items-end justify-between gap-3">
           <h2 className="font-display text-2xl">Retailer offers</h2>
           <p className="text-sm text-ink-muted">
-            {offers.length} offer{offers.length === 1 ? "" : "s"} from the comparison API.
+            {offers.length} retailer offer{offers.length === 1 ? "" : "s"}.
           </p>
         </div>
         {offers.length === 0 ? (
           <EmptyState
-            title="No retailer offers"
-            description="The comparison API returned no offers for this variant. Offers are not invented for display."
+            title="No retailer offers yet."
+            description="Offers are not invented for display."
           />
         ) : (
           <ul className="grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -204,9 +204,7 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
           aggregates · <ValueKindBadge kind="PREDICTED" available={false} />
         </p>
         {history.predicted !== null ? null : (
-          <p className="text-sm text-ink-muted">
-            Predicted prices are not returned by this API and are not displayed.
-          </p>
+          <p className="text-sm text-ink-muted">Price predictions are not available.</p>
         )}
         {historyVariant ? (
           <>
@@ -221,8 +219,8 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
           </>
         ) : (
           <EmptyState
-            title="No history for this variant"
-            description="The history API did not return a series for the selected variant."
+            title="No price history is available for this variant."
+            description="Price history is never invented for display."
           />
         )}
       </section>

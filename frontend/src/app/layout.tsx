@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     template: "%s · PriceRadar India",
   },
   description:
-    "Search and compare observed product prices across Indian retailers. Calculated figures are labelled. Predictions are not shown.",
+    "Search and compare product prices across Indian retailers. Calculated figures are labelled. Predictions are not shown.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

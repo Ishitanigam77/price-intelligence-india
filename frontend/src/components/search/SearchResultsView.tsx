@@ -60,7 +60,7 @@ export function SearchResultsView() {
     return (
       <EmptyState
         title="Enter a search"
-        description="Use the search bar to query enabled retailer adapters. Blank searches are rejected by the API."
+        description="Enter a product name to search across supported Indian retailers."
         action={<SearchBar />}
       />
     );
@@ -84,26 +84,19 @@ export function SearchResultsView() {
       <SearchBar initialQuery={query} size="hero" />
       <p className="text-sm text-ink-muted" aria-live="polite">
         {page.total === 0
-          ? `No observed listings matched “${page.query}”.`
-          : `Showing ${page.items.length} observed offer${page.items.length === 1 ? "" : "s"} (total ${page.total}) for “${page.query}”, grouped by exact variant. Consulted ${page.consulted_retailer_ids.length} retailer adapter${page.consulted_retailer_ids.length === 1 ? "" : "s"}.`}
+          ? `No matching products found for “${page.query}”.`
+          : `Showing ${page.items.length} result${page.items.length === 1 ? "" : "s"} (total ${page.total}) for “${page.query}”, grouped by exact variant.`}
       </p>
       {page.failures.length > 0 ? (
         <div role="status" className="rounded-xl bg-warn-light px-4 py-3 text-sm text-warn">
-          Some retailers could not be reached during this search. Successful retailers still
-          contributed results.
-          <ul className="mt-2 list-disc pl-5">
-            {page.failures.map((failure) => (
-              <li key={`${failure.retailer_id}-${failure.error_code}`}>
-                {failure.retailer_id}: {failure.message}
-              </li>
-            ))}
-          </ul>
+          Some stores could not be checked. Matching results from stores that responded are still
+          shown.
         </div>
       ) : null}
       {cards.length === 0 ? (
         <EmptyState
-          title="No verified search results"
-          description="The backend returned no observed listings for this query. Nothing was invented to fill this page."
+          title="No matching products found."
+          description="Results are never invented to fill this page."
         />
       ) : (
         <ProductGrid cards={cards} />

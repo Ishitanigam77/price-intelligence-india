@@ -17,8 +17,8 @@ export default function HomePage() {
           See what Indian retailers actually charged — and when they charged it.
         </h1>
         <p className="mt-4 max-w-2xl text-base text-white/75 sm:text-lg">
-          PriceRadar India records observed listings, compares verified offers, and calculates
-          historical statistics from stored snapshots. It does not invent prices or forecast them.
+          Find products across Indian retailers, compare verified prices, and view price history.
+          Prices are never invented or forecasted.
         </p>
         <div className="mt-8 max-w-2xl rounded-2xl bg-paper p-4 text-ink sm:p-6">
           <SearchBar autoFocus />
@@ -27,24 +27,23 @@ export default function HomePage() {
 
       <section className="mt-12 grid gap-6 md:grid-cols-3">
         <article className="rounded-2xl bg-paper-card p-6 shadow-card">
-          <h2 className="font-display text-xl">Search observed listings</h2>
+          <h2 className="font-display text-xl">Search products across Indian retailers</h2>
           <p className="mt-2 text-sm text-ink-muted">
-            Queries go to <code className="text-ink">GET /api/v1/products/search</code> and return
-            retailer offers as recorded by enabled adapters.
+            Look up a product and see matching offers from supported Indian retailers.
           </p>
         </article>
         <article className="rounded-2xl bg-paper-card p-6 shadow-card">
           <h2 className="font-display text-xl">Compare verified prices</h2>
           <p className="mt-2 text-sm text-ink-muted">
-            Product details use the comparison API. Unverified coupons and cashback never win the
+            Compare verified prices side by side. Unverified coupons and cashback never win the
             lowest verified slot.
           </p>
         </article>
         <article className="rounded-2xl bg-paper-card p-6 shadow-card">
-          <h2 className="font-display text-xl">Read history honestly</h2>
+          <h2 className="font-display text-xl">View price history</h2>
           <p className="mt-2 text-sm text-ink-muted">
-            Averages, extrema, and trend are calculated from stored observations. Insufficient
-            history is reported instead of filled in.
+            See how a product’s price has changed over time. When there is not enough history, we
+            say so instead of filling in numbers.
           </p>
         </article>
       </section>

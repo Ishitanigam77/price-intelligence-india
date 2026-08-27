@@ -63,7 +63,7 @@ export function PriceHistoryChart({
       )}
     >
       <figcaption className="mb-3 text-sm text-ink-muted">
-        Observed analysis prices used for historical calculations. Predicted values are not shown.
+        Recorded prices used for historical calculations. Forecasts are not shown.
       </figcaption>
       <svg
         role="img"
@@ -71,9 +71,9 @@ export function PriceHistoryChart({
         viewBox={`0 0 ${width} ${height}`}
         className="h-auto w-full min-w-[20rem]"
       >
-        <title id="price-history-chart-title">Historical observed prices</title>
+        <title id="price-history-chart-title">Historical recorded prices</title>
         <desc id="price-history-chart-desc">
-          Line chart of qualifying observed analysis prices from {formatMoney(minY, currency)} to{" "}
+          Line chart of recorded prices from {formatMoney(minY, currency)} to{" "}
           {formatMoney(maxY, currency)}.
         </desc>
         <line x1={left} y1={top} x2={left} y2={height - bottom} stroke="#cbbfaa" />
@@ -101,12 +101,12 @@ export function PriceHistoryChart({
       </svg>
       <div className="sr-only">
         <table>
-          <caption>Qualifying historical observations</caption>
+          <caption>Recorded historical prices</caption>
           <thead>
             <tr>
               <th>Observed at</th>
               <th>Retailer</th>
-              <th>Analysis price</th>
+              <th>Recorded price</th>
             </tr>
           </thead>
           <tbody>

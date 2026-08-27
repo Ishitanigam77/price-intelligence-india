@@ -44,9 +44,10 @@ describe("Search results rendering", () => {
     render(<SearchResultsView />);
 
     expect(
-      await screen.findByRole("heading", { name: "No verified search results" }),
+      await screen.findByRole("heading", { name: "No matching products found." }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/backend returned no observed listings/i)).toBeInTheDocument();
+    expect(screen.getByText(/results are never invented/i)).toBeInTheDocument();
+    expect(screen.queryByText(/backend returned no observed listings/i)).not.toBeInTheDocument();
   });
 
   it("renders an error state when search fails", async () => {

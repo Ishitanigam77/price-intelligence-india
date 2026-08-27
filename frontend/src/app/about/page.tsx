@@ -24,14 +24,12 @@ export default function AboutPage() {
       <h2 className="mt-8 font-display text-2xl">What is not claimed</h2>
       <p className="mt-3 text-ink-muted">
         PriceRadar does not currently operate live integrations with real consumer retailers.
-        Enabled adapters in this codebase are fixture-backed mocks used to validate search,
-        comparison, and history. The frontend does not invent retailer names, prices, or
-        availability to fill empty screens.
+        Retailer names, prices, and availability are never invented to fill empty screens.
       </p>
       <h2 className="mt-8 font-display text-2xl">Legitimate data only</h2>
       <p className="mt-3 text-ink-muted">
-        When real retailers are onboarded, data collection is limited to official APIs, affiliate or
-        partner feeds, and other permitted sources. The platform does not bypass CAPTCHA,
+        When real retailers are onboarded, data collection is limited to official feeds, affiliate
+        or partner programmes, and other permitted sources. The platform does not bypass CAPTCHA,
         authentication, anti-bot systems, rate limits, or retailer terms of service.
       </p>
     </article>

@@ -99,7 +99,7 @@ export function SearchBar({
       ) : null}
       {isHero ? (
         <p className="mt-3 text-sm text-ink-muted">
-          Results come from enabled retailer adapters. Prices are observed facts, not predictions.{" "}
+          Compare prices from supported Indian retailers.{" "}
           <Link
             href="/about"
             className="font-medium text-brand underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
