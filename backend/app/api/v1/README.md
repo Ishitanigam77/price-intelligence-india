@@ -11,7 +11,8 @@ and including its router there — nothing else needs to change.
   reporting PostgreSQL and Redis availability independently; HTTP 503 if either is down).
 - `products.py` — catalogue routes over `Product`/`ProductVariant` (list/get, filter by
   category/brand, list variants for a product) plus `GET /products/search` (Phase 4 product
-  discovery via `ProductDiscoveryService`).
+  discovery via `ProductDiscoveryService`) and `GET /products/{product_id}/prices` (Phase 6
+  price comparison via `PriceComparisonService`).
 - `retailers.py` — read-only routes over `Retailer`/`Seller` (list/get, list sellers for a
   retailer).
 - `prices.py` — read-only routes over `PriceSnapshot` via `app.services.price_service`
@@ -20,8 +21,9 @@ and including its router there — nothing else needs to change.
   depends on price-drop detection (Phase 4) and sale-event intelligence (Phase 7), neither of
   which exist yet.
 
-No retailer scraping, product matching, price comparison, discount prediction, recommendation,
+No retailer scraping, product matching, discount prediction, recommendation,
 or ML logic lives here. Catalogue routes are thin typed wrappers over Phase 1 repositories
 (`prices.py` uses a small service composing two repositories). `GET /products/search` is a
 thin typed wrapper over `ProductDiscoveryService`, which talks only to the retailer adapter
-abstraction.
+abstraction. `GET /products/{id}/prices` is a thin typed wrapper over
+`PriceComparisonService`, which ranks persisted offers with the Phase 6 comparison engine.

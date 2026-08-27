@@ -58,3 +58,37 @@ class ProductIdentifierType(StrEnum):
     ISBN = "isbn"
     MPN = "mpn"
     OTHER = "other"
+
+
+class AdjustmentKind(StrEnum):
+    """Kind of a price adjustment attached to a retailer offer.
+
+    Promotional kinds (coupon, payment discount, cashback) may reduce the verified effective
+    price only when eligibility is `verified_eligible`. Fee kinds are additive costs. Displayed
+    discount is informational: it is already reflected in `displayed_price` and never applied
+    a second time.
+    """
+
+    COUPON = "coupon"
+    PAYMENT_DISCOUNT = "payment_discount"
+    CASHBACK = "cashback"
+    DELIVERY_FEE = "delivery_fee"
+    PLATFORM_FEE = "platform_fee"
+    DISPLAYED_DISCOUNT = "displayed_discount"
+    OTHER = "other"
+
+
+class AdjustmentEligibility(StrEnum):
+    """Whether a price adjustment is verified as applicable to the offer being compared.
+
+    Only `verified_eligible` adjustments may change the verified effective price. Every other
+    state is preserved for provenance and must not be treated as a universal discount.
+    """
+
+    VERIFIED_ELIGIBLE = "verified_eligible"
+    INELIGIBLE = "ineligible"
+    UNVERIFIED = "unverified"
+    UNAVAILABLE = "unavailable"
+    MEMBERSHIP_ONLY = "membership_only"
+    PAYMENT_METHOD_SPECIFIC = "payment_method_specific"
+    CONDITIONAL = "conditional"

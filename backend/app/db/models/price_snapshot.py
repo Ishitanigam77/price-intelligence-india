@@ -31,6 +31,7 @@ from app.domain.validation import (
 )
 
 if TYPE_CHECKING:
+    from app.db.models.price_adjustment import PriceAdjustment
     from app.db.models.retailer_product import RetailerProduct
     from app.db.models.seller import Seller
 
@@ -123,6 +124,11 @@ class PriceSnapshot(UUIDPrimaryKeyMixin, Base):
         "RetailerProduct", back_populates="price_snapshots"
     )
     seller: Mapped["Seller | None"] = relationship("Seller", back_populates="price_snapshots")
+    adjustments: Mapped[list["PriceAdjustment"]] = relationship(
+        "PriceAdjustment",
+        back_populates="price_snapshot",
+        cascade="all, delete-orphan",
+    )
 
     @validates("currency")
     def _validate_currency(self, key: str, value: str) -> str:

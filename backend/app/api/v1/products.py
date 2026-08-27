@@ -3,8 +3,9 @@
 Catalogue routes (`GET /products`, `GET /products/{id}`, ...) expose the Phase 1
 `Product`/`ProductVariant` models via repositories. Discovery (`GET /products/search`)
 fans out to enabled retailer adapters through `ProductDiscoveryService` and is the Phase 4
-write path that persists newly observed listings. Different variants are always returned as
-distinct resources, never merged (`PROJECT_ARCHITECTURE.md` §5).
+write path that persists newly observed listings. Comparison (`GET /products/{id}/prices`)
+ranks retailer offers per variant through `PriceComparisonService`. Different variants are
+always returned as distinct resources, never merged (`PROJECT_ARCHITECTURE.md` §5).
 """
 
 import uuid
@@ -15,12 +16,14 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError as PydanticValidationError
 
 from app.api.deps import (
+    PriceComparisonServiceDep,
     ProductDiscoveryServiceDep,
     ProductRepositoryDep,
     ProductVariantRepositoryDep,
 )
 from app.api.errors import NotFoundError
 from app.schemas.common import Page
+from app.schemas.comparison import ProductPricesRead
 from app.schemas.discovery import ProductSearchPage
 from app.schemas.pagination import PaginationParams, pagination_params
 from app.schemas.product import ProductRead, ProductVariantRead
@@ -112,6 +115,19 @@ def get_product_by_slug(slug: str, repo: ProductRepositoryDep) -> ProductRead:
     if product is None:
         raise NotFoundError(f"Product with slug {slug!r} was not found.")
     return ProductRead.model_validate(product)
+
+
+@router.get("/{product_id}/prices", response_model=ProductPricesRead)
+def get_product_prices(
+    product_id: uuid.UUID, service: PriceComparisonServiceDep
+) -> ProductPricesRead:
+    """Compare retailer offers for every variant of a product.
+
+    Offers are ranked per variant using verified effective price; unverified coupons,
+    cashback, and payment discounts never win the lowest-verified-price slot. Different
+    variants are never combined.
+    """
+    return service.compare_product(product_id)
 
 
 @router.get("/{product_id}/variants", response_model=Page[ProductVariantRead])
