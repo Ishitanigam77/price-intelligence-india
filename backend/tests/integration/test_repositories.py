@@ -137,6 +137,43 @@ def test_price_snapshot_repository_add_and_query(db_session: Session) -> None:
 
     assert snapshot_repo.latest_for_retailer_product(rp.id).id == latest.id
     assert len(snapshot_repo.history_for_retailer_product(rp.id)) == 2
+    product_history = snapshot_repo.history_for_product(product.id)
+    assert [snap.displayed_price for snap in product_history] == [
+        Decimal("100"),
+        Decimal("90"),
+    ]
+
+
+def test_price_snapshot_repository_history_for_product_isolates_variants(
+    db_session: Session,
+) -> None:
+    product = ProductRepository(db_session).add(make_product())
+    variant_a = ProductVariantRepository(db_session).add(
+        make_variant(product, attributes={"storage": "128GB", "color": "Black"})
+    )
+    variant_b = ProductVariantRepository(db_session).add(
+        make_variant(product, attributes={"storage": "256GB", "color": "Black"})
+    )
+    retailer = RetailerRepository(db_session).add(make_retailer())
+    listing_a = RetailerProductRepository(db_session).add(
+        make_retailer_product(variant_a, retailer, retailer_sku="HIST-128")
+    )
+    listing_b = RetailerProductRepository(db_session).add(
+        make_retailer_product(variant_b, retailer, retailer_sku="HIST-256")
+    )
+    now = datetime.now(UTC)
+    snapshot_repo = PriceSnapshotRepository(db_session)
+    snapshot_repo.add_snapshot(
+        make_price_snapshot(listing_a, displayed_price=Decimal("100"), observed_at=now)
+    )
+    snapshot_repo.add_snapshot(
+        make_price_snapshot(listing_b, displayed_price=Decimal("200"), observed_at=now)
+    )
+
+    only_a = snapshot_repo.history_for_product(product.id, variant_id=variant_a.id)
+    assert [snap.displayed_price for snap in only_a] == [Decimal("100")]
+    both = snapshot_repo.history_for_product(product.id)
+    assert {snap.displayed_price for snap in both} == {Decimal("100"), Decimal("200")}
 
 
 def test_price_snapshot_repository_has_no_update_method(db_session: Session) -> None:

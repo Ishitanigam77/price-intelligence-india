@@ -18,3 +18,4 @@ simulated PostgreSQL/Redis outages), and `test_api_products.py`/`test_api_retail
 `test_api_prices.py`/`test_api_deals.py`/`test_api_product_prices.py` (representative
 `/api/v1/` route tests, via the `client` fixture in `conftest.py`). These require a local
 Redis instance in addition to the Phase 1 PostgreSQL requirement — see `../../README.md`.
+`test_api_product_history.py` covers Phase 7 historical intelligence.

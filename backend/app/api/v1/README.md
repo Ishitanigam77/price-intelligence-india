@@ -12,7 +12,8 @@ and including its router there — nothing else needs to change.
 - `products.py` — catalogue routes over `Product`/`ProductVariant` (list/get, filter by
   category/brand, list variants for a product) plus `GET /products/search` (Phase 4 product
   discovery via `ProductDiscoveryService`) and `GET /products/{product_id}/prices` (Phase 6
-  price comparison via `PriceComparisonService`).
+  price comparison via `PriceComparisonService`) and `GET /products/{product_id}/history`
+  (Phase 7 historical intelligence via `PriceHistoryService`).
 - `retailers.py` — read-only routes over `Retailer`/`Seller` (list/get, list sellers for a
   retailer).
 - `prices.py` — read-only routes over `PriceSnapshot` via `app.services.price_service`
@@ -27,3 +28,5 @@ or ML logic lives here. Catalogue routes are thin typed wrappers over Phase 1 re
 thin typed wrapper over `ProductDiscoveryService`, which talks only to the retailer adapter
 abstraction. `GET /products/{id}/prices` is a thin typed wrapper over
 `PriceComparisonService`, which ranks persisted offers with the Phase 6 comparison engine.
+`GET /products/{id}/history` is a thin typed wrapper over `PriceHistoryService`, which
+computes historical aggregates from stored verified observations.

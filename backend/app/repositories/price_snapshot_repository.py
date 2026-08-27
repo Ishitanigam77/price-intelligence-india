@@ -13,6 +13,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from app.db.models.price_snapshot import PriceSnapshot
+from app.db.models.product_variant import ProductVariant
 from app.db.models.retailer_product import RetailerProduct
 from app.repositories.base import BaseRepository
 
@@ -97,5 +98,45 @@ class PriceSnapshotRepository(BaseRepository[PriceSnapshot]):
                     RetailerProduct.product_variant
                 ),
             )
+        )
+        return list(self.session.scalars(stmt).all())
+
+    def history_for_product(
+        self,
+        product_id: uuid.UUID,
+        *,
+        variant_id: uuid.UUID | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
+    ) -> list[PriceSnapshot]:
+        """Every stored observation for a product, oldest first.
+
+        Observations are never updated in place; this returns the append-only history.
+        Optional `variant_id` keeps results on a single matched variant. `since`/`until`
+        bound `observed_at` only — they do not invent missing timestamps.
+        """
+        stmt = (
+            select(PriceSnapshot)
+            .join(RetailerProduct, PriceSnapshot.retailer_product_id == RetailerProduct.id)
+            .join(ProductVariant, RetailerProduct.product_variant_id == ProductVariant.id)
+            .where(ProductVariant.product_id == product_id)
+        )
+        if variant_id is not None:
+            stmt = stmt.where(ProductVariant.id == variant_id)
+        if since is not None:
+            stmt = stmt.where(PriceSnapshot.observed_at >= since)
+        if until is not None:
+            stmt = stmt.where(PriceSnapshot.observed_at <= until)
+        stmt = stmt.order_by(
+            PriceSnapshot.observed_at.asc(),
+            PriceSnapshot.created_at.asc(),
+            PriceSnapshot.id.asc(),
+        ).options(
+            selectinload(PriceSnapshot.seller),
+            selectinload(PriceSnapshot.adjustments),
+            selectinload(PriceSnapshot.retailer_product).selectinload(RetailerProduct.retailer),
+            selectinload(PriceSnapshot.retailer_product).selectinload(
+                RetailerProduct.product_variant
+            ),
         )
         return list(self.session.scalars(stmt).all())

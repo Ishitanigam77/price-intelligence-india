@@ -8,7 +8,16 @@ benefits, or assumed delivery charges to `effective_price`.
 
 from app.pricing.config import PricingConfig, get_pricing_config
 from app.pricing.engine import PriceComparisonEngine
-from app.pricing.enums import FreshnessStatus, PriceKind, RankingCriterion
+from app.pricing.enums import (
+    FreshnessStatus,
+    InsufficientReasonCode,
+    MetricStatus,
+    PriceKind,
+    RankingCriterion,
+    TrendDirection,
+    ValueKind,
+)
+from app.pricing.history import PriceHistoryEngine
 from app.pricing.models import (
     ComparedOffer,
     DataFreshness,
@@ -24,15 +33,20 @@ __all__ = [
     "ComparedOffer",
     "DataFreshness",
     "FreshnessStatus",
+    "InsufficientReasonCode",
+    "MetricStatus",
     "OfferInput",
     "PriceAdjustment",
     "PriceComparisonEngine",
+    "PriceHistoryEngine",
     "PriceKind",
     "PricingConfig",
     "ProductComparison",
     "RankingCriterion",
     "RankingExplanation",
     "SellerSnapshot",
+    "TrendDirection",
+    "ValueKind",
     "VariantComparison",
     "get_pricing_config",
 ]

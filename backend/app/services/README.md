@@ -5,7 +5,7 @@ catalogue API routes call a single Phase 1 repository directly via `app/api/deps
 no additional layer.
 
 **Status**: FastAPI backend application foundation + Phase 4 product discovery + Phase 6
-price comparison.
+price comparison + Phase 7 historical price intelligence.
 
 - `price_service.py` — composes `RetailerProductRepository` + `PriceSnapshotRepository` so
   "get the price for a retailer listing" can distinguish "the listing doesn't exist" (404) from
@@ -16,3 +16,6 @@ price comparison.
   standardized results. Timeouts/retries stay in the adapter executor. No semantic matching.
 - `price_comparison_service.py` — loads matched listings/snapshots/adjustments for a product
   and asks `app.pricing.PriceComparisonEngine` to rank verified offers per variant.
+- `price_history_service.py` — loads stored observations for a product and asks
+  `app.pricing.PriceHistoryEngine` to compute per-variant historical intelligence
+  (averages, extrema, percentile, volatility, drop, trend). Never fabricates missing history.

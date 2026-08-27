@@ -6,11 +6,17 @@ from app.domain.exceptions import NegativeAmountError
 from app.domain.validation import validate_non_negative_amount
 
 MONEY_QUANTUM = Decimal("0.01")
+RATIO_QUANTUM = Decimal("0.0001")
 
 
 def quantize_money(value: Decimal) -> Decimal:
     """Round a monetary amount to 2 decimal places (paise)."""
     return value.quantize(MONEY_QUANTUM, rounding=ROUND_HALF_UP)
+
+
+def quantize_ratio(value: Decimal) -> Decimal:
+    """Round a unitless ratio or percent to 4 decimal places."""
+    return value.quantize(RATIO_QUANTUM, rounding=ROUND_HALF_UP)
 
 
 def optional_money(value: Decimal | None, *, field_name: str) -> Decimal | None:

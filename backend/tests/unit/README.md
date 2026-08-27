@@ -10,8 +10,9 @@ they cover, starting in **Phase 1**.
 - `observability/` — JSON logging, correlation IDs, metrics sink.
 - `matching/` — product identity matching engine: identifier/attribute/title/embedding stages,
   classification, evaluation precision/recall, and core-domain isolation.
-- `pricing/` — price comparison engine: verified effective price, adjustment safety,
-  deterministic ranking, freshness, and core-domain isolation.
+- `pricing/` — price comparison engine (verified effective price, ranking, freshness) and
+  Phase 7 historical intelligence (window averages, extrema, percentile, volatility,
+  price-drop, trend, insufficient-history, provenance, isolation).
 - `retailer_adapters/` — adapter contract, registry, config, timeout/retry, rate limits,
   mock retailers, normalization, extensibility, and core-domain isolation.
 
