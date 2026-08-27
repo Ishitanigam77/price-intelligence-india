@@ -15,7 +15,7 @@ const NAV = [
 
 export function Header() {
   const pathname = usePathname();
-  const showCompactSearch = pathname !== "/";
+  const showCompactSearch = pathname !== "/" && !pathname.startsWith("/search");
 
   return (
     <header className="sticky top-0 z-40 border-b border-paper-muted/80 bg-paper/95 backdrop-blur">
