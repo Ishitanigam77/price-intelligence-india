@@ -35,6 +35,16 @@ describe("Product details rendering", () => {
     expect(screen.getByText("Lowest verified price")).toBeInTheDocument();
     expect(screen.getByText("Retailer offers")).toBeInTheDocument();
     expect(screen.getByText("Price history snapshot")).toBeInTheDocument();
+    expect(screen.getByText("7-day average")).toBeInTheDocument();
+    expect(screen.getByText("30-day average")).toBeInTheDocument();
+    expect(screen.getByText("90-day average")).toBeInTheDocument();
+    expect(screen.getByText("180-day average")).toBeInTheDocument();
+    expect(screen.getByText("Historical low")).toBeInTheDocument();
+    expect(screen.getByText("Trend")).toBeInTheDocument();
+    expect(
+      screen.getByText("This is the lowest verified price among current offers."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/ranking fell back/i)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open full price history" })).toHaveAttribute(
       "href",
       `/products/${productFixture.id}/price-history?variant=${variantFixture.id}`,

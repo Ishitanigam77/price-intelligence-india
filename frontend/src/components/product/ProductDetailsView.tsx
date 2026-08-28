@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/status/EmptyState";
 import { ErrorState } from "@/components/status/ErrorState";
 import { LoadingSkeleton } from "@/components/status/LoadingSkeleton";
 import { getProduct, getProductHistory, getProductPrices, listProductVariants } from "@/lib/api";
+import { formatRankingSummary } from "@/lib/format/offer";
 import { formatVariant } from "@/lib/format/variant";
 import { useAsync } from "@/lib/hooks/useAsync";
 import type {
@@ -150,13 +151,9 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
         />
         <div className="space-y-3">
           {lowest ? <AvailabilityBadge status={lowest.availability} /> : null}
-          {selected?.priceVariant?.ranking_reason ? (
-            <p className="text-sm text-ink-muted">{selected.priceVariant.ranking_reason.reason}</p>
-          ) : (
-            <p className="text-sm text-ink-muted">
-              No verified offer is available for this variant.
-            </p>
-          )}
+          <p className="text-sm text-ink-muted">
+            {formatRankingSummary(selected?.priceVariant?.ranking_reason)}
+          </p>
           {selected?.variant ? (
             <p className="text-sm text-ink">Exact variant: {formatVariant(selected.variant)}</p>
           ) : null}
@@ -208,9 +205,11 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
         )}
         {historyVariant ? (
           <>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <MetricCard title="7-day average" metric={historyVariant.average_7d} />
               <MetricCard title="30-day average" metric={historyVariant.average_30d} />
+              <MetricCard title="90-day average" metric={historyVariant.average_90d} />
+              <MetricCard title="180-day average" metric={historyVariant.average_180d} />
               <MetricCard title="Historical low" metric={historyVariant.historical_low} />
               <MetricCard title="Trend" metric={historyVariant.trend} />
             </div>

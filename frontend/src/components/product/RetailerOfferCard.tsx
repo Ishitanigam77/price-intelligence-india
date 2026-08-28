@@ -6,6 +6,7 @@ import { PriceDisplay } from "@/components/price/PriceDisplay";
 import { ValueKindBadge } from "@/components/price/ValueKindBadge";
 import { formatDateTime } from "@/lib/format/datetime";
 import { formatMoneyOrUnavailable } from "@/lib/format/money";
+import { formatAdjustmentLine, formatPriceKind, formatSourceType } from "@/lib/format/offer";
 import { cn } from "@/lib/cn";
 import type { ComparedOfferRead } from "@/lib/types/api";
 
@@ -76,16 +77,16 @@ export function RetailerOfferCard({ offer, priceHistoryHref, className }: Retail
           </dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-ink-muted">Price kind</dt>
-          <dd className="mt-1 font-medium text-ink">{offer.price_kind.replaceAll("_", " ")}</dd>
+          <dt className="text-xs uppercase tracking-wide text-ink-muted">Price type</dt>
+          <dd className="mt-1 font-medium text-ink">{formatPriceKind(offer.price_kind)}</dd>
         </div>
         <div>
           <dt className="text-xs uppercase tracking-wide text-ink-muted">Observed at</dt>
           <dd className="mt-1">{formatDateTime(offer.observation_timestamp)}</dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-ink-muted">Source type</dt>
-          <dd className="mt-1">{offer.source_type?.replaceAll("_", " ") ?? "Not provided"}</dd>
+          <dt className="text-xs uppercase tracking-wide text-ink-muted">Listing source</dt>
+          <dd className="mt-1">{formatSourceType(offer.source_type)}</dd>
         </div>
       </dl>
 
@@ -95,11 +96,7 @@ export function RetailerOfferCard({ offer, priceHistoryHref, className }: Retail
         <ul className="space-y-1 text-sm text-ink-muted">
           {offer.adjustments.map((adjustment, index) => (
             <li key={`${adjustment.kind}-${index}`}>
-              {adjustment.kind.replaceAll("_", " ")} · {adjustment.eligibility.replaceAll("_", " ")}
-              {adjustment.amount != null
-                ? ` · ${formatMoneyOrUnavailable(adjustment.amount, offer.currency)}`
-                : ""}
-              {adjustment.affects_effective_price ? " · affects effective price" : ""}
+              {formatAdjustmentLine(adjustment, offer.currency)}
             </li>
           ))}
         </ul>
