@@ -24,6 +24,8 @@ from app.api.deps import (
     get_product_variant_repository,
     get_retailer_product_repository,
     get_retailer_repository,
+    get_sale_event_repository,
+    get_sale_event_service,
     get_seller_repository,
 )
 from app.observability.metrics import NullMetricsSink
@@ -34,12 +36,14 @@ from app.repositories.product_repository import ProductRepository
 from app.repositories.product_variant_repository import ProductVariantRepository
 from app.repositories.retailer_product_repository import RetailerProductRepository
 from app.repositories.retailer_repository import RetailerRepository
+from app.repositories.sale_event_repository import SaleEventRepository
 from app.repositories.seller_repository import SellerRepository
 from app.retailer_adapters.base.registry import RetailerRegistry
 from app.services.price_comparison_service import PriceComparisonService
 from app.services.price_history_service import PriceHistoryService
 from app.services.price_service import PriceService
 from app.services.product_discovery_service import ProductDiscoveryService
+from app.services.sale_event_service import SaleEventService
 
 
 def test_repository_provider_functions_bind_the_given_session(db_session: Session) -> None:
@@ -54,6 +58,7 @@ def test_repository_provider_functions_bind_the_given_session(db_session: Sessio
     snapshot_repo = get_price_snapshot_repository(db_session)
     assert isinstance(snapshot_repo, PriceSnapshotRepository)
     assert snapshot_repo.session is db_session
+    assert isinstance(get_sale_event_repository(db_session), SaleEventRepository)
 
 
 def test_get_price_service_composes_the_two_repositories_it_needs(db_session: Session) -> None:
@@ -75,6 +80,11 @@ def test_get_price_comparison_service_binds_session(db_session: Session) -> None
 def test_get_price_history_service_binds_session(db_session: Session) -> None:
     service = get_price_history_service(db_session, NullMetricsSink())
     assert isinstance(service, PriceHistoryService)
+
+
+def test_get_sale_event_service_binds_session(db_session: Session) -> None:
+    service = get_sale_event_service(db_session, NullMetricsSink())
+    assert isinstance(service, SaleEventService)
 
 
 def test_get_product_discovery_service_binds_session_and_registry(db_session: Session) -> None:

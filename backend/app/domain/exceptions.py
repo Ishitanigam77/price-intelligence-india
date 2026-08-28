@@ -28,3 +28,7 @@ class InvalidVariantAttributesError(DomainError):
 
 class NegativeAmountError(DomainError):
     """A monetary amount (price, fee, MRP) was negative."""
+
+
+class InvalidSaleEventError(DomainError):
+    """A sale event's window, scope, or source provenance is invalid."""

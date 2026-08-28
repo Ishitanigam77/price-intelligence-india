@@ -92,3 +92,48 @@ class AdjustmentEligibility(StrEnum):
     MEMBERSHIP_ONLY = "membership_only"
     PAYMENT_METHOD_SPECIFIC = "payment_method_specific"
     CONDITIONAL = "conditional"
+
+
+class SaleEventType(StrEnum):
+    """Kind of sale event. Generic and retailer-agnostic; no named campaigns are hardcoded.
+
+    `manually_curated` and `externally_sourced` cover ingestion paths that do not otherwise
+    fit a more specific kind. A curated retailer sale should use `retailer_specific` with
+    `source=manual_curation` rather than collapsing the two dimensions.
+    """
+
+    RETAILER_SPECIFIC = "retailer_specific"
+    BRAND = "brand"
+    CATEGORY = "category"
+    SEASONAL = "seasonal"
+    NATIONAL_SHOPPING = "national_shopping"
+    MANUALLY_CURATED = "manually_curated"
+    EXTERNALLY_SOURCED = "externally_sourced"
+
+
+class SaleEventSource(StrEnum):
+    """How a `SaleEvent` record was obtained.
+
+    External values are the same permitted acquisition methods as `SourceType`.
+    `observed_price_inference` is a *calculated* detection from stored price observations,
+    never an observed retailer-published event name.
+    """
+
+    MANUAL_CURATION = "manual_curation"
+    OFFICIAL_API = "official_api"
+    AFFILIATE_FEED = "affiliate_feed"
+    PRODUCT_FEED = "product_feed"
+    OTHER_PERMITTED = "other_permitted"
+    OBSERVED_PRICE_INFERENCE = "observed_price_inference"
+
+
+class SaleEventStatus(StrEnum):
+    """Lifecycle of a sale event relative to a point in time.
+
+    Derived from `start_date`/`end_date`; not stored. Inclusive of both bounds for
+    `during_event`.
+    """
+
+    BEFORE_EVENT = "before_event"
+    DURING_EVENT = "during_event"
+    AFTER_EVENT = "after_event"

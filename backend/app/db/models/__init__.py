@@ -14,6 +14,7 @@ from app.db.models.product_identifier import ProductIdentifier
 from app.db.models.product_variant import ProductVariant
 from app.db.models.retailer import Retailer
 from app.db.models.retailer_product import RetailerProduct
+from app.db.models.sale_event import SaleEvent
 from app.db.models.seller import Seller
 
 __all__ = [
@@ -26,5 +27,6 @@ __all__ = [
     "ProductVariant",
     "Retailer",
     "RetailerProduct",
+    "SaleEvent",
     "Seller",
 ]

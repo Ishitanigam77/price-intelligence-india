@@ -23,12 +23,14 @@ from app.repositories.product_repository import ProductRepository
 from app.repositories.product_variant_repository import ProductVariantRepository
 from app.repositories.retailer_product_repository import RetailerProductRepository
 from app.repositories.retailer_repository import RetailerRepository
+from app.repositories.sale_event_repository import SaleEventRepository
 from app.repositories.seller_repository import SellerRepository
 from app.retailer_adapters.base.registry import RetailerRegistry
 from app.services.price_comparison_service import PriceComparisonService
 from app.services.price_history_service import PriceHistoryService
 from app.services.price_service import PriceService
 from app.services.product_discovery_service import ProductDiscoveryService
+from app.services.sale_event_service import SaleEventService
 
 DbSession = Annotated[Session, Depends(get_db)]
 RedisClient = Annotated[Redis, Depends(get_redis)]
@@ -66,6 +68,10 @@ def get_price_snapshot_repository(db: DbSession) -> PriceSnapshotRepository:
     return PriceSnapshotRepository(db)
 
 
+def get_sale_event_repository(db: DbSession) -> SaleEventRepository:
+    return SaleEventRepository(db)
+
+
 ProductRepositoryDep = Annotated[ProductRepository, Depends(get_product_repository)]
 ProductVariantRepositoryDep = Annotated[
     ProductVariantRepository, Depends(get_product_variant_repository)
@@ -80,6 +86,7 @@ RetailerProductRepositoryDep = Annotated[
 PriceSnapshotRepositoryDep = Annotated[
     PriceSnapshotRepository, Depends(get_price_snapshot_repository)
 ]
+SaleEventRepositoryDep = Annotated[SaleEventRepository, Depends(get_sale_event_repository)]
 
 
 def get_price_service(
@@ -140,3 +147,13 @@ def get_price_history_service(
 
 
 PriceHistoryServiceDep = Annotated[PriceHistoryService, Depends(get_price_history_service)]
+
+
+def get_sale_event_service(
+    db: DbSession,
+    metrics_sink: MetricsSinkDep,
+) -> SaleEventService:
+    return SaleEventService(db, metrics_sink=metrics_sink)
+
+
+SaleEventServiceDep = Annotated[SaleEventService, Depends(get_sale_event_service)]

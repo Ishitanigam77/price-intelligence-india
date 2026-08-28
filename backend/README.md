@@ -10,15 +10,15 @@ Redis infrastructure, centralized exception handling, structured logging, CORS, 
 support — and the **retailer adapter framework** (common interface, registry, execution
 helpers, and three fixture-backed mock adapters). The **product identity matching engine**
 (`app/matching/`) and **price comparison engine** (`app/pricing/`,
-`GET /api/v1/products/{product_id}/prices`) are implemented. Collectors, real retailer
-integrations, sale-event intelligence, recommendation, notifications, and auth are **not**
-implemented yet — see `../ROADMAP.md`.
+`GET /api/v1/products/{product_id}/prices`) are implemented. **Phase 9 sale-event intelligence**
+(`app/sales/`, `GET /api/v1/sale-events`, `GET /api/v1/products/{id}/sale-history`) is
+implemented. Collectors, real retailer integrations, recommendation, notifications, and auth
+are **not** implemented yet — see `../ROADMAP.md`.
 
 > **Note on phase numbering**: `../ROADMAP.md` reserves "Phase 2" for the Retailer Adapter
 > Framework. That framework is implemented here (`app/retailer_adapters/`). A separate
 > FastAPI application-foundation increment (application factory, `/api/v1/`, Redis, Docker)
-> was merged independently and is also present. Sale-event intelligence, recommendation, and
-> ML remain later-phase work.
+> was merged independently and is also present. Recommendation and ML remain later-phase work.
 
 ## Layout
 
@@ -27,7 +27,8 @@ implemented yet — see `../ROADMAP.md`.
   versioned API (see below). `deps.py` wires repositories/services into routes via dependency
   injection; `errors.py` is the centralized exception handling.
 - `app/api/v1/` — `/api/v1/` routers: `health` (liveness + per-dependency readiness),
-  `products` (catalogue + `GET /products/search` discovery), `retailers`, `prices`, `deals`.
+  `products` (catalogue + `GET /products/search` discovery), `retailers`, `prices`, `deals`,
+  `sale_events`.
 - `app/schemas/` — Pydantic request/response DTOs, kept separate from the SQLAlchemy models.
 - `app/services/` — thin service-layer boundaries, added only where genuinely needed:
   `price_service.py` (listing vs observation existence) and `product_discovery_service.py`
@@ -49,8 +50,8 @@ implemented yet — see `../ROADMAP.md`.
   of FastAPI routes and of specific retailer adapters.
 - `app/pricing/` — price comparison engine (Phase 6) and historical price intelligence
   (Phase 7: window averages, extrema, percentile, volatility, drop detection, trend)
-- `app/sales/` — sale-event intelligence (Phase 7)
-- `app/recommendation/` — BUY_NOW / WAIT / WATCH engine (Phase 9)
+- `app/sales/` — sale-event intelligence (Phase 9)
+- `app/recommendation/` — BUY_NOW / WAIT / WATCH engine (later phase; empty scaffold)
 - `app/notifications/` — watchlist & price alert dispatch (Phase 6)
 - `app/workers/` — Celery app, tasks, schedules (Phase 2+)
 - `app/observability/` — structured JSON logging, correlation IDs, metrics seams

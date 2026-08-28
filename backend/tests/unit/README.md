@@ -13,6 +13,8 @@ they cover, starting in **Phase 1**.
 - `pricing/` — price comparison engine (verified effective price, ranking, freshness) and
   Phase 7 historical intelligence (window averages, extrema, percentile, volatility,
   price-drop, trend, insufficient-history, provenance, isolation).
+- `sales/` — Phase 9 sale-event intelligence (lifecycle, applicability, historical sale
+  prices, calculated detection from concurrent drops, isolation).
 - `retailer_adapters/` — adapter contract, registry, config, timeout/retry, rate limits,
   mock retailers, normalization, extensibility, and core-domain isolation.
 

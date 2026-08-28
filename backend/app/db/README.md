@@ -13,5 +13,5 @@ separately under `../../alembic/` and must be kept in sync with these models.
   application foundation.
 - `models/` — one module per entity: `Category`, `Brand`, `Product`, `ProductVariant`,
   `ProductIdentifier`, `Retailer`, `Seller`, `RetailerProduct`, `PriceSnapshot`,
-  `PriceAdjustment`. See each module's docstring for the reasoning behind its shape and
-  constraints.
+  `PriceAdjustment`, `SaleEvent`. See each module's docstring for the reasoning behind its
+  shape and constraints.
