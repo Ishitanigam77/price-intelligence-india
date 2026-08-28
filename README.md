@@ -5,14 +5,10 @@ network of Indian online retailers, identifies identical products/variants acros
 price history, detects genuine price drops and sale events, and recommends whether to
 **BUY_NOW**, **WAIT**, or **WATCH**.
 
-> **Status: Phase 1 — Core Domain Model & Database Foundation**, plus a **FastAPI backend
-> application foundation** (application factory, `/api/v1/` versioned routing, Redis
-> infrastructure, centralized exception handling, structured logging, CORS, and local Docker
-> Compose support — see `backend/README.md`) and the **retailer adapter framework** with
-> fixture-backed mock adapters (see `backend/app/retailer_adapters/` and
-> `RETAILER_ARCHITECTURE.md`). Real retailer integrations, matching, price intelligence, ML
-> models, authentication, notifications, and the frontend do **not** exist yet — see
-> `ROADMAP.md`.
+> **Status:** backend through historical price intelligence is implemented (see `backend/README.md`).
+> The **Next.js frontend** (`frontend/`) consumes those APIs for search, product details, price
+> history, deals, retailers, and about. Real retailer integrations, ML models, authentication,
+> notifications, and recommendations do **not** exist yet — see `ROADMAP.md`.
 
 ## Why This Exists
 
@@ -42,7 +38,7 @@ never fabricates retailer data.
 
 ```
 .
-├── frontend/                  # Next.js + TypeScript + Tailwind CSS app (Phase 5+)
+├── frontend/                  # Next.js + TypeScript + Tailwind CSS app (search, compare, history)
 ├── backend/
 │   ├── Dockerfile, docker-entrypoint.sh   # Production-oriented backend image
 │   ├── app/
@@ -99,10 +95,9 @@ that AI-assisted contributions follow the same process.
 
 ## Getting Started
 
-The backend now has a working database schema and a production-quality FastAPI application
-foundation (versioned API, Redis, Docker). See [`backend/README.md`](./backend/README.md) for
-local setup, running migrations, running the API (locally or via Docker Compose), and running
-tests. There is no frontend yet (Phase 5+).
+See [`backend/README.md`](./backend/README.md) for API setup, migrations, and backend tests.
+See [`frontend/README.md`](./frontend/README.md) for the Next.js app (`NEXT_PUBLIC_API_BASE_URL`,
+dev server, lint, typecheck, and frontend tests).
 
 ## License
 
