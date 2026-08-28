@@ -2,17 +2,17 @@
 # Idempotent repository bootstrap for the PriceRadar India Cloud Agent environment.
 #
 # Prepares everything tied to the checked-out source: system service packages (guarded so a
-# prebuilt snapshot that already has them is a no-op), backend virtualenv + Python deps,
-# frontend Node deps, local .env files, the PostgreSQL role/databases, and the Alembic schema.
-# Safe to re-run: every step checks current state before acting.
+# prebuilt snapshot that already has them is a no-op), local .env files, the PostgreSQL
+# role/databases, the backend virtualenv + Python deps, the frontend Node deps, and the Alembic
+# schema. Safe to re-run: every step checks current state before acting.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-DB_USER="priceradar_app"
+export DB_USER="priceradar_app"
 DB_PASSWORD="changeme"
-DB_NAME="priceradar"
+export DB_NAME="priceradar"
 DB_TEST_NAME="priceradar_test"
 export DATABASE_URL="postgresql+psycopg://${DB_USER}:${DB_PASSWORD}@localhost:5432/${DB_NAME}"
 export REDIS_URL="redis://localhost:6379/0"
@@ -23,9 +23,9 @@ log "System packages"
 NEED_PKGS=()
 command -v pg_ctlcluster >/dev/null 2>&1 || NEED_PKGS+=(postgresql postgresql-contrib)
 command -v redis-server  >/dev/null 2>&1 || NEED_PKGS+=(redis-server)
-command -v python3       >/dev/null 2>&1 || NEED_PKGS+=(python3)
 python3 -c 'import venv, ensurepip' >/dev/null 2>&1 || NEED_PKGS+=(python3-venv)
 command -v gcc >/dev/null 2>&1 || NEED_PKGS+=(build-essential)
+dpkg -s libpq-dev >/dev/null 2>&1 || NEED_PKGS+=(libpq-dev)
 if [ "${#NEED_PKGS[@]}" -gt 0 ]; then
   sudo apt-get update -y
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "${NEED_PKGS[@]}"
@@ -38,8 +38,7 @@ log "Local env files"
 [ -f frontend/.env.local ] || cp frontend/.env.example frontend/.env.local
 
 # PostgreSQL and Redis must be running so migrations can be applied during install.
-log "Ensure PostgreSQL + Redis are running"
-"$REPO_ROOT/.cursor/start.sh"
+bash "$REPO_ROOT/.cursor/services.sh"
 
 log "PostgreSQL role and databases"
 sudo -u postgres psql -v ON_ERROR_STOP=1 <<SQL
