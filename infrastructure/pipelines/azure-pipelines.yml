@@ -1,0 +1,594 @@
+# PriceRadar India — production CI/CD (Azure DevOps, triggered from GitHub).
+#
+# Stages: Validate → Lint → Unit tests → Integration tests → Security scanning →
+# Frontend/Backend/Worker/ML build → Docker build → Container scan → Push ACR →
+# Deploy development → Smoke tests → Staging (environment check) →
+# Production (environment check) → Deploy production.
+#
+# Failed validation, lint, tests, or security scans skip every later stage.
+# Production deployment uses the Azure DevOps Environment named `production`
+# (real approval/check configured in the Azure DevOps UI — not a YAML-only fake).
+#
+# This pipeline never runs terraform destroy and never uses only the `latest` tag
+# for production images.
+#
+# Required Azure DevOps configuration (see infrastructure/CICD.md):
+#   Service connections: azure-sc-dev, azure-sc-staging, azure-sc-prod
+#   Environments: development, staging, production (production MUST have an approval check)
+#   Variable groups: priceradar-dev, priceradar-staging, priceradar-prod
+
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  pythonVersion: "3.12"
+  nodeVersion: "22.x"
+  imageTag: "sha-$(Build.SourceVersion)"
+  azureServiceConnectionDev: azure-sc-dev
+  azureServiceConnectionStaging: azure-sc-staging
+  azureServiceConnectionProd: azure-sc-prod
+  POSTGRES_USER: priceradar_app
+  POSTGRES_PASSWORD: changeme
+  POSTGRES_DB: priceradar_test
+  TEST_DATABASE_URL: postgresql+psycopg://priceradar_app:changeme@localhost:5432/priceradar_test
+  DATABASE_URL: postgresql+psycopg://priceradar_app:changeme@localhost:5432/priceradar_test
+  REDIS_URL: redis://localhost:6379/0
+  CELERY_BROKER_URL: redis://localhost:6379/1
+  CELERY_RESULT_BACKEND: redis://localhost:6379/2
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+stages:
+  - stage: Validate
+    displayName: 1. Validate
+    jobs:
+      - job: ValidateRepo
+        displayName: Repository and pipeline validation
+        steps:
+          - checkout: self
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: $(pythonVersion)
+          - script: |
+              set -euo pipefail
+              python -m pip install --upgrade pip
+              python -m pip install pyyaml
+              python infrastructure/pipelines/scripts/validate_yaml.py
+              test -f backend/Dockerfile
+              test -f frontend/Dockerfile
+              test -f ml/Dockerfile
+              test -f infrastructure/docker/docker-compose.yml
+            displayName: Validate YAML and required Docker artifacts
+
+      - job: TerraformValidate
+        displayName: Terraform fmt and validate
+        steps:
+          - checkout: self
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: "1.6.6"
+          - script: |
+              set -euo pipefail
+              terraform fmt -check -recursive infrastructure/terraform
+              for env in bootstrap environments/dev environments/staging environments/prod; do
+                echo "terraform init/validate: ${env}"
+                terraform -chdir="infrastructure/terraform/${env}" init -backend=false -input=false
+                terraform -chdir="infrastructure/terraform/${env}" validate
+              done
+            displayName: terraform fmt -check and validate
+
+  - stage: Lint
+    displayName: 2. Lint
+    dependsOn: Validate
+    jobs:
+      - job: BackendLint
+        displayName: Backend ruff
+        steps:
+          - checkout: self
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: $(pythonVersion)
+          - script: |
+              set -euo pipefail
+              python -m pip install --upgrade pip
+              python -m pip install -e "./backend[dev]"
+              (cd backend && ruff check app tests)
+            displayName: ruff check
+
+      - job: FrontendLint
+        displayName: Frontend eslint and typecheck
+        steps:
+          - checkout: self
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(nodeVersion)
+          - script: |
+              set -euo pipefail
+              cd frontend
+              npm ci
+              npm run lint
+              npm run typecheck
+            displayName: eslint and tsc
+
+  - stage: UnitTests
+    displayName: 3. Unit tests
+    dependsOn: Lint
+    jobs:
+      - job: BackendUnit
+        displayName: Backend unit tests
+        steps:
+          - checkout: self
+          - template: templates/jobs/python-postgres-redis.yml
+          - script: |
+              set -euo pipefail
+              python -m pip install -e "./backend[dev]"
+              (cd backend && python -m pytest tests/unit --ignore=tests/unit/workers --ignore=tests/unit/ml -q --tb=short)
+            displayName: pytest backend unit
+
+      - job: WorkerUnit
+        displayName: Worker unit tests
+        steps:
+          - checkout: self
+          - template: templates/jobs/python-postgres-redis.yml
+          - script: |
+              set -euo pipefail
+              python -m pip install -e "./backend[dev]"
+              (cd backend && python -m pytest tests/unit/workers -q --tb=short)
+            displayName: pytest workers
+
+      - job: MlUnit
+        displayName: ML unit tests
+        steps:
+          - checkout: self
+          - template: templates/jobs/python-postgres-redis.yml
+          - script: |
+              set -euo pipefail
+              python -m pip install -e "./backend[dev]"
+              (cd backend && python -m pytest tests/unit/ml -q --tb=short)
+            displayName: pytest ml
+
+      - job: FrontendUnit
+        displayName: Frontend unit tests
+        steps:
+          - checkout: self
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(nodeVersion)
+          - script: |
+              set -euo pipefail
+              cd frontend
+              npm ci
+              npm test
+            displayName: vitest
+
+      - job: SmokeUnit
+        displayName: Smoke-test script unit tests
+        steps:
+          - checkout: self
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: $(pythonVersion)
+          - script: |
+              set -euo pipefail
+              python -m pip install pytest
+              PYTHONPATH=infrastructure/pipelines/scripts python -m pytest infrastructure/pipelines/scripts/test_smoke_test.py -q --tb=short
+            displayName: pytest smoke_test
+
+  - stage: IntegrationTests
+    displayName: 4. Integration tests
+    dependsOn: UnitTests
+    jobs:
+      - job: BackendIntegration
+        displayName: Backend integration tests
+        steps:
+          - checkout: self
+          - template: templates/jobs/python-postgres-redis.yml
+          - script: |
+              set -euo pipefail
+              python -m pip install -e "./backend[dev]"
+              (cd backend && python -m pytest tests/integration -q --tb=short)
+            displayName: pytest integration
+
+  - stage: SecurityScan
+    displayName: 5. Dependency and security scanning
+    dependsOn: IntegrationTests
+    jobs:
+      - job: PipAudit
+        displayName: pip-audit
+        steps:
+          - checkout: self
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: $(pythonVersion)
+          - script: |
+              set -euo pipefail
+              python -m pip install --upgrade pip pip-audit
+              python -m pip install -e "./backend[dev]"
+              pip-audit --progress-spinner off
+            displayName: pip-audit backend
+
+      - job: NpmAudit
+        displayName: npm audit
+        steps:
+          - checkout: self
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(nodeVersion)
+          - script: |
+              set -euo pipefail
+              cd frontend
+              npm ci
+              npm audit --audit-level=high
+            displayName: npm audit high+
+
+      - job: Checkov
+        displayName: Checkov Terraform
+        steps:
+          - checkout: self
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: $(pythonVersion)
+          - script: |
+              set -euo pipefail
+              python -m pip install checkov
+              checkov -d infrastructure/terraform --config-file infrastructure/terraform/checkov.yaml
+            displayName: checkov
+
+      - job: TrivyFs
+        displayName: Trivy filesystem and secrets
+        steps:
+          - checkout: self
+          - script: |
+              set -euo pipefail
+              curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+              trivy fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL --exit-code 1 \
+                --config infrastructure/security/trivy.yaml \
+                --skip-dirs .git,.venv,frontend/node_modules,frontend/.next .
+            displayName: trivy fs
+
+  - stage: FrontendBuild
+    displayName: 6. Frontend build
+    dependsOn: SecurityScan
+    jobs:
+      - job: NextBuild
+        displayName: next build
+        steps:
+          - checkout: self
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(nodeVersion)
+          - script: |
+              set -euo pipefail
+              cd frontend
+              npm ci
+              NEXT_PUBLIC_API_BASE_URL="${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}" npm run build
+            displayName: npm run build
+
+  - stage: BackendBuild
+    displayName: 7. Backend build
+    dependsOn: SecurityScan
+    jobs:
+      - job: PythonBackendBuild
+        displayName: backend install and compileall
+        steps:
+          - checkout: self
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: $(pythonVersion)
+          - script: |
+              set -euo pipefail
+              python -m pip install -e "./backend[dev]"
+              python -m compileall -q backend/app
+            displayName: compileall backend
+
+  - stage: WorkerBuild
+    displayName: 8. Worker build
+    dependsOn: SecurityScan
+    jobs:
+      - job: PythonWorkerBuild
+        displayName: worker compileall
+        steps:
+          - checkout: self
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: $(pythonVersion)
+          - script: |
+              set -euo pipefail
+              python -m pip install -e "./backend[dev]"
+              python -m compileall -q backend/app/workers
+            displayName: compileall workers
+
+  - stage: MlBuild
+    displayName: 9. ML build
+    dependsOn: SecurityScan
+    jobs:
+      - job: PythonMlBuild
+        displayName: ml compileall
+        steps:
+          - checkout: self
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: $(pythonVersion)
+          - script: |
+              set -euo pipefail
+              python -m pip install -e "./backend[ml]"
+              PYTHONPATH="${PWD}:${PWD}/backend" python -m compileall -q ml
+            displayName: compileall ml
+
+  - stage: DockerBuild
+    displayName: 10. Docker build
+    dependsOn:
+      - FrontendBuild
+      - BackendBuild
+      - WorkerBuild
+      - MlBuild
+    jobs:
+      - job: BuildImages
+        displayName: Build frontend, backend, workers, ML images
+        steps:
+          - checkout: self
+          - script: |
+              set -euo pipefail
+              docker build --target api -t "priceradar/backend:$(imageTag)" backend
+              docker build --target worker -t "priceradar/workers:$(imageTag)" backend
+              docker build \
+                --build-arg "NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}" \
+                -t "priceradar/frontend:$(imageTag)" frontend
+              docker build -f ml/Dockerfile -t "priceradar/ml:$(imageTag)" .
+              mkdir -p "$(Build.ArtifactStagingDirectory)/image-tag"
+              echo "$(imageTag)" > "$(Build.ArtifactStagingDirectory)/image-tag/IMAGE_TAG"
+            displayName: docker build four images
+          - publish: $(Build.ArtifactStagingDirectory)/image-tag
+            artifact: image-tag
+            displayName: Publish image tag
+
+  - stage: ContainerScan
+    displayName: 11. Container security scanning
+    dependsOn: DockerBuild
+    jobs:
+      - job: TrivyImages
+        displayName: Trivy image scan
+        steps:
+          - checkout: self
+          - script: |
+              set -euo pipefail
+              docker build --target api -t "priceradar/backend:$(imageTag)" backend
+              docker build --target worker -t "priceradar/workers:$(imageTag)" backend
+              docker build -t "priceradar/frontend:$(imageTag)" frontend
+              docker build -f ml/Dockerfile -t "priceradar/ml:$(imageTag)" .
+              curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+              for image in \
+                "priceradar/backend:$(imageTag)" \
+                "priceradar/workers:$(imageTag)" \
+                "priceradar/frontend:$(imageTag)" \
+                "priceradar/ml:$(imageTag)"; do
+                echo "Scanning ${image}"
+                trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed "${image}"
+              done
+            displayName: trivy image HIGH/CRITICAL
+
+  - stage: PushAcr
+    displayName: 12. Push images to ACR
+    dependsOn: ContainerScan
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    variables:
+      - group: priceradar-dev
+    jobs:
+      - job: PushDevAcr
+        displayName: Push versioned tags to development ACR
+        steps:
+          - checkout: self
+          - task: AzureCLI@2
+            displayName: ACR login, build, and push
+            inputs:
+              azureSubscription: $(azureServiceConnectionDev)
+              scriptType: bash
+              scriptLocation: inlineScript
+              addSpnToEnvironment: false
+              inlineScript: |
+                set -euo pipefail
+                test -n "${ACR_NAME:?ACR_NAME must be set in variable group priceradar-dev}"
+                test -n "${ACR_LOGIN_SERVER:?ACR_LOGIN_SERVER must be set in variable group priceradar-dev}"
+                az acr login --name "${ACR_NAME}"
+                TAG="$(imageTag)"
+                docker build --target api -t "${ACR_LOGIN_SERVER}/priceradar/backend:${TAG}" backend
+                docker build --target worker -t "${ACR_LOGIN_SERVER}/priceradar/workers:${TAG}" backend
+                docker build \
+                  --build-arg "NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}" \
+                  -t "${ACR_LOGIN_SERVER}/priceradar/frontend:${TAG}" frontend
+                docker build -f ml/Dockerfile -t "${ACR_LOGIN_SERVER}/priceradar/ml:${TAG}" .
+                docker push "${ACR_LOGIN_SERVER}/priceradar/backend:${TAG}"
+                docker push "${ACR_LOGIN_SERVER}/priceradar/workers:${TAG}"
+                docker push "${ACR_LOGIN_SERVER}/priceradar/frontend:${TAG}"
+                docker push "${ACR_LOGIN_SERVER}/priceradar/ml:${TAG}"
+                echo "Pushed immutable tag ${TAG}"
+
+  - stage: DeployDevelopment
+    displayName: 13. Deploy development
+    dependsOn: PushAcr
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    variables:
+      - group: priceradar-dev
+    jobs:
+      - deployment: DeployDev
+        displayName: Deploy to development
+        environment: development
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  displayName: Migrate and update Container Apps
+                  inputs:
+                    azureSubscription: $(azureServiceConnectionDev)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    addSpnToEnvironment: false
+                    inlineScript: |
+                      set -euo pipefail
+                      export IMAGE_TAG="$(imageTag)"
+                      export AZURE_RESOURCE_GROUP ACR_LOGIN_SERVER
+                      export BACKEND_APP_NAME FRONTEND_APP_NAME WORKER_APP_NAME ML_APP_NAME
+                      export MIGRATE_JOB_NAME ML_TRAIN_JOB_NAME
+                      bash infrastructure/pipelines/scripts/deploy_containerapps.sh
+                      bash infrastructure/pipelines/scripts/run_migrate_job.sh
+
+  - stage: SmokeTests
+    displayName: 14. Smoke tests
+    dependsOn: DeployDevelopment
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    variables:
+      - group: priceradar-dev
+    jobs:
+      - job: SmokeDev
+        displayName: Development smoke tests
+        steps:
+          - checkout: self
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: $(pythonVersion)
+          - script: |
+              set -euo pipefail
+              python infrastructure/pipelines/scripts/smoke_test.py \
+                --backend-url "${SMOKE_BACKEND_URL:?}" \
+                --frontend-url "${SMOKE_FRONTEND_URL:?}" \
+                --ml-url "${SMOKE_ML_URL:-}"
+            displayName: Run smoke tests against development
+
+  - stage: DeployStaging
+    displayName: 16a. Deploy staging
+    dependsOn: SmokeTests
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    variables:
+      - group: priceradar-staging
+    jobs:
+      - job: PushStagingAcr
+        displayName: Push the same immutable tag to staging ACR
+        steps:
+          - checkout: self
+          - task: AzureCLI@2
+            displayName: Build and push staging ACR
+            inputs:
+              azureSubscription: $(azureServiceConnectionStaging)
+              scriptType: bash
+              scriptLocation: inlineScript
+              addSpnToEnvironment: false
+              inlineScript: |
+                set -euo pipefail
+                az acr login --name "${ACR_NAME}"
+                TAG="$(imageTag)"
+                docker build --target api -t "${ACR_LOGIN_SERVER}/priceradar/backend:${TAG}" backend
+                docker build --target worker -t "${ACR_LOGIN_SERVER}/priceradar/workers:${TAG}" backend
+                docker build \
+                  --build-arg "NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}" \
+                  -t "${ACR_LOGIN_SERVER}/priceradar/frontend:${TAG}" frontend
+                docker build -f ml/Dockerfile -t "${ACR_LOGIN_SERVER}/priceradar/ml:${TAG}" .
+                docker push "${ACR_LOGIN_SERVER}/priceradar/backend:${TAG}"
+                docker push "${ACR_LOGIN_SERVER}/priceradar/workers:${TAG}"
+                docker push "${ACR_LOGIN_SERVER}/priceradar/frontend:${TAG}"
+                docker push "${ACR_LOGIN_SERVER}/priceradar/ml:${TAG}"
+      - deployment: DeployStagingEnv
+        displayName: Deploy to staging (environment check)
+        dependsOn: PushStagingAcr
+        environment: staging
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  displayName: Migrate and update staging apps
+                  inputs:
+                    azureSubscription: $(azureServiceConnectionStaging)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    addSpnToEnvironment: false
+                    inlineScript: |
+                      set -euo pipefail
+                      export IMAGE_TAG="$(imageTag)"
+                      bash infrastructure/pipelines/scripts/deploy_containerapps.sh
+                      bash infrastructure/pipelines/scripts/run_migrate_job.sh
+                - task: UsePythonVersion@0
+                  inputs:
+                    versionSpec: $(pythonVersion)
+                - script: |
+                    set -euo pipefail
+                    python infrastructure/pipelines/scripts/smoke_test.py \
+                      --backend-url "${SMOKE_BACKEND_URL:?}" \
+                      --frontend-url "${SMOKE_FRONTEND_URL:?}" \
+                      --ml-url "${SMOKE_ML_URL:-}"
+                  displayName: Staging smoke tests
+
+  - stage: DeployProduction
+    displayName: 15-16. Production approval and deploy
+    dependsOn: DeployStaging
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    variables:
+      - group: priceradar-prod
+    jobs:
+      - job: PushProdAcr
+        displayName: Push the same immutable tag to production ACR
+        steps:
+          - checkout: self
+          - task: AzureCLI@2
+            displayName: Build and push production ACR
+            inputs:
+              azureSubscription: $(azureServiceConnectionProd)
+              scriptType: bash
+              scriptLocation: inlineScript
+              addSpnToEnvironment: false
+              inlineScript: |
+                set -euo pipefail
+                az acr login --name "${ACR_NAME}"
+                TAG="$(imageTag)"
+                docker build --target api -t "${ACR_LOGIN_SERVER}/priceradar/backend:${TAG}" backend
+                docker build --target worker -t "${ACR_LOGIN_SERVER}/priceradar/workers:${TAG}" backend
+                docker build \
+                  --build-arg "NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}" \
+                  -t "${ACR_LOGIN_SERVER}/priceradar/frontend:${TAG}" frontend
+                docker build -f ml/Dockerfile -t "${ACR_LOGIN_SERVER}/priceradar/ml:${TAG}" .
+                docker push "${ACR_LOGIN_SERVER}/priceradar/backend:${TAG}"
+                docker push "${ACR_LOGIN_SERVER}/priceradar/workers:${TAG}"
+                docker push "${ACR_LOGIN_SERVER}/priceradar/frontend:${TAG}"
+                docker push "${ACR_LOGIN_SERVER}/priceradar/ml:${TAG}"
+      - deployment: DeployProdEnv
+        displayName: Deploy to production (environment approval required)
+        dependsOn: PushProdAcr
+        environment: production
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  displayName: Migrate and update production apps
+                  inputs:
+                    azureSubscription: $(azureServiceConnectionProd)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    addSpnToEnvironment: false
+                    inlineScript: |
+                      set -euo pipefail
+                      export IMAGE_TAG="$(imageTag)"
+                      bash infrastructure/pipelines/scripts/deploy_containerapps.sh
+                      bash infrastructure/pipelines/scripts/run_migrate_job.sh
+                - task: UsePythonVersion@0
+                  inputs:
+                    versionSpec: $(pythonVersion)
+                - script: |
+                    set -euo pipefail
+                    python infrastructure/pipelines/scripts/smoke_test.py \
+                      --backend-url "${SMOKE_BACKEND_URL:?}" \
+                      --frontend-url "${SMOKE_FRONTEND_URL:?}" \
+                      --ml-url "${SMOKE_ML_URL:-}"
+                  displayName: Production smoke tests

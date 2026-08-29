@@ -1,0 +1,61 @@
+# Checkov configuration for PriceRadar India Terraform.
+#
+# Scans run in CI (Azure DevOps + GitHub Actions) and locally:
+#   checkov -d infrastructure/terraform --config-file infrastructure/terraform/checkov.yaml
+#
+# Skip IDs below are documented exceptions, not a blanket suppression of application CVEs.
+
+framework:
+  - terraform
+
+compact: true
+quiet: false
+soft-fail: false
+
+skip-check:
+  # Microsoft-hosted Azure DevOps / GitHub agents need Key Vault and storage data-plane
+  # access during terraform apply and to read remote state. Operators should set
+  # kv_allowed_ip_rules and/or use a self-hosted agent on the VNet, then enable
+  # private endpoints. See infrastructure/CICD.md and infrastructure/IDENTITY.md.
+  - CKV_AZURE_109
+  - CKV_AZURE_189
+  - CKV_AZURE_59
+  - CKV2_AZURE_33
+  - CKV2_AZURE_32
+
+  # ACR remains reachable so Microsoft-hosted agents can `docker push`. Runtime pull uses
+  # managed identity (AcrPull). Premium + zone redundancy + data endpoints are enabled in prod.
+  # Content trust, geo-replication, and quarantine require Premium and break Standard (dev/staging)
+  # plus typical CI push workflows; image scanning is enforced in CI (Trivy) instead.
+  - CKV_AZURE_139
+  - CKV_AZURE_233
+  - CKV_AZURE_164
+  - CKV_AZURE_165
+  - CKV_AZURE_166
+  - CKV_AZURE_167
+  - CKV_AZURE_237
+
+  # Redis Basic/Standard (dev/staging) cannot use private endpoints or Standard replication.
+  # Prod uses Premium with VNet injection and public_network_access_enabled = false.
+  - CKV_AZURE_89
+  - CKV_AZURE_230
+
+  # PostgreSQL uses VNet injection (delegated subnet + private DNS), not a separate private
+  # endpoint. Geo-redundant backups are enabled on prod (GP SKU); burstable SKUs used in
+  # dev/staging do not support geo-redundant backup.
+  - CKV2_AZURE_57
+  - CKV_AZURE_136
+
+  # Storage uses Azure-managed encryption keys. Customer-managed keys would require an extra
+  # Key Vault key and rotation process operators can add later without replacing the account.
+  - CKV2_AZURE_1
+
+  # Queue logging is not applicable: this account is Blob-only (ML artifacts / tfstate).
+  # Blob diagnostic analytics require a pre-existing Log Analytics destination in bootstrap
+  # (chicken-and-egg). Blob versioning and delete retention are enabled instead.
+  - CKV_AZURE_33
+  - CKV2_AZURE_21
+
+  # Resource group deletion protection is enabled in the azurerm provider features block
+  # (prevent_deletion_if_contains_resources). Checkov's RG-level check does not see that.
+  - CKV_AZURE_206

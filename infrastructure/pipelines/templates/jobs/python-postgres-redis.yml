@@ -1,0 +1,19 @@
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: $(pythonVersion)
+  - script: |
+      set -euo pipefail
+      docker run -d --name pr-postgres \
+        -e POSTGRES_USER="$(POSTGRES_USER)" \
+        -e POSTGRES_PASSWORD="$(POSTGRES_PASSWORD)" \
+        -e POSTGRES_DB="$(POSTGRES_DB)" \
+        -p 5432:5432 postgres:16-alpine
+      docker run -d --name pr-redis -p 6379:6379 redis:7-alpine
+      for i in $(seq 1 30); do
+        docker exec pr-postgres pg_isready -U "$(POSTGRES_USER)" -d "$(POSTGRES_DB)" && break
+        sleep 2
+      done
+      docker exec pr-redis redis-cli ping
+      python -m pip install --upgrade pip
+    displayName: Start PostgreSQL and Redis, set up Python

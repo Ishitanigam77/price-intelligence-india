@@ -12,7 +12,8 @@ price history, detects genuine price drops and sale events, and recommends wheth
 > The **Next.js frontend** (`frontend/`) consumes catalogue APIs for search, product details,
 > price history, deals, retailers, and about. **Phase 12** adds Clerk authentication and
 > user-owned watchlists, saved products, target prices, alerts, and profile (see
-> `AUTHENTICATION.md`). Live retailer E2E is not run without approved credentials —
+> `AUTHENTICATION.md`). **Phase 15** adds production DevOps (GitHub + Azure DevOps CI/CD,
+> Docker, ACR, Terraform for Azure). Live retailer E2E is not run without approved credentials —
 > see `backend/app/retailer_adapters/INTEGRATIONS.md`.
 
 ## Why This Exists
@@ -80,20 +81,16 @@ never fabricates retailer data.
 │   └── models/                   # Artifact versioning (Phase 10)
 │   └── notebooks/                # Exploratory analysis
 ├── infrastructure/
-│   ├── terraform/                 # Azure infrastructure as code (later increment)
-│   ├── docker/                    # docker-compose.yml: local dev stack (backend+Postgres+Redis)
-│   └── pipelines/                 # Azure DevOps pipeline definitions (later increment)
+│   ├── terraform/                 # Azure IaC: modules + dev/staging/prod (Phase 15)
+│   ├── docker/                    # docker-compose.yml: local stack (API, worker, frontend, ML, Postgres, Redis)
+│   └── pipelines/                 # Azure DevOps YAML (app CI/CD + Terraform; Phase 15)
 ├── .cursor/rules/                 # Cursor project rules enforcing the phase-by-phase process
 ├── .env.example                   # Documented environment variables (no real secrets)
 └── .gitignore
 ```
 
-Directories not yet populated with implementation code (`retailer_adapters/`, `collectors/`,
-`normalization/`, `matching/`, `pricing/`, `sales/`, `recommendation/`, `notifications/`,
-`workers/`, `frontend/`, `ml/`, `infrastructure/terraform/`, `infrastructure/pipelines/`, ...)
-currently contain only a `README.md` describing their intended purpose.
-`infrastructure/docker/` now contains the local development Docker Compose file described
-above.
+Directories not yet populated with implementation code are called out in their own README files.
+`infrastructure/` contains Phase 15 Terraform, Azure DevOps pipelines, and local Docker Compose.
 
 ## Development Process
 
@@ -107,6 +104,8 @@ that AI-assisted contributions follow the same process.
 See [`backend/README.md`](./backend/README.md) for API setup, migrations, and backend tests.
 See [`frontend/README.md`](./frontend/README.md) for the Next.js app (`NEXT_PUBLIC_API_BASE_URL`,
 dev server, lint, typecheck, and frontend tests).
+See [`infrastructure/CICD.md`](./infrastructure/CICD.md) for CI/CD, Terraform, ACR, and
+how to deploy safely (Phase 15).
 
 ## License
 

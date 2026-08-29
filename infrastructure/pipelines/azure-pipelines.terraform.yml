@@ -1,0 +1,215 @@
+# Terraform workflow. Never contains terraform destroy.
+#
+# Production apply runs only inside the Azure DevOps Environment `production`
+# after that environment's approval/check succeeds.
+#
+# Usage: set pipeline variable TF_ENVIRONMENT to dev, staging, or prod
+# (or pass it when queuing the pipeline).
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - infrastructure/terraform/**
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - infrastructure/terraform/**
+
+pool:
+  vmImage: ubuntu-latest
+
+parameters:
+  - name: environment
+    displayName: Terraform environment
+    type: string
+    default: dev
+    values:
+      - dev
+      - staging
+      - prod
+
+variables:
+  tfWorkingDir: infrastructure/terraform/environments/${{ parameters.environment }}
+  azureServiceConnectionDev: azure-sc-dev
+  azureServiceConnectionStaging: azure-sc-staging
+  azureServiceConnectionProd: azure-sc-prod
+
+stages:
+  - stage: FmtValidateScan
+    displayName: terraform fmt, validate, security scan
+    jobs:
+      - job: Static
+        steps:
+          - checkout: self
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: "1.6.6"
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: "3.12"
+          - script: |
+              set -euo pipefail
+              terraform fmt -check -recursive infrastructure/terraform
+              terraform -chdir="$(tfWorkingDir)" init -backend=false -input=false
+              terraform -chdir="$(tfWorkingDir)" validate
+              python -m pip install checkov
+              checkov -d infrastructure/terraform --config-file infrastructure/terraform/checkov.yaml
+            displayName: fmt, validate, checkov
+
+  - stage: Plan
+    displayName: terraform plan
+    dependsOn: FmtValidateScan
+    jobs:
+      - job: PlanEnv
+        variables:
+          - group: priceradar-${{ parameters.environment }}
+        steps:
+          - checkout: self
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: "1.6.6"
+          - task: AzureCLI@2
+            displayName: terraform init and plan
+            inputs:
+              azureSubscription: azure-sc-${{ parameters.environment }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              addSpnToEnvironment: false
+              inlineScript: |
+                set -euo pipefail
+                terraform -chdir="$(tfWorkingDir)" init -input=false \
+                  -backend-config="resource_group_name=${TF_STATE_RESOURCE_GROUP}" \
+                  -backend-config="storage_account_name=${TF_STATE_STORAGE_ACCOUNT}" \
+                  -backend-config="container_name=${TF_STATE_CONTAINER}" \
+                  -backend-config="key=${{ parameters.environment }}.terraform.tfstate" \
+                  -backend-config="use_azuread_auth=true"
+                terraform -chdir="$(tfWorkingDir)" plan -input=false -out="$(Build.ArtifactStagingDirectory)/tfplan" \
+                  -var="image_tag=${IMAGE_TAG:-bootstrap-placeholder}" \
+                  -var="container_apps_enabled=${CONTAINER_APPS_ENABLED:-true}" \
+                  -var="cicd_principal_id=${CICD_PRINCIPAL_ID:-}" \
+                  -var="alert_email=${ALERT_EMAIL:-}" \
+                  -var="cors_allowed_origins=${CORS_ALLOWED_ORIGINS:-}" \
+                  -var="clerk_publishable_key=${CLERK_PUBLISHABLE_KEY:-}" \
+                  -var="clerk_jwks_url=${CLERK_JWKS_URL:-}" \
+                  -var="clerk_issuer=${CLERK_ISSUER:-}" \
+                  -var="clerk_audience=${CLERK_AUDIENCE:-}"
+            env:
+              ARM_USE_OIDC: true
+          - publish: $(Build.ArtifactStagingDirectory)/tfplan
+            artifact: tfplan-${{ parameters.environment }}
+            displayName: Publish tfplan
+
+  - stage: ApplyDev
+    displayName: terraform apply (dev)
+    dependsOn: Plan
+    condition: and(succeeded(), eq('${{ parameters.environment }}', 'dev'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: ApplyDevEnv
+        environment: development
+        variables:
+          - group: priceradar-dev
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - download: current
+                  artifact: tfplan-dev
+                - task: TerraformInstaller@1
+                  inputs:
+                    terraformVersion: "1.6.6"
+                - task: AzureCLI@2
+                  displayName: terraform apply saved plan
+                  inputs:
+                    azureSubscription: $(azureServiceConnectionDev)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    addSpnToEnvironment: false
+                    inlineScript: |
+                      set -euo pipefail
+                      terraform -chdir="$(tfWorkingDir)" init -input=false \
+                        -backend-config="resource_group_name=${TF_STATE_RESOURCE_GROUP}" \
+                        -backend-config="storage_account_name=${TF_STATE_STORAGE_ACCOUNT}" \
+                        -backend-config="container_name=${TF_STATE_CONTAINER}" \
+                        -backend-config="key=dev.terraform.tfstate" \
+                        -backend-config="use_azuread_auth=true"
+                      terraform -chdir="$(tfWorkingDir)" apply -input=false "$(Pipeline.Workspace)/tfplan-dev/tfplan"
+
+  - stage: ApplyStaging
+    displayName: terraform apply (staging)
+    dependsOn: Plan
+    condition: and(succeeded(), eq('${{ parameters.environment }}', 'staging'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: ApplyStagingEnv
+        environment: staging
+        variables:
+          - group: priceradar-staging
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - download: current
+                  artifact: tfplan-staging
+                - task: TerraformInstaller@1
+                  inputs:
+                    terraformVersion: "1.6.6"
+                - task: AzureCLI@2
+                  displayName: terraform apply saved plan
+                  inputs:
+                    azureSubscription: $(azureServiceConnectionStaging)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    addSpnToEnvironment: false
+                    inlineScript: |
+                      set -euo pipefail
+                      terraform -chdir="$(tfWorkingDir)" init -input=false \
+                        -backend-config="resource_group_name=${TF_STATE_RESOURCE_GROUP}" \
+                        -backend-config="storage_account_name=${TF_STATE_STORAGE_ACCOUNT}" \
+                        -backend-config="container_name=${TF_STATE_CONTAINER}" \
+                        -backend-config="key=staging.terraform.tfstate" \
+                        -backend-config="use_azuread_auth=true"
+                      terraform -chdir="$(tfWorkingDir)" apply -input=false "$(Pipeline.Workspace)/tfplan-staging/tfplan"
+
+  - stage: ApplyProduction
+    displayName: terraform apply (production, approval required)
+    dependsOn: Plan
+    condition: and(succeeded(), eq('${{ parameters.environment }}', 'prod'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: ApplyProdEnv
+        environment: production
+        variables:
+          - group: priceradar-prod
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - download: current
+                  artifact: tfplan-prod
+                - task: TerraformInstaller@1
+                  inputs:
+                    terraformVersion: "1.6.6"
+                - task: AzureCLI@2
+                  displayName: terraform apply saved plan after environment approval
+                  inputs:
+                    azureSubscription: $(azureServiceConnectionProd)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    addSpnToEnvironment: false
+                    inlineScript: |
+                      set -euo pipefail
+                      terraform -chdir="$(tfWorkingDir)" init -input=false \
+                        -backend-config="resource_group_name=${TF_STATE_RESOURCE_GROUP}" \
+                        -backend-config="storage_account_name=${TF_STATE_STORAGE_ACCOUNT}" \
+                        -backend-config="container_name=${TF_STATE_CONTAINER}" \
+                        -backend-config="key=prod.terraform.tfstate" \
+                        -backend-config="use_azuread_auth=true"
+                      terraform -chdir="$(tfWorkingDir)" apply -input=false "$(Pipeline.Workspace)/tfplan-prod/tfplan"

@@ -1,16 +1,19 @@
 # docker/
 
-Dockerfiles and compose configuration for containerizing the frontend, backend, workers, and ML
-services. Introduced per-service as each service is actually built, not speculatively.
-
-**Status**: `docker-compose.yml` implemented as part of the backend's FastAPI application
-foundation — a **local development** stack (backend + PostgreSQL + Redis, with a persistent
-PostgreSQL volume and service health checks). The backend's own `Dockerfile` lives at
-`../../backend/Dockerfile` (colocated with the service it builds), with
-`docker-compose.yml`'s `build.context` pointing at it. No frontend/worker/ML Dockerfiles and no
-production Azure/Kubernetes deployment exist yet — see `../../ROADMAP.md`.
+Dockerfiles live next to the services they build (`backend/Dockerfile`, `frontend/Dockerfile`, `ml/Dockerfile`). This directory holds the **local development** Compose file.
 
 ```bash
-cp ../../.env.example ../../.env   # then edit with your own local values
+cp ../../.env.example ../../.env   # then edit; never commit
 docker compose -f docker-compose.yml up --build
 ```
+
+| Service | Image |
+|---|---|
+| postgres | `postgres:16-alpine` |
+| redis | `redis:7-alpine` |
+| backend | `backend/Dockerfile` `--target api` |
+| worker | `backend/Dockerfile` `--target worker` (`RUN_DB_MIGRATIONS=false`) |
+| frontend | `frontend/Dockerfile` |
+| ml | `ml/Dockerfile` (liveness on port 8080; override command to train) |
+
+Production hosting is Azure Container Apps (`../terraform/`), not this Compose file.

@@ -1,13 +1,9 @@
 # PROJECT_ARCHITECTURE.md — PriceRadar India
 
-> Status: **Phase 1 — Core Domain Model & Database Foundation implemented**, plus a **FastAPI
-> backend application foundation** (application factory, `/api/v1/` versioned routing, Redis
-> infrastructure, centralized exception handling, Docker support — see `backend/README.md`)
-> and the **retailer adapter framework** with fixture-backed mock adapters (see
-> `backend/app/retailer_adapters/` and `RETAILER_ARCHITECTURE.md`). Real retailer
-> integrations, matching, pricing, ML, and other later-phase business logic described below
-> are still targets, not yet built. This document describes the target architecture the
-> codebase will grow into, phase by phase.
+> Status: **Phases 1–14A application work implemented** (domain, API, adapters, matching,
+> pricing, sales, ML, recommendations, Clerk, collection workers). **Phase 15** adds Azure
+> Terraform, Azure DevOps/GitHub CI/CD, and production Docker images — see
+> `infrastructure/CICD.md`. This document describes the target architecture.
 
 ## 1. Vision
 

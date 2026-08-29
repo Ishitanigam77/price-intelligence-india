@@ -157,6 +157,17 @@ Implemented after Phase 13 collection. **Only** this batch:
 - Phase 13 collection architecture and the comparison engine are not modified.
 - **Explicitly excluded:** Phase 14B and later retailer-expansion work.
 
+## Phase 15 — Production DevOps (this increment)
+
+Implemented after Phase 14A. Production-grade CI/CD and Azure infrastructure **as code** only:
+
+- GitHub Actions CI (validate, lint, unit/integration tests including Phase 13/14 tests, security scanning, Docker builds). No GitHub deploy.
+- Azure DevOps YAML pipelines for the full CD path: Docker → ACR (immutable tags) → development → smoke tests → staging → **Azure DevOps Environment approval** → production. No `terraform destroy`. Production is not automatic.
+- Multi-stage Docker images for frontend, backend, workers, and ML; local Compose updated to those services.
+- Terraform for networking, ACR, PostgreSQL, Redis, Key Vault, Container Apps, monitoring, and storage across **dev**, **staging**, and **prod**. Existing Azure resources must be imported, not recreated.
+
+**Explicitly excluded:** Phase 16 and later. No additional retailers, no application redesign, no automatic production deploy from this repository change.
+
 ## Phase Ordering Notes
 
 - Phases are sequential by default but a later phase may be pulled forward only on explicit
