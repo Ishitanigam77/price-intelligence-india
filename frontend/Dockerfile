@@ -59,7 +59,9 @@ ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0
 
-RUN addgroup --system --gid 1001 nodejs \
+# Apply Alpine security updates so known-fixed OS CVEs are not shipped in the runtime image.
+RUN apk upgrade --no-cache \
+    && addgroup --system --gid 1001 nodejs \
     && adduser --system --uid 1001 --ingroup nodejs nextjs
 
 COPY --from=builder /app/public ./public

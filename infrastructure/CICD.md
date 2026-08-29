@@ -81,7 +81,7 @@ Any failure in 1–11 skips deploy. Failed security or tests cannot proceed to d
 | `priceradar/workers` | `backend/Dockerfile` | `worker` | `appuser` | Celery ping |
 | `priceradar/ml` | `ml/Dockerfile` (repo-root context) | `runtime` | `appuser` | `GET /health` on port 8080 |
 
-Multi-stage builds, lockfile/pyproject installs, no secrets in layers. `CLERK_SECRET_KEY` is runtime-only. `NEXT_PUBLIC_*` are build-args because Next.js inlines them for the browser (they are not server secrets).
+Multi-stage builds, lockfile/pyproject installs, no secrets in layers. `CLERK_SECRET_KEY` is runtime-only. `NEXT_PUBLIC_*` are build-args because Next.js inlines them for the browser (they are not server secrets). Runtime stages run `apt-get upgrade` / `apk upgrade` so Debian/Alpine security patches (for example OpenSSL) land in the image Trivy scans; do not ignore HIGH/CRITICAL image CVEs that already have a fix.
 
 Local stack: `infrastructure/docker/docker-compose.yml` — PostgreSQL, Redis, backend, worker, frontend, ML. Copy `.env.example` → `.env` first.
 

@@ -52,7 +52,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     ML_HEALTH_PORT=8080 \
     RUN_DB_MIGRATIONS=false
 
+# Upgrade the slim base so known-fixed OS CVEs (e.g. OpenSSL CVE-2026-14456) are not
+# shipped in the scanned runtime image. Do not ignore those findings in Trivy.
 RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends libpq5 curl \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --shell /usr/sbin/nologin appuser
