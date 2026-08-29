@@ -32,8 +32,14 @@ def sanitize_text(value: str | None, *, max_length: int = 1000) -> str | None:
 
 
 def sanitize_mapping(payload: dict[str, Any]) -> dict[str, Any]:
-    """Redact credential-looking keys in a structured log/metrics payload."""
-    return {str(key): redact(str(key), value) for key, value in payload.items()}
+    """Redact credential-looking keys and secret-looking values in log payloads."""
+    cleaned: dict[str, Any] = {}
+    for key, value in payload.items():
+        redacted = redact(str(key), value)
+        if isinstance(redacted, str):
+            redacted = sanitize_text(redacted) or redacted
+        cleaned[str(key)] = redacted
+    return cleaned
 
 
 def assert_no_secrets(payload: dict[str, Any]) -> None:

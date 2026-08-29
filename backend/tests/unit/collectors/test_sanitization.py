@@ -36,3 +36,15 @@ def test_sanitize_mapping_redacts_credential_keys() -> None:
     assert payload["authorization"] == REDACTED
     assert payload["job_id"] == "abc"
     assert payload["retailer_id"] == "mock-retailer-a"
+
+
+def test_sanitize_mapping_redacts_redis_credentials_in_values() -> None:
+    payload = sanitize_mapping(
+        {
+            "job_id": "abc",
+            "redis_url": "redis://:hunter2@localhost:6379/1",
+        }
+    )
+    assert payload["job_id"] == "abc"
+    assert "hunter2" not in payload["redis_url"]
+    assert REDACTED in payload["redis_url"]

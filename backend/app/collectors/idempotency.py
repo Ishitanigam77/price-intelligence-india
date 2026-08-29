@@ -45,7 +45,8 @@ def build_idempotency_key(
     """Return a stable, length-bounded idempotency key."""
     canonical = _canonical_scope(scope)
     if run_key:
-        canonical = f"{canonical}|run={_safe_token(run_key)}" if canonical else f"run={_safe_token(run_key)}"
+        token = _safe_token(run_key)
+        canonical = f"{canonical}|run={token}" if canonical else f"run={token}"
     raw = f"{job_type.value}|{retailer_id}|{canonical}"
     if len(raw) <= _KEY_MAX_LENGTH:
         return raw

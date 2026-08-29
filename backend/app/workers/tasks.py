@@ -42,9 +42,7 @@ def _run_collection_job(
     settings = get_settings()
     try:
         registry = build_retailer_registry(settings=settings)
-        orchestrator = CollectionOrchestrator(
-            session, registry, metrics_sink=NullMetricsSink()
-        )
+        orchestrator = CollectionOrchestrator(session, registry, metrics_sink=NullMetricsSink())
         result: CollectionRunResult = asyncio.run(
             orchestrator.run(
                 job_type,

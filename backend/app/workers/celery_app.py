@@ -6,9 +6,8 @@ from celery import Celery
 
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
-from app.workers.celery_config import build_celery_config, celery_config_public_view
-
 from app.observability.logging import get_logger
+from app.workers.celery_config import build_celery_config, celery_config_public_view
 
 logger = get_logger(__name__)
 

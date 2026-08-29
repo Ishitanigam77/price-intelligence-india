@@ -46,9 +46,7 @@ async def run_product_search(
         ProductSearchQuery(text=query_text, category=category, limit=limit)
     )
     persisted = ingestor.ingest_search_result(adapter, result)
-    return RetailerJobOutcome(
-        succeeded=persisted, skipped=max(0, len(result.products) - persisted)
-    )
+    return RetailerJobOutcome(succeeded=persisted, skipped=max(0, len(result.products) - persisted))
 
 
 async def run_product_refresh(

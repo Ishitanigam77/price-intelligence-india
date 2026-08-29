@@ -3,7 +3,11 @@
 import pytest
 
 from app.collectors.config import CollectionConfig
-from app.collectors.errors import CollectionFailure, CollectionPermanentError, CollectionTimeoutError
+from app.collectors.errors import (
+    CollectionFailure,
+    CollectionPermanentError,
+    CollectionTimeoutError,
+)
 from app.collectors.retry import backoff_seconds, is_retryable
 from app.domain.enums import CollectionErrorCategory
 
@@ -50,4 +54,11 @@ def test_max_attempts_never_unbounded() -> None:
     config = CollectionConfig(max_retries=2)
     assert config.max_attempts == 3
     error = CollectionTimeoutError("slow", retailer_id="store-a")
-    assert is_retryable(error, attempt=config.max_attempts, max_attempts=config.max_attempts) is False
+    assert (
+        is_retryable(
+            error,
+            attempt=config.max_attempts,
+            max_attempts=config.max_attempts,
+        )
+        is False
+    )

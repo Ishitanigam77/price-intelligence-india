@@ -11,8 +11,7 @@ import time
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.orm import Session
 
@@ -28,7 +27,10 @@ from app.collectors.jobs import (
     run_product_search,
     run_sale_event_refresh,
 )
-from app.collectors.mapping import collection_failure_from_adapter, collection_failure_from_exception
+from app.collectors.mapping import (
+    collection_failure_from_adapter,
+    collection_failure_from_exception,
+)
 from app.collectors.metrics import CollectionMetricsRecorder
 from app.collectors.rate_limit import CollectionRateLimiterRegistry
 from app.collectors.retry import backoff_seconds, is_retryable
@@ -46,6 +48,9 @@ from app.retailer_adapters.base.errors import RetailerAdapterError
 from app.retailer_adapters.base.interface import RetailerAdapter
 from app.retailer_adapters.base.registry import RetailerRegistry
 from app.sales.detection import SaleEventDetector
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 logger = get_logger(__name__)
 
@@ -100,8 +105,16 @@ class CollectionRunResult:
         statuses = {item.status for item in self.retailers}
         if statuses <= {CollectionJobStatus.SUCCESS}:
             return CollectionJobStatus.SUCCESS
-        if CollectionJobStatus.SUCCESS in statuses or CollectionJobStatus.PARTIAL_SUCCESS in statuses:
-            if CollectionJobStatus.FAILED in statuses or CollectionJobStatus.PARTIAL_SUCCESS in statuses:
+        mixed = (
+            CollectionJobStatus.SUCCESS in statuses
+            or CollectionJobStatus.PARTIAL_SUCCESS in statuses
+        )
+        if mixed:
+            failed_or_partial = (
+                CollectionJobStatus.FAILED in statuses
+                or CollectionJobStatus.PARTIAL_SUCCESS in statuses
+            )
+            if failed_or_partial:
                 return CollectionJobStatus.PARTIAL_SUCCESS
             return CollectionJobStatus.SUCCESS
         return CollectionJobStatus.FAILED
@@ -266,7 +279,14 @@ class CollectionOrchestrator:
         started_mono = self._monotonic()
 
         try:
-            outcome = await self._execute_with_policy(job, adapter, query=query, limit=limit, category=category, skus=skus)
+            outcome = await self._execute_with_policy(
+                job,
+                adapter,
+                query=query,
+                limit=limit,
+                category=category,
+                skus=skus,
+            )
         except CollectionFailure as error:
             duration_ms = (self._monotonic() - started_mono) * 1000.0
             self._finalize_failure(job, adapter, error=error, duration_ms=duration_ms)
@@ -431,9 +451,7 @@ class CollectionOrchestrator:
     ) -> RetailerJobOutcome:
         search_query = query if query is not None else self._config.default_search_query
         search_limit = limit if limit is not None else self._config.default_search_limit
-        search_category = (
-            category if category is not None else self._config.default_search_category
-        )
+        search_category = category if category is not None else self._config.default_search_category
         if job_type is CollectionJobType.PRODUCT_SEARCH:
             return await run_product_search(
                 adapter,
@@ -510,16 +528,12 @@ class CollectionOrchestrator:
         self, job: CollectionJob, errors: Sequence[CollectionFailure], *, attempt: int
     ) -> None:
         for error in errors:
-            self._record_error(
-                job, error, attempt=attempt, max_attempts=self._config.max_attempts
-            )
+            self._record_error(job, error, attempt=attempt, max_attempts=self._config.max_attempts)
 
     async def _record_health_and_freshness(self, adapter: RetailerAdapter) -> None:
         health = await adapter.health_check()
         self._metrics.retailer_health(adapter.retailer_id, health.status)
-        age = self._ingestor.newest_observation_age_seconds(
-            adapter.retailer_id, now=self._clock()
-        )
+        age = self._ingestor.newest_observation_age_seconds(adapter.retailer_id, now=self._clock())
         if age is not None:
             self._metrics.price_freshness(adapter.retailer_id, age)
 

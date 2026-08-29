@@ -43,9 +43,7 @@ class CollectionIngestor:
         self._retailers = RetailerRepository(session)
         self._events = SaleEventRepository(session)
 
-    def ingest_search_result(
-        self, adapter: RetailerAdapter, result: ProductSearchResult
-    ) -> int:
+    def ingest_search_result(self, adapter: RetailerAdapter, result: ProductSearchResult) -> int:
         persisted = 0
         for product in result.products:
             if self.ingest_adapter_product(adapter, product) is not None:
@@ -58,9 +56,7 @@ class CollectionIngestor:
         normalized = adapter.normalize_product(product)
         return self._discovery.persist_discovered_listing(product, normalized)
 
-    def ingest_price(
-        self, listing, price: PriceObservation
-    ) -> PriceSnapshot | None:
+    def ingest_price(self, listing, price: PriceObservation) -> PriceSnapshot | None:
         return self._discovery.persist_price_observation(listing, price.seller, price)
 
     def ingest_availability(
@@ -145,9 +141,7 @@ class CollectionIngestor:
             created += 1
         return created
 
-    def newest_observation_age_seconds(
-        self, retailer_slug: str, *, now
-    ) -> float | None:
+    def newest_observation_age_seconds(self, retailer_slug: str, *, now) -> float | None:
         retailer = self._retailers.get_by_slug(retailer_slug)
         if retailer is None:
             return None

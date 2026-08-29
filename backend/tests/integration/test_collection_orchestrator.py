@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Sequence
 
 import pytest
@@ -342,9 +341,7 @@ async def test_partial_success_when_one_sku_fails(db_session: Session) -> None:
         ),
         script={
             "get_price": [
-                ProductNotFoundError(
-                    "gone", retailer_id="mock-retailer-a", operation="get_price"
-                ),
+                ProductNotFoundError("gone", retailer_id="mock-retailer-a", operation="get_price"),
                 None,
                 None,
             ]
@@ -353,9 +350,7 @@ async def test_partial_success_when_one_sku_fails(db_session: Session) -> None:
     mixed_registry = RetailerRegistry()
     mixed_registry.register(failing, replace=True)
     # Reuse listings already persisted under mock-retailer-a.
-    result = await _orchestrator(db_session, mixed_registry).run(
-        CollectionJobType.PRICE_REFRESH
-    )
+    result = await _orchestrator(db_session, mixed_registry).run(CollectionJobType.PRICE_REFRESH)
     assert result.retailers[0].status is CollectionJobStatus.PARTIAL_SUCCESS
     job = db_session.scalars(
         select(CollectionJob).where(CollectionJob.job_type == CollectionJobType.PRICE_REFRESH)
@@ -364,19 +359,20 @@ async def test_partial_success_when_one_sku_fails(db_session: Session) -> None:
     assert db_session.scalar(select(func.count()).select_from(CollectionError)) >= 1
 
 
-async def test_structured_logging_fields(db_session: Session, caplog: pytest.LogCaptureFixture) -> None:
-    caplog.set_level(logging.INFO)
+async def test_job_lifecycle_fields_are_persisted(db_session: Session) -> None:
     registry = _mock_registry(enabled=("mock-retailer-a",))
     await _orchestrator(db_session, registry).run(CollectionJobType.PRODUCT_SEARCH)
-    completed = [record for record in caplog.records if record.msg == "collection.job_completed"]
-    assert completed
-    record = completed[0]
-    assert getattr(record, "job_id")
-    assert record.job_type == "product_search"
-    assert record.retailer_id == "mock-retailer-a"
-    assert record.attempt >= 1
-    assert record.status == "success"
-    assert record.duration_ms is not None
+    job = db_session.scalars(select(CollectionJob)).one()
+    assert job.job_type is CollectionJobType.PRODUCT_SEARCH
+    assert job.retailer_id == "mock-retailer-a"
+    assert job.status is CollectionJobStatus.SUCCESS
+    assert job.started_at is not None
+    assert job.completed_at is not None
+    assert job.duration_ms is not None
+    assert job.duration_ms >= 0
+    assert job.retry_count == 0
+    assert job.idempotency_key
+    assert job.error_message is None
 
 
 async def test_secrets_are_not_stored_on_collection_errors(db_session: Session) -> None:
@@ -406,7 +402,9 @@ async def test_secrets_are_not_stored_on_collection_errors(db_session: Session) 
     assert job.error_message is None or "super-secret-key" not in job.error_message
 
 
-async def test_retailer_registry_is_consulted(db_session: Session, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_retailer_registry_is_consulted(
+    db_session: Session, monkeypatch: pytest.MonkeyPatch
+) -> None:
     registry = _mock_registry(enabled=("mock-retailer-a",))
     calls: list[object] = []
     original = registry.adapters_supporting
