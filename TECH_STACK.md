@@ -98,4 +98,5 @@ Technologies are introduced into the repository only when the phase that needs t
   not in Phase 0.
 - Playwright is only introduced for a specific, named, permitted retailer integration — never
   added speculatively.
-- ML libraries are introduced when there is real historical price data to train against.
+- ML libraries (XGBoost, NumPy) are introduced with Phase 10 sale-price prediction. They
+  train only on stored observations and sale events; missing history yields `INSUFFICIENT_DATA`.

@@ -74,17 +74,32 @@
 - XGBoost training pipeline with `INSUFFICIENT_DATA` fallback when history is inadequate.
 - Inference service consumed by the Recommendation Engine.
 
+> **Delivery note:** in the implemented sequence this work is **Phase 10** (after Phase 7
+> historical intelligence, Phase 8 frontend, and Phase 9 sale-event intelligence). See
+> Phase 10 below.
+
 ## Phase 9 — Recommendation Engine
 
 - BUY_NOW / WAIT / WATCH recommendation logic combining price intelligence, sale-event
   intelligence, and ML predictions.
 - Human-readable explanations for why a recommendation or offer was chosen.
 
-## Phase 10 — Retailer Ecosystem Expansion
+## Phase 10 — ML: Sale-Price Prediction (this increment)
 
-- Onboarding process/checklist for adding new retailer adapters at scale (targeting 100+
-  retailers over time), without modifying core engine code.
-- Retailer health monitoring and alerting on data collection issues.
+Implemented after Phase 9 sale-event intelligence. Scope matches the ML work originally
+listed under Phase 8 above:
+
+- Feature engineering from stored observations and sale events, with mandatory leakage
+  prevention (no future observations, no target-as-feature, inferred events not treated as
+  known upcoming sales).
+- Chronological train / validation / test splits (not random).
+- XGBoost training, MAE/RMSE evaluation, residual-based prediction intervals, model
+  versioning/metadata, and inference that always labels outputs as predictions.
+- `INSUFFICIENT_DATA` when legitimate history cannot support training or a reliable
+  evaluation split. Training data is never fabricated.
+
+Retailer-ecosystem expansion (onboarding at scale, collection-health alerting) remains a
+later increment and is **not** part of this phase.
 
 ## Phase 11 — Infrastructure & Production Readiness
 

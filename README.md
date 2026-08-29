@@ -5,10 +5,11 @@ network of Indian online retailers, identifies identical products/variants acros
 price history, detects genuine price drops and sale events, and recommends whether to
 **BUY_NOW**, **WAIT**, or **WATCH**.
 
-> **Status:** backend through historical price intelligence is implemented (see `backend/README.md`).
-> The **Next.js frontend** (`frontend/`) consumes those APIs for search, product details, price
-> history, deals, retailers, and about. Real retailer integrations, ML models, authentication,
-> notifications, and recommendations do **not** exist yet — see `ROADMAP.md`.
+> **Status:** backend through sale-event intelligence and sale-price prediction is implemented
+> (see `backend/README.md` and `ml/README.md`). The **Next.js frontend** (`frontend/`) consumes
+> catalogue APIs for search, product details, price history, deals, retailers, and about. Real
+> retailer integrations, authentication, notifications, and recommendations do **not** exist
+> yet — see `ROADMAP.md`.
 
 ## Why This Exists
 
@@ -66,9 +67,12 @@ never fabricates retailer data.
 │       ├── unit/
 │       └── integration/
 ├── ml/
-│   ├── training/                # XGBoost sale-price model training (Phase 8)
-│   ├── inference/                # Prediction serving (Phase 8)
-│   ├── features/                 # Feature engineering (Phase 8)
+│   ├── training/                # XGBoost sale-price model training (Phase 10)
+│   ├── inference/                # Prediction serving (Phase 10)
+│   ├── features/                 # Feature engineering (Phase 10)
+│   ├── preprocessing/            # Train-only encoding (Phase 10)
+│   ├── evaluation/               # MAE/RMSE and residual intervals (Phase 10)
+│   └── models/                   # Artifact versioning (Phase 10)
 │   └── notebooks/                # Exploratory analysis
 ├── infrastructure/
 │   ├── terraform/                 # Azure infrastructure as code (Phase 11)

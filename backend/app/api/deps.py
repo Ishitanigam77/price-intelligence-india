@@ -31,6 +31,7 @@ from app.services.price_history_service import PriceHistoryService
 from app.services.price_service import PriceService
 from app.services.product_discovery_service import ProductDiscoveryService
 from app.services.sale_event_service import SaleEventService
+from app.services.sale_price_prediction_service import SalePricePredictionService
 
 DbSession = Annotated[Session, Depends(get_db)]
 RedisClient = Annotated[Redis, Depends(get_redis)]
@@ -157,3 +158,15 @@ def get_sale_event_service(
 
 
 SaleEventServiceDep = Annotated[SaleEventService, Depends(get_sale_event_service)]
+
+
+def get_sale_price_prediction_service(
+    db: DbSession,
+    metrics_sink: MetricsSinkDep,
+) -> SalePricePredictionService:
+    return SalePricePredictionService(db, metrics_sink=metrics_sink)
+
+
+SalePricePredictionServiceDep = Annotated[
+    SalePricePredictionService, Depends(get_sale_price_prediction_service)
+]

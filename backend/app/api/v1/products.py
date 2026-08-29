@@ -8,8 +8,10 @@ ranks retailer offers per variant through `PriceComparisonService`. Historical i
 (`GET /products/{id}/history`) computes per-variant aggregates from stored observations
 through `PriceHistoryService`. Sale-event history (`GET /products/{id}/sale-history`) reports
 applicable sale windows and observed prices during those windows through `SaleEventService`.
-Different variants are always returned as distinct resources, never merged
-(`PROJECT_ARCHITECTURE.md` §5).
+Sale-price prediction (`GET /products/{id}/sale-price-prediction`) returns a labeled
+PREDICTED effective sale price (or INSUFFICIENT_DATA) through
+`SalePricePredictionService`. Different variants are always returned as distinct resources,
+never merged (`PROJECT_ARCHITECTURE.md` §5).
 """
 
 import uuid
@@ -27,6 +29,7 @@ from app.api.deps import (
     ProductRepositoryDep,
     ProductVariantRepositoryDep,
     SaleEventServiceDep,
+    SalePricePredictionServiceDep,
 )
 from app.api.errors import NotFoundError
 from app.schemas.common import Page
@@ -34,6 +37,7 @@ from app.schemas.comparison import ProductPricesRead
 from app.schemas.discovery import ProductSearchPage
 from app.schemas.history import ProductHistoryRead
 from app.schemas.pagination import PaginationParams, pagination_params
+from app.schemas.prediction import ProductSalePricePredictionRead
 from app.schemas.product import ProductRead, ProductVariantRead
 from app.schemas.sale_event import ProductSaleHistoryRead
 
@@ -186,6 +190,30 @@ def get_product_sale_history(
         until=until,
         limit=pagination.limit,
         offset=pagination.offset,
+    )
+
+
+@router.get(
+    "/{product_id}/sale-price-prediction",
+    response_model=ProductSalePricePredictionRead,
+)
+def get_product_sale_price_prediction(
+    product_id: uuid.UUID,
+    service: SalePricePredictionServiceDep,
+    variant_id: uuid.UUID | None = None,
+    as_of: datetime | None = None,
+    model_version: str | None = None,
+) -> ProductSalePricePredictionRead:
+    """Return a labeled predicted effective sale price per listing.
+
+    Predictions are never observed or calculated prices. When history or a trained model is
+    inadequate the status is `INSUFFICIENT_DATA` and no price is invented.
+    """
+    return service.predict_product(
+        product_id,
+        variant_id=variant_id,
+        as_of=as_of,
+        model_version=model_version,
     )
 
 
