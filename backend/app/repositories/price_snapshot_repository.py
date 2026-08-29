@@ -70,6 +70,36 @@ class PriceSnapshotRepository(BaseRepository[PriceSnapshot]):
         stmt = stmt.order_by(PriceSnapshot.observed_at.asc()).limit(limit)
         return list(self.session.scalars(stmt).all())
 
+    def history_for_retailer(
+        self,
+        retailer_id: uuid.UUID,
+        *,
+        since: datetime | None = None,
+        until: datetime | None = None,
+    ) -> list[PriceSnapshot]:
+        """Stored observations for one persisted retailer, oldest first."""
+        stmt = (
+            select(PriceSnapshot)
+            .join(RetailerProduct, PriceSnapshot.retailer_product_id == RetailerProduct.id)
+            .where(RetailerProduct.retailer_id == retailer_id)
+        )
+        if since is not None:
+            stmt = stmt.where(PriceSnapshot.observed_at >= since)
+        if until is not None:
+            stmt = stmt.where(PriceSnapshot.observed_at <= until)
+        stmt = stmt.order_by(
+            PriceSnapshot.observed_at.asc(),
+            PriceSnapshot.created_at.asc(),
+            PriceSnapshot.id.asc(),
+        ).options(
+            selectinload(PriceSnapshot.seller),
+            selectinload(PriceSnapshot.retailer_product).selectinload(RetailerProduct.retailer),
+            selectinload(PriceSnapshot.retailer_product)
+            .selectinload(RetailerProduct.product_variant)
+            .selectinload(ProductVariant.product),
+        )
+        return list(self.session.scalars(stmt).all())
+
     def latest_per_seller_for_retailer_products(
         self, retailer_product_ids: Sequence[uuid.UUID]
     ) -> list[PriceSnapshot]:

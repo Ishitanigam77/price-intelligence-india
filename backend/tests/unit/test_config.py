@@ -83,6 +83,9 @@ def test_database_url_and_redis_url_never_default_to_a_wildcard_or_empty_secret(
     settings = Settings(_env_file=None)
     assert "changeme" in settings.database_url
     assert settings.redis_url.startswith("redis://")
+    assert settings.celery_broker_url.startswith("redis://")
+    assert settings.celery_result_backend.startswith("redis://")
+    assert settings.collection_max_attempts == settings.collection_max_retries + 1
 
 
 def test_clerk_settings_default_to_empty_placeholders() -> None:
@@ -99,3 +102,18 @@ def test_clerk_is_configured_when_jwks_url_is_set() -> None:
         clerk_jwks_url="https://example.clerk.accounts.dev/.well-known/jwks.json",
     )
     assert settings.clerk_is_configured is True
+
+
+def test_empty_celery_broker_url_is_rejected() -> None:
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, celery_broker_url="")
+
+
+def test_non_redis_celery_result_backend_is_rejected() -> None:
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, celery_result_backend="amqp://guest:guest@localhost//")
+
+
+def test_empty_redis_url_is_rejected() -> None:
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, redis_url="")

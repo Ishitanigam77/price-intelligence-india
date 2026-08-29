@@ -16,12 +16,10 @@ concerns used across layers.
   No secrets are hardcoded — see `.env.example`. Per-retailer credentials are added only
   alongside a real adapter, never speculatively. Phase 12 added Clerk settings
   (`CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_JWKS_URL`, `CLERK_ISSUER`,
-  `CLERK_AUDIENCE`) with empty placeholders.
+  `CLERK_AUDIENCE`) with empty placeholders. Phase 13 added Celery broker/result backend URLs
+  and collection retry/timeout/rate-limit settings.
 - `logging.py` — structured (JSON by default) logging configuration, applied once per process
   by the application factory (`app.main.create_app`).
 - `redis.py` — Redis connection pool/client management and a `check_redis_connection` health
-  check, consumed by `app.api.deps.get_redis` and `app.api.v1.health`. Infrastructure only — no
-  caching business logic, distributed locks, or queues (those belong to later phases).
-
-Extended incrementally as later phases need more settings (Celery, Clerk, retailer
-credentials, ...).
+  check, consumed by `app.api.deps.get_redis` and `app.api.v1.health`. Celery uses Redis as
+  broker/result backend via `CELERY_BROKER_URL` / `CELERY_RESULT_BACKEND` (Phase 13).

@@ -55,6 +55,7 @@ from app.repositories.retailer_repository import RetailerRepository
 from app.repositories.seller_repository import SellerRepository
 from app.retailer_adapters.base.fleet import FleetSearchOutcome, RetailerFailure, RetailerFleet
 from app.retailer_adapters.base.models import (
+    AvailabilityObservation,
     NormalizedProduct,
     PriceObservation,
     ProductIdentifierValue,
@@ -189,11 +190,67 @@ class ProductDiscoveryService:
             )
             if normalized is None:
                 continue
-            hit = self._persist_listing(adapter_product, normalized)
+            hit = self.persist_discovered_listing(adapter_product, normalized)
             if hit is not None:
                 hits.append(hit)
         hits.sort(key=lambda item: (item.retailer.slug, item.retailer_sku))
         return hits
+
+    def persist_discovered_listing(
+        self, adapter_product: AdapterRetailerProduct, normalized: NormalizedProduct
+    ) -> ProductSearchHit | None:
+        """Public ingest used by collection jobs as well as on-demand search."""
+        return self._persist_listing(adapter_product, normalized)
+
+    def persist_price_observation(
+        self,
+        listing: RetailerProduct,
+        seller_info: SellerInformation | None,
+        price: PriceObservation,
+    ) -> PriceSnapshot | None:
+        """Persist one observed price without inventing values. Idempotent on observation key."""
+        seller = self._upsert_seller(listing.retailer, seller_info)
+        return self._persist_snapshot(listing, seller, price)
+
+    def persist_availability_observation(
+        self,
+        listing: RetailerProduct,
+        availability: AvailabilityObservation,
+    ) -> PriceSnapshot | None:
+        """Record availability against last-known observed prices. Never invents a price.
+
+        Availability feeds often omit price. A new snapshot is written only when a previous
+        legitimately observed price exists for the listing (copied forward) or the caller
+        already persisted a concurrent `PriceObservation`. Duplicate `(listing, observed_at,
+        seller)` keys are reused rather than inserted twice.
+        """
+        latest = self._snapshots.latest_for_retailer_product(listing.id)
+        if latest is None:
+            return None
+        seller_id = latest.seller_id
+        existing = self._snapshots.get_by_observation_key(
+            listing.id, availability.observed_at, seller_id
+        )
+        if existing is not None:
+            return existing
+        return self._snapshots.add_snapshot(
+            PriceSnapshot(
+                retailer_product_id=listing.id,
+                seller_id=seller_id,
+                observed_at=availability.observed_at,
+                currency=latest.currency,
+                mrp=latest.mrp,
+                displayed_price=latest.displayed_price,
+                effective_price=latest.effective_price,
+                delivery_fee=latest.delivery_fee,
+                platform_fee=latest.platform_fee,
+                availability=availability.status,
+                source_type=availability.source_type,
+                source_url=availability.source_url or latest.source_url,
+                confidence=availability.confidence,
+                created_at=_utc_now(),
+            )
+        )
 
     def _persist_listing(
         self, adapter_product: AdapterRetailerProduct, normalized: NormalizedProduct

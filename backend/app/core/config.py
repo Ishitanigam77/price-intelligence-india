@@ -8,8 +8,10 @@ file.
 
 from functools import lru_cache
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_REDIS_SCHEMES = {"redis", "rediss"}
 
 
 class Settings(BaseSettings):
@@ -80,6 +82,45 @@ class Settings(BaseSettings):
     clerk_issuer: str = ""
     clerk_audience: str = ""
 
+    # -- Celery (Phase 13 background collection) ----------------------------------------------
+    #: Redis URL used as the Celery broker. Never log this value — it may contain a password.
+    celery_broker_url: str = "redis://localhost:6379/1"
+    #: Redis URL used as the Celery result backend. Never log this value.
+    celery_result_backend: str = "redis://localhost:6379/2"
+    celery_task_always_eager: bool = False
+    celery_task_eager_propagates: bool = True
+    celery_task_acks_late: bool = True
+    celery_worker_concurrency: int = 2
+    celery_worker_prefetch_multiplier: int = 1
+    celery_task_time_limit: int = 300
+    celery_task_soft_time_limit: int = 270
+    celery_result_expires_seconds: int = 86400
+    celery_broker_connection_retry_on_startup: bool = True
+
+    # -- Collection jobs (Phase 13) ------------------------------------------------------------
+    #: Additional attempts after the first try. Total attempts = this value + 1. Never infinite.
+    collection_max_retries: int = Field(default=2, ge=0, le=10)
+    collection_initial_backoff_seconds: float = 0.5
+    collection_max_backoff_seconds: float = 30.0
+    collection_backoff_multiplier: float = 2.0
+    #: Outer bound for a single retailer operation (search, one SKU refresh, ...).
+    collection_operation_timeout_seconds: float = 15.0
+    #: Outer bound for one retailer's slice of a job, including retries.
+    collection_retailer_timeout_seconds: float = 120.0
+    collection_default_search_query: str = "fictional"
+    collection_default_search_limit: int = 20
+    collection_default_search_category: str = ""
+    #: Collection-layer per-retailer pacing. Independent per retailer; never a global lock.
+    collection_rate_limit_requests_per_minute: int = 60
+    collection_rate_limit_burst_size: int = 1
+    collection_rate_limit_max_concurrent: int = 1
+    collection_beat_enabled: bool = False
+    collection_search_interval_seconds: int = 3600
+    collection_product_refresh_interval_seconds: int = 3600
+    collection_price_refresh_interval_seconds: int = 1800
+    collection_availability_refresh_interval_seconds: int = 1800
+    collection_sale_event_refresh_interval_seconds: int = 3600
+
     @field_validator("log_level")
     @classmethod
     def _validate_log_level(cls, value: str) -> str:
@@ -100,6 +141,77 @@ class Settings(BaseSettings):
                     f"retailer_adapter_kinds entries must be one of {sorted(allowed)}, "
                     f"got {token!r}."
                 )
+        return value
+
+    @field_validator("celery_broker_url", "celery_result_backend")
+    @classmethod
+    def _validate_celery_redis_url(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError(
+                "Celery broker and result backend URLs are required. Set CELERY_BROKER_URL "
+                "and CELERY_RESULT_BACKEND to redis:// or rediss:// URLs (credentials from "
+                "the environment / Key Vault, never committed)."
+            )
+        scheme = stripped.split("://", 1)[0].lower()
+        if scheme not in _REDIS_SCHEMES:
+            raise ValueError(
+                "Celery broker and result backend URLs must use the redis:// or rediss:// "
+                "scheme. The URL value is not echoed here because it may contain a password."
+            )
+        return stripped
+
+    @field_validator("redis_url")
+    @classmethod
+    def _validate_redis_url(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError(
+                "REDIS_URL is required. Set it to a redis:// or rediss:// URL (credentials "
+                "from the environment / Key Vault, never committed)."
+            )
+        scheme = stripped.split("://", 1)[0].lower()
+        if scheme not in _REDIS_SCHEMES:
+            raise ValueError(
+                "REDIS_URL must use the redis:// or rediss:// scheme. The URL value is not "
+                "echoed here because it may contain a password."
+            )
+        return stripped
+
+    @field_validator(
+        "collection_max_retries",
+        "celery_worker_concurrency",
+        "celery_worker_prefetch_multiplier",
+        "celery_task_time_limit",
+        "celery_task_soft_time_limit",
+        "collection_default_search_limit",
+        "collection_rate_limit_requests_per_minute",
+        "collection_rate_limit_burst_size",
+        "collection_rate_limit_max_concurrent",
+    )
+    @classmethod
+    def _validate_positive_int(cls, value: int) -> int:
+        if value < 0:
+            raise ValueError("Numeric collection/Celery settings must be >= 0.")
+        return value
+
+    @field_validator(
+        "collection_max_backoff_seconds",
+        "collection_backoff_multiplier",
+        "collection_operation_timeout_seconds",
+        "collection_retailer_timeout_seconds",
+    )
+    @classmethod
+    def _validate_positive_float(cls, value: float) -> float:
+        if value <= 0:
+            raise ValueError("Collection timeout and backoff multiplier settings must be > 0.")
+        return value
+
+    @field_validator("collection_initial_backoff_seconds")
+    @classmethod
+    def _validate_non_negative_backoff(cls, value: float) -> float:
+        if value < 0:
+            raise ValueError("collection_initial_backoff_seconds must be >= 0.")
         return value
 
     @property
@@ -144,6 +256,17 @@ class Settings(BaseSettings):
         treated as sufficient by itself for JWT verification, and is never returned to clients.
         """
         return bool(self.clerk_jwks_url.strip())
+
+    @property
+    def collection_search_category_value(self) -> str | None:
+        """Optional default search category; empty env value means unrestricted."""
+        stripped = self.collection_default_search_category.strip()
+        return stripped or None
+
+    @property
+    def collection_max_attempts(self) -> int:
+        """Total attempts for a retryable collection failure (first try + configured retries)."""
+        return self.collection_max_retries + 1
 
 
 @lru_cache

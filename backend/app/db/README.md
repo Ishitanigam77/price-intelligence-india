@@ -14,5 +14,6 @@ separately under `../../alembic/` and must be kept in sync with these models.
 - `models/` — one module per entity: `Category`, `Brand`, `Product`, `ProductVariant`,
   `ProductIdentifier`, `Retailer`, `Seller`, `RetailerProduct`, `PriceSnapshot`,
   `PriceAdjustment`, `SaleEvent`, plus Phase 12 `User`, `UserPreference`, `WatchlistItem`,
-  `SavedProduct`, `TargetPrice`, `PriceAlert`. See each module's docstring for the reasoning
-  behind its shape and constraints.
+  `SavedProduct`, `TargetPrice`, `PriceAlert`, and Phase 13 `CollectionJob` /
+  `CollectionError`. See each module's docstring for the reasoning behind its shape and
+  constraints.

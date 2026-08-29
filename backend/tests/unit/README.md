@@ -21,5 +21,9 @@ they cover, starting in **Phase 1**.
   data, prediction fallback, upcoming events, determinism, no fabricated values, isolation).
 - `retailer_adapters/` — adapter contract, registry, config, timeout/retry, rate limits,
   mock retailers, normalization, extensibility, and core-domain isolation.
+- `collectors/` — Phase 13 collection retry/backoff, timeouts, rate limits, idempotency,
+  sanitization, metrics-ready names, and registry isolation.
+- `workers/` — Celery/Redis configuration (no secrets in the public view) and the five
+  collection task entrypoints.
 
 No database or web framework is involved — these run anywhere Python runs.

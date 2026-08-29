@@ -15,6 +15,8 @@ adjustment provenance (coupon / payment discount / cashback) for the Phase 6 com
 engine; it likewise has no update method. `SaleEventRepository` lists sale windows by type,
 source, scope, and derived lifecycle status (Phase 9). User-owned repositories
 (`UserRepository`, `WatchlistRepository`, `SavedProductRepository`, `TargetPriceRepository`,
-`PriceAlertRepository`) always filter by `user_id` (Phase 12).
+`PriceAlertRepository`) always filter by `user_id` (Phase 12). `CollectionJobRepository` and
+`CollectionErrorRepository` persist Phase 13 background collection status and sanitized
+failures.
 
 Consumed directly by `app/api/v1/` routes via the dependency providers in `app/api/deps.py`.

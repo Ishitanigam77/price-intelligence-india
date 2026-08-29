@@ -130,6 +130,18 @@ export) remains a later increment and is **not** part of this phase.
 - Ownership enforced at the service/repository layer; client-supplied user ids cannot override
   identity. See `AUTHENTICATION.md`.
 
+## Phase 13 — Scalable Data Collection
+
+Implemented after Phase 12 authentication. Background collection only:
+
+- Celery workers with Redis as broker and result backend (environment-configured).
+- Five jobs: retailer product search, product refresh, price refresh, availability refresh,
+  sale-event refresh.
+- Per-retailer isolation, retries with bounded exponential backoff, timeouts, per-retailer
+  rate limiting, and idempotent job records (`CollectionJob` / `CollectionError`).
+- Uses `RetailerRegistry` and mock/approved adapters only. No real-retailer scraping,
+  notification delivery, billing, or collection UI.
+
 ## Phase Ordering Notes
 
 - Phases are sequential by default but a later phase may be pulled forward only on explicit
