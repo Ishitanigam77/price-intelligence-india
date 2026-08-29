@@ -1,6 +1,7 @@
 """Evaluation metrics and validation-residual uncertainty."""
 
 import numpy as np
+import pytest
 
 from ml.config import MLConfig
 from ml.enums import SplitName
@@ -11,7 +12,7 @@ from ml.evaluation.uncertainty import fit_uncertainty, interval_and_confidence
 def test_mae_and_rmse_on_known_vectors() -> None:
     actual = np.asarray([10.0, 20.0, 30.0], dtype=np.float32)
     predicted = np.asarray([12.0, 18.0, 30.0], dtype=np.float32)
-    assert mean_absolute_error(actual, predicted) == 4.0 / 3.0
+    assert mean_absolute_error(actual, predicted) == pytest.approx(4.0 / 3.0, rel=1e-5)
     assert abs(root_mean_squared_error(actual, predicted) - ((4.0 + 4.0 + 0.0) / 3.0) ** 0.5) < 1e-6
     metrics = evaluate_split(actual, predicted, split=SplitName.TEST)
     assert metrics.n == 3

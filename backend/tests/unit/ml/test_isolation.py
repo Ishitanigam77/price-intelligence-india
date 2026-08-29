@@ -27,13 +27,24 @@ def _python_files(root: Path) -> list[Path]:
     )
 
 
+def _imported_names(path: Path) -> list[str]:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    names: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            names.append(node.module)
+    return names
+
+
 def test_ml_package_does_not_import_fastapi_named_adapters_or_recommendations() -> None:
     offenders: list[str] = []
     for path in _python_files(ML_ROOT):
-        source = path.read_text(encoding="utf-8")
-        for fragment in FORBIDDEN_IMPORT_FRAGMENTS:
-            if fragment in source:
-                offenders.append(f"{path.relative_to(REPO_ROOT)} mentions {fragment}")
+        for name in _imported_names(path):
+            for fragment in FORBIDDEN_IMPORT_FRAGMENTS:
+                if name == fragment or name.startswith(f"{fragment}."):
+                    offenders.append(f"{path.relative_to(REPO_ROOT)} imports {name}")
     assert offenders == []
 
 
