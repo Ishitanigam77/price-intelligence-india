@@ -84,7 +84,10 @@
   intelligence, and ML predictions.
 - Human-readable explanations for why a recommendation or offer was chosen.
 
-## Phase 10 — ML: Sale-Price Prediction (this increment)
+> **Delivery note:** in the implemented sequence this work is **Phase 11** (after Phase 10
+> sale-price prediction). See Phase 11 below.
+
+## Phase 10 — ML: Sale-Price Prediction
 
 Implemented after Phase 9 sale-event intelligence. Scope matches the ML work originally
 listed under Phase 8 above:
@@ -101,13 +104,22 @@ listed under Phase 8 above:
 Retailer-ecosystem expansion (onboarding at scale, collection-health alerting) remains a
 later increment and is **not** part of this phase.
 
-## Phase 11 — Infrastructure & Production Readiness
+## Phase 11 — BUY / WAIT Recommendation Engine (this increment)
 
-- Terraform modules for Azure resources (App hosting, PostgreSQL, Redis, Key Vault, ACR,
-  Monitor/Application Insights).
-- Azure DevOps pipelines: CI (build, lint, test, security scan) → build image → push to ACR →
-  deploy dev → integration tests → manual approval → deploy production.
-- Full observability: structured logging, health checks, metrics, alerting.
+Implemented after Phase 10 sale-price prediction. Scope matches the recommendation work
+originally listed under Phase 9 above:
+
+- Deterministic BUY_NOW / WAIT / WATCH / INSUFFICIENT_DATA decisions from current effective
+  price, historical percentile/low/averages/trend, optional Phase 10 predicted sale price and
+  prediction confidence, upcoming sale events, expected savings, and data freshness.
+- Explicit, explainable rules. No LLM or additional ML model is a decision maker.
+- Phase 10 artifacts are consumed as labeled PREDICTED inputs only; they are not modified
+  or retrained. Missing or low-confidence predictions fall back to historical/current-price
+  signals and are never invented.
+- Human-readable reasons citing the rules and values that actually fired.
+
+Infrastructure & production readiness (Terraform, Azure DevOps pipelines, Azure Monitor
+export) remains a later increment and is **not** part of this phase.
 
 ## Phase Ordering Notes
 

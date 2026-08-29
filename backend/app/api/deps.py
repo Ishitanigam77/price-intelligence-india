@@ -30,6 +30,7 @@ from app.services.price_comparison_service import PriceComparisonService
 from app.services.price_history_service import PriceHistoryService
 from app.services.price_service import PriceService
 from app.services.product_discovery_service import ProductDiscoveryService
+from app.services.recommendation_service import RecommendationService
 from app.services.sale_event_service import SaleEventService
 from app.services.sale_price_prediction_service import SalePricePredictionService
 
@@ -170,3 +171,13 @@ def get_sale_price_prediction_service(
 SalePricePredictionServiceDep = Annotated[
     SalePricePredictionService, Depends(get_sale_price_prediction_service)
 ]
+
+
+def get_recommendation_service(
+    db: DbSession,
+    metrics_sink: MetricsSinkDep,
+) -> RecommendationService:
+    return RecommendationService(db, metrics_sink=metrics_sink)
+
+
+RecommendationServiceDep = Annotated[RecommendationService, Depends(get_recommendation_service)]

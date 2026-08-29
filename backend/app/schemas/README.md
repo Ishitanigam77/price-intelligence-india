@@ -20,6 +20,9 @@ application foundation.
   calculated aggregates; insufficient history is explicit; predicted values are absent).
 - `deal.py` — an intentionally empty placeholder schema; there is no `Deal` entity yet (see
   `ROADMAP.md` Phase 4/7).
+- `prediction.py` — DTOs for `GET /api/v1/products/{product_id}/sale-price-prediction`.
+- `recommendation.py` — DTOs for `GET /api/v1/products/{product_id}/recommendation`
+  (BUY_NOW / WAIT / WATCH / INSUFFICIENT_DATA plus reasons).
 
 These are deliberately kept separate from `app/db/models/` so the API contract never depends on
 ORM internals (lazy-loaded relationships, mixins, column types) and can evolve independently of

@@ -13,13 +13,14 @@ helpers, and three fixture-backed mock adapters). The **product identity matchin
 `GET /api/v1/products/{product_id}/prices`) are implemented. **Phase 9 sale-event intelligence**
 (`app/sales/`, `GET /api/v1/sale-events`, `GET /api/v1/products/{id}/sale-history`) is
 implemented. **Phase 10 sale-price prediction** (`ml/`, `GET /api/v1/products/{id}/sale-price-prediction`)
-is implemented. Collectors, real retailer integrations, recommendation, notifications, and auth
-are **not** implemented yet — see `../ROADMAP.md`.
+is implemented. **Phase 11 BUY / WAIT recommendation** (`app/recommendation/`,
+`GET /api/v1/products/{id}/recommendation`) is implemented. Collectors, real retailer
+integrations, notifications, and auth are **not** implemented yet — see `../ROADMAP.md`.
 
 > **Note on phase numbering**: `../ROADMAP.md` reserves "Phase 2" for the Retailer Adapter
 > Framework. That framework is implemented here (`app/retailer_adapters/`). A separate
 > FastAPI application-foundation increment (application factory, `/api/v1/`, Redis, Docker)
-> was merged independently and is also present. Recommendation remains later-phase work.
+> was merged independently and is also present.
 
 ## Layout
 
@@ -28,8 +29,8 @@ are **not** implemented yet — see `../ROADMAP.md`.
   versioned API (see below). `deps.py` wires repositories/services into routes via dependency
   injection; `errors.py` is the centralized exception handling.
 - `app/api/v1/` — `/api/v1/` routers: `health` (liveness + per-dependency readiness),
-  `products` (catalogue + `GET /products/search` discovery), `retailers`, `prices`, `deals`,
-  `sale_events`.
+  `products` (catalogue + `GET /products/search` discovery + prices/history/sale-history/
+  sale-price-prediction/recommendation), `retailers`, `prices`, `deals`, `sale_events`.
 - `app/schemas/` — Pydantic request/response DTOs, kept separate from the SQLAlchemy models.
 - `app/services/` — thin service-layer boundaries, added only where genuinely needed:
   `price_service.py` (listing vs observation existence) and `product_discovery_service.py`
@@ -52,7 +53,7 @@ are **not** implemented yet — see `../ROADMAP.md`.
 - `app/pricing/` — price comparison engine (Phase 6) and historical price intelligence
   (Phase 7: window averages, extrema, percentile, volatility, drop detection, trend)
 - `app/sales/` — sale-event intelligence (Phase 9)
-- `app/recommendation/` — BUY_NOW / WAIT / WATCH engine (later phase; empty scaffold)
+- `app/recommendation/` — BUY_NOW / WAIT / WATCH engine (Phase 11)
 - `app/notifications/` — watchlist & price alert dispatch (Phase 6)
 - `app/workers/` — Celery app, tasks, schedules (Phase 2+)
 - `app/observability/` — structured JSON logging, correlation IDs, metrics seams

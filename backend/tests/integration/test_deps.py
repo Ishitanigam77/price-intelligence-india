@@ -22,6 +22,7 @@ from app.api.deps import (
     get_product_discovery_service,
     get_product_repository,
     get_product_variant_repository,
+    get_recommendation_service,
     get_retailer_product_repository,
     get_retailer_repository,
     get_sale_event_repository,
@@ -43,6 +44,7 @@ from app.services.price_comparison_service import PriceComparisonService
 from app.services.price_history_service import PriceHistoryService
 from app.services.price_service import PriceService
 from app.services.product_discovery_service import ProductDiscoveryService
+from app.services.recommendation_service import RecommendationService
 from app.services.sale_event_service import SaleEventService
 
 
@@ -85,6 +87,11 @@ def test_get_price_history_service_binds_session(db_session: Session) -> None:
 def test_get_sale_event_service_binds_session(db_session: Session) -> None:
     service = get_sale_event_service(db_session, NullMetricsSink())
     assert isinstance(service, SaleEventService)
+
+
+def test_get_recommendation_service_binds_session(db_session: Session) -> None:
+    service = get_recommendation_service(db_session, NullMetricsSink())
+    assert isinstance(service, RecommendationService)
 
 
 def test_get_product_discovery_service_binds_session_and_registry(db_session: Session) -> None:
