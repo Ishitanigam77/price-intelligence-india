@@ -60,9 +60,17 @@ ENV NODE_ENV=production \
     HOSTNAME=0.0.0.0
 
 # Apply Alpine security updates so known-fixed OS CVEs are not shipped in the runtime image.
+# The official Node image also ships npm/npx/corepack. Next.js standalone only needs the
+# node binary; remove the unused npm tree so Trivy does not fail on npm's bundled
+# dependencies (brace-expansion, tar, pacote, sigstore, …). Do not ignore those CVEs.
 RUN apk upgrade --no-cache \
     && addgroup --system --gid 1001 nodejs \
-    && adduser --system --uid 1001 --ingroup nodejs nextjs
+    && adduser --system --uid 1001 --ingroup nodejs nextjs \
+    && rm -rf /usr/local/lib/node_modules/npm \
+              /usr/local/lib/node_modules/corepack \
+              /usr/local/bin/npm \
+              /usr/local/bin/npx \
+              /usr/local/bin/corepack
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
