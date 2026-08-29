@@ -121,11 +121,12 @@ product feed         │   - discovery / listing fetch               │
 
 ### 2.7 Recommendation Engine
 
-- Combines current price intelligence, sale-event context, and ML predictions into a
-  BUY_NOW / WAIT / WATCH recommendation.
-- Always produces a human-readable explanation referencing the specific facts that drove the
-  recommendation (e.g. "current price is within 2% of the 90-day low" or "a sale event
-  historically drops this category by X% and is predicted in N days").
+- Combines current price intelligence, sale-event context, and optional Phase 10 predictions
+  into a deterministic BUY_NOW / WAIT / WATCH / INSUFFICIENT_DATA recommendation.
+- Always produces human-readable reasons referencing the specific rules and values that
+  drove the decision (for example a CALCULATED historical percentile or a labeled PREDICTED
+  sale price). Missing predictions are not invented; stale or insufficient history yields
+  `INSUFFICIENT_DATA`. A recommendation is never a guarantee.
 
 ### 2.8 Notifications
 

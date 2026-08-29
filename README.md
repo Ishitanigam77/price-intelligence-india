@@ -5,11 +5,11 @@ network of Indian online retailers, identifies identical products/variants acros
 price history, detects genuine price drops and sale events, and recommends whether to
 **BUY_NOW**, **WAIT**, or **WATCH**.
 
-> **Status:** backend through sale-event intelligence and sale-price prediction is implemented
-> (see `backend/README.md` and `ml/README.md`). The **Next.js frontend** (`frontend/`) consumes
-> catalogue APIs for search, product details, price history, deals, retailers, and about. Real
-> retailer integrations, authentication, notifications, and recommendations do **not** exist
-> yet — see `ROADMAP.md`.
+> **Status:** backend through sale-event intelligence, sale-price prediction, and the BUY /
+> WAIT recommendation engine is implemented (see `backend/README.md` and `ml/README.md`).
+> The **Next.js frontend** (`frontend/`) consumes catalogue APIs for search, product details,
+> price history, deals, retailers, and about. Real retailer integrations, authentication,
+> and notifications do **not** exist yet — see `ROADMAP.md`.
 
 ## Why This Exists
 
@@ -58,7 +58,7 @@ never fabricates retailer data.
 │   │   ├── matching/             # Product/variant matching engine (Phase 3)
 │   │   ├── pricing/              # Price intelligence: effective price, history, drops (Phase 4)
 │   │   ├── sales/                # Sale-event intelligence (Phase 7)
-│   │   ├── recommendation/       # BUY_NOW / WAIT / WATCH engine (Phase 9)
+│   │   ├── recommendation/       # BUY_NOW / WAIT / WATCH engine (Phase 11)
 │   │   ├── notifications/        # Watchlist & price alert dispatch (Phase 6)
 │   │   ├── workers/              # Celery app, tasks, schedules (Phase 2+)
 │   │   └── observability/        # Structured logging, health checks, metrics
@@ -75,9 +75,9 @@ never fabricates retailer data.
 │   └── models/                   # Artifact versioning (Phase 10)
 │   └── notebooks/                # Exploratory analysis
 ├── infrastructure/
-│   ├── terraform/                 # Azure infrastructure as code (Phase 11)
+│   ├── terraform/                 # Azure infrastructure as code (later increment)
 │   ├── docker/                    # docker-compose.yml: local dev stack (backend+Postgres+Redis)
-│   └── pipelines/                 # Azure DevOps pipeline definitions (Phase 11)
+│   └── pipelines/                 # Azure DevOps pipeline definitions (later increment)
 ├── .cursor/rules/                 # Cursor project rules enforcing the phase-by-phase process
 ├── .env.example                   # Documented environment variables (no real secrets)
 └── .gitignore

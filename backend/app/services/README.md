@@ -5,7 +5,8 @@ catalogue API routes call a single Phase 1 repository directly via `app/api/deps
 no additional layer.
 
 **Status**: FastAPI backend application foundation + Phase 4 product discovery + Phase 6
-price comparison + Phase 7 historical price intelligence + Phase 9 sale-event intelligence.
+price comparison + Phase 7 historical price intelligence + Phase 9 sale-event intelligence +
+Phase 10 sale-price prediction + Phase 11 recommendation.
 
 - `price_service.py` — composes `RetailerProductRepository` + `PriceSnapshotRepository` so
   "get the price for a retailer listing" can distinguish "the listing doesn't exist" (404) from
@@ -25,3 +26,7 @@ price comparison + Phase 7 historical price intelligence + Phase 9 sale-event in
 - `sale_price_prediction_service.py` — loads the same stored observations and events, then asks
   the Phase 10 `ml` inference layer for a labeled predicted effective sale price (or
   `INSUFFICIENT_DATA`). Does not implement recommendations.
+- `recommendation_service.py` — loads stored history and sale events, calls the existing
+  Phase 10 `SalePricePredictionService` without retraining, and asks
+  `app.recommendation.RecommendationEngine` for a deterministic BUY_NOW / WAIT / WATCH /
+  INSUFFICIENT_DATA decision with explicit reasons.

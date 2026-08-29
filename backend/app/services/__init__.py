@@ -7,7 +7,7 @@ or projects persisted listings into the price comparison engine (`price_comparis
 or projects stored snapshots into historical intelligence (`price_history_service.py`), or
 projects sale events and stored snapshots into sale-event intelligence
 (`sale_event_service.py`), or projects those records into sale-price inference
-(`sale_price_prediction_service.py`).
-Business logic that matches products semantically or recommends BUY_NOW/WAIT/WATCH
-does not belong here.
+(`sale_price_prediction_service.py`), or composes history, sale events, and Phase 10
+predictions into the Phase 11 recommendation engine (`recommendation_service.py`).
+Business logic that matches products semantically does not belong here.
 """

@@ -17,6 +17,8 @@ they cover, starting in **Phase 1**.
   prices, calculated detection from concurrent drops, isolation).
 - `ml/` — Phase 10 sale-price prediction (feature cutoff, leakage, chronological splits,
   INSUFFICIENT_DATA, XGBoost training, evaluation, inference schema, versioning).
+- `recommendation/` — Phase 11 BUY / WAIT / WATCH engine (all four outcomes, missing/stale
+  data, prediction fallback, upcoming events, determinism, no fabricated values, isolation).
 - `retailer_adapters/` — adapter contract, registry, config, timeout/retry, rate limits,
   mock retailers, normalization, extensibility, and core-domain isolation.
 

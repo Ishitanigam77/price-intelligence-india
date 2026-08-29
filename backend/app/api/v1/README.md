@@ -16,7 +16,9 @@ and including its router there — nothing else needs to change.
   (Phase 7 historical intelligence via `PriceHistoryService`) and
   `GET /products/{product_id}/sale-history` (Phase 9 sale-event history via `SaleEventService`)
   and `GET /products/{product_id}/sale-price-prediction` (Phase 10 labeled prediction or
-  `INSUFFICIENT_DATA` via `SalePricePredictionService`).
+  `INSUFFICIENT_DATA` via `SalePricePredictionService`) and
+  `GET /products/{product_id}/recommendation` (Phase 11 BUY_NOW / WAIT / WATCH /
+  INSUFFICIENT_DATA via `RecommendationService`).
 - `retailers.py` — read-only routes over `Retailer`/`Seller` (list/get, list sellers for a
   retailer).
 - `prices.py` — read-only routes over `PriceSnapshot` via `app.services.price_service`
@@ -27,7 +29,7 @@ and including its router there — nothing else needs to change.
 - `sale_events.py` — Phase 9 sale-event intelligence: `GET /sale-events`,
   `GET /sale-events/upcoming`, and `GET /sale-events/{event_id}`.
 
-No retailer scraping, product matching, or recommendation logic lives here. Catalogue routes are thin typed wrappers over Phase 1 repositories
+No retailer scraping or product matching lives here. Catalogue routes are thin typed wrappers over Phase 1 repositories
 (`prices.py` uses a small service composing two repositories). `GET /products/search` is a
 thin typed wrapper over `ProductDiscoveryService`, which talks only to the retailer adapter
 abstraction. `GET /products/{id}/prices` is a thin typed wrapper over
@@ -36,4 +38,6 @@ abstraction. `GET /products/{id}/prices` is a thin typed wrapper over
 computes historical aggregates from stored verified observations.
 `GET /products/{id}/sale-history` and `/sale-events*` are thin typed wrappers over
 `SaleEventService`. `GET /products/{id}/sale-price-prediction` is a thin typed wrapper over
-`SalePricePredictionService` (Phase 10). Recommendation logic is not implemented here.
+`SalePricePredictionService` (Phase 10). `GET /products/{id}/recommendation` is a thin typed
+wrapper over `RecommendationService` (Phase 11). The route does not train models or call an
+LLM.

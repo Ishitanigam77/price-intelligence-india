@@ -10,7 +10,9 @@ through `PriceHistoryService`. Sale-event history (`GET /products/{id}/sale-hist
 applicable sale windows and observed prices during those windows through `SaleEventService`.
 Sale-price prediction (`GET /products/{id}/sale-price-prediction`) returns a labeled
 PREDICTED effective sale price (or INSUFFICIENT_DATA) through
-`SalePricePredictionService`. Different variants are always returned as distinct resources,
+`SalePricePredictionService`. Recommendation (`GET /products/{id}/recommendation`) returns
+a deterministic BUY_NOW / WAIT / WATCH / INSUFFICIENT_DATA decision per variant through
+`RecommendationService`. Different variants are always returned as distinct resources,
 never merged (`PROJECT_ARCHITECTURE.md` §5).
 """
 
@@ -28,6 +30,7 @@ from app.api.deps import (
     ProductDiscoveryServiceDep,
     ProductRepositoryDep,
     ProductVariantRepositoryDep,
+    RecommendationServiceDep,
     SaleEventServiceDep,
     SalePricePredictionServiceDep,
 )
@@ -39,6 +42,7 @@ from app.schemas.history import ProductHistoryRead
 from app.schemas.pagination import PaginationParams, pagination_params
 from app.schemas.prediction import ProductSalePricePredictionRead
 from app.schemas.product import ProductRead, ProductVariantRead
+from app.schemas.recommendation import ProductRecommendationRead
 from app.schemas.sale_event import ProductSaleHistoryRead
 
 router = APIRouter(prefix="/products", tags=["products"])
@@ -210,6 +214,28 @@ def get_product_sale_price_prediction(
     inadequate the status is `INSUFFICIENT_DATA` and no price is invented.
     """
     return service.predict_product(
+        product_id,
+        variant_id=variant_id,
+        as_of=as_of,
+        model_version=model_version,
+    )
+
+
+@router.get("/{product_id}/recommendation", response_model=ProductRecommendationRead)
+def get_product_recommendation(
+    product_id: uuid.UUID,
+    service: RecommendationServiceDep,
+    variant_id: uuid.UUID | None = None,
+    as_of: datetime | None = None,
+    model_version: str | None = None,
+) -> ProductRecommendationRead:
+    """Return a deterministic BUY_NOW / WAIT / WATCH / INSUFFICIENT_DATA decision per variant.
+
+    Decisions are rule-based and explainable. They are not guaranteed outcomes. Phase 10
+    predictions are optional labeled inputs; missing or low-confidence predictions fall back
+    to historical/current-price signals and are never invented.
+    """
+    return service.recommend_product(
         product_id,
         variant_id=variant_id,
         as_of=as_of,
