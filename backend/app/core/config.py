@@ -72,6 +72,14 @@ class Settings(BaseSettings):
     #: legitimate retailer adapters exist.
     retailer_adapter_kinds: str = "mock"
 
+    # -- Authentication (Clerk) ----------------------------------------------------------------
+    # Secret key is backend-only. Never expose it to the frontend or log it.
+    clerk_publishable_key: str = ""
+    clerk_secret_key: str = ""
+    clerk_jwks_url: str = ""
+    clerk_issuer: str = ""
+    clerk_audience: str = ""
+
     @field_validator("log_level")
     @classmethod
     def _validate_log_level(cls, value: str) -> str:
@@ -127,6 +135,15 @@ class Settings(BaseSettings):
             if entry.strip()
         )
         return kinds if kinds else ("mock",)
+
+    @property
+    def clerk_is_configured(self) -> bool:
+        """True when backend token verification can run (JWKS URL present).
+
+        A missing JWKS URL means protected routes fail closed (401). The secret key is never
+        treated as sufficient by itself for JWT verification, and is never returned to clients.
+        """
+        return bool(self.clerk_jwks_url.strip())
 
 
 @lru_cache

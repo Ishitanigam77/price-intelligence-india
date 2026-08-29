@@ -55,4 +55,10 @@ def test_upgrade_head_then_downgrade_base_round_trips_cleanly(db_engine: Engine)
         "price_snapshots",
         "price_adjustments",
         "sale_events",
+        "users",
+        "user_preferences",
+        "watchlists",
+        "saved_products",
+        "target_prices",
+        "price_alerts",
     }.issubset(tables)

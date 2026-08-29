@@ -12,6 +12,7 @@ from app.db.models import (
     Brand,
     Category,
     PriceAdjustment,
+    PriceAlert,
     PriceSnapshot,
     Product,
     ProductIdentifier,
@@ -19,7 +20,12 @@ from app.db.models import (
     Retailer,
     RetailerProduct,
     SaleEvent,
+    SavedProduct,
     Seller,
+    TargetPrice,
+    User,
+    UserPreference,
+    WatchlistItem,
 )
 from app.domain.enums import (
     AdjustmentEligibility,
@@ -172,5 +178,69 @@ def make_sale_event(
         category_id=category_id,
         brand=brand,
         brand_id=brand_id,
+        **kwargs,
+    )
+
+
+def make_user(
+    *,
+    clerk_user_id: str | None = None,
+    email: str | None = None,
+    display_name: str | None = None,
+    **kwargs,
+) -> User:
+    suffix = uuid.uuid4().hex[:10]
+    return User(
+        clerk_user_id=clerk_user_id or f"user_clerk_{suffix}",
+        email=email,
+        display_name=display_name,
+        **kwargs,
+    )
+
+
+def make_user_preference(user: User, **kwargs) -> UserPreference:
+    return UserPreference(user=user, **kwargs)
+
+
+def make_watchlist_item(user: User, product: Product, **kwargs) -> WatchlistItem:
+    return WatchlistItem(user=user, product=product, **kwargs)
+
+
+def make_saved_product(user: User, product: Product, **kwargs) -> SavedProduct:
+    return SavedProduct(user=user, product=product, **kwargs)
+
+
+def make_target_price(
+    user: User,
+    product: Product,
+    *,
+    amount: Decimal | str = "999.00",
+    currency: str = "INR",
+    **kwargs,
+) -> TargetPrice:
+    return TargetPrice(
+        user=user,
+        product=product,
+        amount=Decimal(amount),
+        currency=currency,
+        **kwargs,
+    )
+
+
+def make_price_alert(
+    user: User,
+    product: Product,
+    *,
+    threshold_amount: Decimal | str = "899.00",
+    currency: str = "INR",
+    is_enabled: bool = True,
+    **kwargs,
+) -> PriceAlert:
+    return PriceAlert(
+        user=user,
+        product=product,
+        threshold_amount=Decimal(threshold_amount),
+        currency=currency,
+        is_enabled=is_enabled,
         **kwargs,
     )

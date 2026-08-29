@@ -9,6 +9,10 @@ import type { ErrorResponse } from "@/lib/types/api";
 
 type QueryValue = string | number | boolean | null | undefined;
 
+export type ApiAuth = {
+  accessToken?: string | null;
+};
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
@@ -32,6 +36,17 @@ function buildUrl(path: string, query?: Record<string, QueryValue>): string {
     }
   }
   return url.toString();
+}
+
+function buildHeaders(auth?: ApiAuth, hasBody?: boolean): HeadersInit {
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (hasBody) {
+    headers["Content-Type"] = "application/json";
+  }
+  if (auth?.accessToken) {
+    headers.Authorization = `Bearer ${auth.accessToken}`;
+  }
+  return headers;
 }
 
 async function parseError(response: Response): Promise<ApiError> {
@@ -62,22 +77,35 @@ async function parseJson<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
-export async function apiGet<T>(path: string, query?: Record<string, QueryValue>): Promise<T> {
-  const url = buildUrl(path, query);
+async function apiRequest<T>(
+  method: string,
+  path: string,
+  options?: {
+    query?: Record<string, QueryValue>;
+    body?: unknown;
+    auth?: ApiAuth;
+    retryMutations?: boolean;
+  },
+): Promise<T> {
+  const url = buildUrl(path, options?.query);
+  const hasBody = options?.body !== undefined;
+  const retryMutations = options?.retryMutations ?? false;
   const { maxAttempts, backoffMs } = getRetryPolicy();
   const timeoutMs = getRequestTimeoutMs();
+  const attempts = method === "GET" || retryMutations ? maxAttempts : 1;
   let lastError: unknown;
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
       const response = await fetch(url, {
-        method: "GET",
-        headers: { Accept: "application/json" },
+        method,
+        headers: buildHeaders(options?.auth, hasBody),
+        body: hasBody ? JSON.stringify(options?.body) : undefined,
         cache: "no-store",
         signal: AbortSignal.timeout(timeoutMs),
       });
       if (!response.ok) {
-        if (isRetryableStatus(response.status) && attempt < maxAttempts) {
+        if (isRetryableStatus(response.status) && attempt < attempts) {
           await sleep(backoffMs * 2 ** (attempt - 1));
           continue;
         }
@@ -89,7 +117,7 @@ export async function apiGet<T>(path: string, query?: Record<string, QueryValue>
       if (error instanceof ApiError) {
         throw error;
       }
-      if (attempt < maxAttempts) {
+      if (attempt < attempts) {
         await sleep(backoffMs * 2 ** (attempt - 1));
         continue;
       }
@@ -99,4 +127,24 @@ export async function apiGet<T>(path: string, query?: Record<string, QueryValue>
   throw lastError instanceof Error
     ? lastError
     : new ApiError(0, "network_error", "The request could not be completed.");
+}
+
+export async function apiGet<T>(
+  path: string,
+  query?: Record<string, QueryValue>,
+  auth?: ApiAuth,
+): Promise<T> {
+  return apiRequest<T>("GET", path, { query, auth });
+}
+
+export async function apiPost<T>(path: string, body: unknown, auth?: ApiAuth): Promise<T> {
+  return apiRequest<T>("POST", path, { body, auth });
+}
+
+export async function apiPatch<T>(path: string, body: unknown, auth?: ApiAuth): Promise<T> {
+  return apiRequest<T>("PATCH", path, { body, auth });
+}
+
+export async function apiDelete(path: string, auth?: ApiAuth): Promise<void> {
+  await apiRequest<void>("DELETE", path, { auth });
 }

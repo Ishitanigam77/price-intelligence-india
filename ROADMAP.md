@@ -121,6 +121,15 @@ originally listed under Phase 9 above:
 Infrastructure & production readiness (Terraform, Azure DevOps pipelines, Azure Monitor
 export) remains a later increment and is **not** part of this phase.
 
+## Phase 12 — User Authentication and Personalization
+
+- Clerk as the identity provider (sign up, sign in, sign out, session).
+- Internal PostgreSQL user mapping (`clerk_user_id` → `users.id`), no application passwords.
+- Protected backend APIs and frontend routes (`/watchlist`, `/alerts`, `/profile`).
+- User-owned watchlists, saved products, target prices, alerts, preferences, and profile.
+- Ownership enforced at the service/repository layer; client-supplied user ids cannot override
+  identity. See `AUTHENTICATION.md`.
+
 ## Phase Ordering Notes
 
 - Phases are sequential by default but a later phase may be pulled forward only on explicit

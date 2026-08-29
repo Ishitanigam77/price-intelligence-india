@@ -8,8 +8,10 @@ price history, detects genuine price drops and sale events, and recommends wheth
 > **Status:** backend through sale-event intelligence, sale-price prediction, and the BUY /
 > WAIT recommendation engine is implemented (see `backend/README.md` and `ml/README.md`).
 > The **Next.js frontend** (`frontend/`) consumes catalogue APIs for search, product details,
-> price history, deals, retailers, and about. Real retailer integrations, authentication,
-> and notifications do **not** exist yet — see `ROADMAP.md`.
+> price history, deals, retailers, and about. **Phase 12** adds Clerk authentication and
+> user-owned watchlists, saved products, target prices, alerts, and profile (see
+> `AUTHENTICATION.md`). Real retailer integrations and notification dispatch do **not** exist
+> yet — see `ROADMAP.md`.
 
 ## Why This Exists
 
@@ -34,6 +36,7 @@ never fabricates retailer data.
 | [`ROADMAP.md`](./ROADMAP.md) | Phase-by-phase delivery plan |
 | [`RETAILER_ARCHITECTURE.md`](./RETAILER_ARCHITECTURE.md) | The retailer adapter contract and legitimate-data-acquisition policy |
 | [`DATA_FLOW.md`](./DATA_FLOW.md) | End-to-end data flow from acquisition to UI |
+| [`AUTHENTICATION.md`](./AUTHENTICATION.md) | Phase 12 Clerk setup, user mapping, authorization, protected routes |
 
 ## Repository Structure (Scaffolding)
 

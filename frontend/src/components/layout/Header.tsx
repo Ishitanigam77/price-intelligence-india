@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { AuthControls } from "@/components/auth/AuthControls";
 import { SearchBar } from "@/components/search/SearchBar";
 import { cn } from "@/lib/cn";
 
@@ -53,6 +54,9 @@ export function Header() {
             <SearchBar size="compact" />
           </div>
         ) : null}
+        <div className="lg:ml-auto">
+          <AuthControls />
+        </div>
       </div>
     </header>
   );

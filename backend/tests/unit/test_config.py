@@ -83,3 +83,19 @@ def test_database_url_and_redis_url_never_default_to_a_wildcard_or_empty_secret(
     settings = Settings(_env_file=None)
     assert "changeme" in settings.database_url
     assert settings.redis_url.startswith("redis://")
+
+
+def test_clerk_settings_default_to_empty_placeholders() -> None:
+    settings = Settings(_env_file=None)
+    assert settings.clerk_publishable_key == ""
+    assert settings.clerk_secret_key == ""
+    assert settings.clerk_jwks_url == ""
+    assert settings.clerk_is_configured is False
+
+
+def test_clerk_is_configured_when_jwks_url_is_set() -> None:
+    settings = Settings(
+        _env_file=None,
+        clerk_jwks_url="https://example.clerk.accounts.dev/.well-known/jwks.json",
+    )
+    assert settings.clerk_is_configured is True

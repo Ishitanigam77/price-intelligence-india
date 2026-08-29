@@ -47,6 +47,30 @@ export function Footer() {
                 About
               </Link>
             </li>
+            <li>
+              <Link
+                className="underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                href="/watchlist"
+              >
+                Watchlist
+              </Link>
+            </li>
+            <li>
+              <Link
+                className="underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                href="/alerts"
+              >
+                Alerts
+              </Link>
+            </li>
+            <li>
+              <Link
+                className="underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                href="/profile"
+              >
+                Profile
+              </Link>
+            </li>
           </ul>
         </div>
         <div>
