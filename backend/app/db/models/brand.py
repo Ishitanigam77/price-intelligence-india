@@ -11,6 +11,7 @@ from app.domain.validation import validate_slug
 
 if TYPE_CHECKING:
     from app.db.models.product import Product
+    from app.db.models.sale_event import SaleEvent
 
 
 class Brand(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -25,6 +26,7 @@ class Brand(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     products: Mapped[list["Product"]] = relationship("Product", back_populates="brand")
+    sale_events: Mapped[list["SaleEvent"]] = relationship("SaleEvent", back_populates="brand")
 
     @validates("slug")
     def _validate_slug(self, key: str, value: str) -> str:

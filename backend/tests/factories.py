@@ -5,7 +5,7 @@ would be more machinery than Phase 1's test surface needs.
 """
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 from app.db.models import (
@@ -18,6 +18,7 @@ from app.db.models import (
     ProductVariant,
     Retailer,
     RetailerProduct,
+    SaleEvent,
     Seller,
 )
 from app.domain.enums import (
@@ -26,6 +27,8 @@ from app.domain.enums import (
     AvailabilityStatus,
     ConfidenceLevel,
     ProductIdentifierType,
+    SaleEventSource,
+    SaleEventType,
     SourceType,
 )
 
@@ -131,5 +134,43 @@ def make_price_adjustment(
         eligibility=eligibility,
         observed_at=observed_at or snapshot.observed_at,
         confidence=confidence,
+        **kwargs,
+    )
+
+
+def make_sale_event(
+    *,
+    name: str = "FIXTURE: Fictional Catalogue Sale",
+    event_type: SaleEventType = SaleEventType.SEASONAL,
+    source: SaleEventSource = SaleEventSource.MANUAL_CURATION,
+    source_ref: str | None = "test.fixture",
+    confidence: ConfidenceLevel = ConfidenceLevel.HIGH,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
+    retailer: Retailer | None = None,
+    category: Category | None = None,
+    brand: Brand | None = None,
+    **kwargs,
+) -> SaleEvent:
+    """Build a clearly labeled fictional sale event. Not a real-world campaign."""
+    start = start_date or datetime.now(UTC)
+    end = end_date or (start + timedelta(days=7))
+    retailer_id = kwargs.pop("retailer_id", retailer.id if retailer is not None else None)
+    category_id = kwargs.pop("category_id", category.id if category is not None else None)
+    brand_id = kwargs.pop("brand_id", brand.id if brand is not None else None)
+    return SaleEvent(
+        name=name,
+        event_type=event_type,
+        source=source,
+        source_ref=source_ref,
+        confidence=confidence,
+        start_date=start,
+        end_date=end,
+        retailer=retailer,
+        retailer_id=retailer_id,
+        category=category,
+        category_id=category_id,
+        brand=brand,
+        brand_id=brand_id,
         **kwargs,
     )

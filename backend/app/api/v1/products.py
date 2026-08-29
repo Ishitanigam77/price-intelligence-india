@@ -6,8 +6,10 @@ fans out to enabled retailer adapters through `ProductDiscoveryService` and is t
 write path that persists newly observed listings. Comparison (`GET /products/{id}/prices`)
 ranks retailer offers per variant through `PriceComparisonService`. Historical intelligence
 (`GET /products/{id}/history`) computes per-variant aggregates from stored observations
-through `PriceHistoryService`. Different variants are always returned as distinct
-resources, never merged (`PROJECT_ARCHITECTURE.md` §5).
+through `PriceHistoryService`. Sale-event history (`GET /products/{id}/sale-history`) reports
+applicable sale windows and observed prices during those windows through `SaleEventService`.
+Different variants are always returned as distinct resources, never merged
+(`PROJECT_ARCHITECTURE.md` §5).
 """
 
 import uuid
@@ -24,6 +26,7 @@ from app.api.deps import (
     ProductDiscoveryServiceDep,
     ProductRepositoryDep,
     ProductVariantRepositoryDep,
+    SaleEventServiceDep,
 )
 from app.api.errors import NotFoundError
 from app.schemas.common import Page
@@ -32,6 +35,7 @@ from app.schemas.discovery import ProductSearchPage
 from app.schemas.history import ProductHistoryRead
 from app.schemas.pagination import PaginationParams, pagination_params
 from app.schemas.product import ProductRead, ProductVariantRead
+from app.schemas.sale_event import ProductSaleHistoryRead
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -151,6 +155,31 @@ def get_product_history(
     Observation lists are paginated; calculations use the full qualifying history.
     """
     return service.get_product_history(
+        product_id,
+        variant_id=variant_id,
+        since=since,
+        until=until,
+        limit=pagination.limit,
+        offset=pagination.offset,
+    )
+
+
+@router.get("/{product_id}/sale-history", response_model=ProductSaleHistoryRead)
+def get_product_sale_history(
+    product_id: uuid.UUID,
+    service: SaleEventServiceDep,
+    pagination: Annotated[PaginationParams, Depends(pagination_params)],
+    variant_id: uuid.UUID | None = None,
+    since: datetime | None = None,
+    until: datetime | None = None,
+) -> ProductSaleHistoryRead:
+    """Return sale events applicable to a product and observed prices during those windows.
+
+    Aggregates are calculated from verified observed snapshots only. Insufficient history is
+    reported explicitly. Predicted sale prices are not returned. Different variants are never
+    combined.
+    """
+    return service.get_product_sale_history(
         product_id,
         variant_id=variant_id,
         since=since,

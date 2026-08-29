@@ -6,14 +6,27 @@ schemas in a future phase).
 """
 
 import re
+from datetime import datetime
 from decimal import Decimal
+from uuid import UUID
 
+from app.domain.enums import SaleEventSource, SaleEventType
 from app.domain.exceptions import (
     InvalidCountryCodeError,
     InvalidCurrencyCodeError,
+    InvalidSaleEventError,
     InvalidSlugError,
     InvalidVariantAttributesError,
     NegativeAmountError,
+)
+
+_EXTERNAL_SALE_EVENT_SOURCES = frozenset(
+    {
+        SaleEventSource.OFFICIAL_API,
+        SaleEventSource.AFFILIATE_FEED,
+        SaleEventSource.PRODUCT_FEED,
+        SaleEventSource.OTHER_PERMITTED,
+    }
 )
 
 _SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -103,6 +116,86 @@ def normalize_variant_attributes(attributes: dict[str, str]) -> dict[str, str]:
             )
         normalized[key] = value
     return normalized
+
+
+def _require_aware(value: datetime, *, field_name: str) -> datetime:
+    if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
+        raise InvalidSaleEventError(f"{field_name} must be timezone-aware.")
+    return value
+
+
+def validate_sale_event_dates(
+    start_date: datetime, end_date: datetime
+) -> tuple[datetime, datetime]:
+    """Require timezone-aware bounds with `end_date` not before `start_date`."""
+    start = _require_aware(start_date, field_name="start_date")
+    end = _require_aware(end_date, field_name="end_date")
+    if end < start:
+        raise InvalidSaleEventError("Sale event end_date must not be before start_date.")
+    return start, end
+
+
+def normalize_sale_event_source_ref(source_ref: str | None) -> str | None:
+    """Strip provenance text; blank becomes `None` (no invented reference)."""
+    if source_ref is None:
+        return None
+    stripped = source_ref.strip()
+    return stripped or None
+
+
+def validate_sale_event(
+    *,
+    event_type: SaleEventType,
+    source: SaleEventSource,
+    source_ref: str | None,
+    retailer_id: UUID | None,
+    category_id: UUID | None,
+    brand_id: UUID | None,
+    start_date: datetime,
+    end_date: datetime,
+) -> str | None:
+    """Validate sale-event window, scope, and source provenance.
+
+    Returns the normalized `source_ref`. Does not invent missing retailer/brand/category
+    identifiers or fabricate an external source reference.
+    """
+    validate_sale_event_dates(start_date, end_date)
+    ref = normalize_sale_event_source_ref(source_ref)
+
+    if event_type is SaleEventType.RETAILER_SPECIFIC and retailer_id is None:
+        raise InvalidSaleEventError("Retailer-specific sale events require retailer_id.")
+    if event_type is SaleEventType.BRAND and brand_id is None:
+        raise InvalidSaleEventError("Brand sale events require brand_id.")
+    if event_type is SaleEventType.CATEGORY and category_id is None:
+        raise InvalidSaleEventError("Category sale events require category_id.")
+
+    if (
+        event_type is SaleEventType.MANUALLY_CURATED
+        and source is not SaleEventSource.MANUAL_CURATION
+    ):
+        raise InvalidSaleEventError("Manually curated events must use source=manual_curation.")
+
+    if (
+        source is SaleEventSource.OBSERVED_PRICE_INFERENCE
+        and event_type is SaleEventType.EXTERNALLY_SOURCED
+    ):
+        raise InvalidSaleEventError(
+            "Observed-price inference is calculated from stored observations, "
+            "not an externally sourced event."
+        )
+
+    if event_type is SaleEventType.EXTERNALLY_SOURCED:
+        if source not in _EXTERNAL_SALE_EVENT_SOURCES:
+            raise InvalidSaleEventError(
+                "Externally sourced events require a legitimate permitted source "
+                "(official_api, affiliate_feed, product_feed, or other_permitted)."
+            )
+        if ref is None:
+            raise InvalidSaleEventError(
+                "Externally sourced events require source_ref identifying the legitimate source."
+            )
+
+    return ref
 
 
 def build_variant_key(normalized_attributes: dict[str, str]) -> str:

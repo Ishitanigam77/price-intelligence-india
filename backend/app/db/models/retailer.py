@@ -18,6 +18,7 @@ from app.domain.validation import validate_country_code, validate_slug
 
 if TYPE_CHECKING:
     from app.db.models.retailer_product import RetailerProduct
+    from app.db.models.sale_event import SaleEvent
     from app.db.models.seller import Seller
 
 
@@ -38,6 +39,7 @@ class Retailer(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     retailer_products: Mapped[list["RetailerProduct"]] = relationship(
         "RetailerProduct", back_populates="retailer", cascade="all, delete-orphan"
     )
+    sale_events: Mapped[list["SaleEvent"]] = relationship("SaleEvent", back_populates="retailer")
 
     @validates("slug")
     def _validate_slug(self, key: str, value: str) -> str:

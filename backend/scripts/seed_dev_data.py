@@ -25,6 +25,7 @@ from app.db.models import (
     ProductVariant,
     Retailer,
     RetailerProduct,
+    SaleEvent,
     Seller,
 )
 from app.db.session import SessionLocal
@@ -32,6 +33,8 @@ from app.domain.enums import (
     AvailabilityStatus,
     ConfidenceLevel,
     ProductIdentifierType,
+    SaleEventSource,
+    SaleEventType,
     SourceType,
 )
 
@@ -170,6 +173,42 @@ def seed(session: Session) -> None:
         )
     )
 
+    session.add(
+        SaleEvent(
+            name="FIXTURE: Fictional Past Seasonal Sale (seed data only)",
+            event_type=SaleEventType.SEASONAL,
+            source=SaleEventSource.MANUAL_CURATION,
+            source_ref="test.fixture.seed",
+            confidence=ConfidenceLevel.HIGH,
+            start_date=now - timedelta(days=20),
+            end_date=now - timedelta(days=14),
+        )
+    )
+    session.add(
+        SaleEvent(
+            name="FIXTURE: Fictional Current Retailer Sale (seed data only)",
+            event_type=SaleEventType.RETAILER_SPECIFIC,
+            source=SaleEventSource.MANUAL_CURATION,
+            source_ref="test.fixture.seed",
+            confidence=ConfidenceLevel.MEDIUM,
+            retailer=retailer_large,
+            start_date=now - timedelta(days=1),
+            end_date=now + timedelta(days=3),
+        )
+    )
+    session.add(
+        SaleEvent(
+            name="FIXTURE: Fictional Upcoming Brand Sale (seed data only)",
+            event_type=SaleEventType.BRAND,
+            source=SaleEventSource.MANUAL_CURATION,
+            source_ref="test.fixture.seed",
+            confidence=ConfidenceLevel.HIGH,
+            brand=brand,
+            start_date=now + timedelta(days=10),
+            end_date=now + timedelta(days=14),
+        )
+    )
+
     session.commit()
 
 
@@ -177,7 +216,9 @@ def main() -> None:
     session = SessionLocal()
     try:
         seed(session)
-        print("Seeded fake development data for Phase 1 schema validation.")
+        print(
+            "Seeded fake development data for schema validation (including fictional sale events)."
+        )
     finally:
         session.close()
 
