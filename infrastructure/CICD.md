@@ -203,4 +203,7 @@ python infrastructure/pipelines/scripts/smoke_test.py \
 
 ## 10. Security scanning exceptions
 
-Documented in `infrastructure/terraform/checkov.yaml`. They are network-bootstrap exceptions for Microsoft-hosted agents, not a suppression of application vulnerabilities. Do not add CVE ignores without a written justification in that file or in a PR.
+Documented in `infrastructure/terraform/checkov.yaml` and `.trivyignore`. They are
+network-bootstrap exceptions for Microsoft-hosted agents (including AVD-AZURE-0012 on
+tfstate storage), not a suppression of application vulnerabilities. Do not add CVE
+ignores without a written justification in that file or in a PR.
