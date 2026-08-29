@@ -289,15 +289,13 @@ jobs:
           python -m pip install checkov
           checkov -d infrastructure/terraform --config-file infrastructure/terraform/checkov.yaml
       - name: Trivy filesystem
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          severity: HIGH,CRITICAL
-          exit-code: "1"
-          skip-dirs: .git,.venv,frontend/node_modules,frontend/.next
-          trivy-config: infrastructure/security/trivy.yaml
-          trivyignores: .trivyignore
+        run: |
+          set -euo pipefail
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+          trivy fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL --exit-code 1 \
+            --config infrastructure/security/trivy.yaml \
+            --ignorefile .trivyignore \
+            --skip-dirs .git,.venv,frontend/node_modules,frontend/.next .
 
   docker:
     name: Docker build
@@ -314,34 +312,10 @@ jobs:
       - name: Build ML image
         run: docker build -f ml/Dockerfile -t priceradar/ml:ci .
       - name: Trivy image scans
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: image
-          image-ref: priceradar/backend:ci
-          severity: HIGH,CRITICAL
-          exit-code: "1"
-          ignore-unfixed: true
-      - name: Trivy worker image
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: image
-          image-ref: priceradar/workers:ci
-          severity: HIGH,CRITICAL
-          exit-code: "1"
-          ignore-unfixed: true
-      - name: Trivy frontend image
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: image
-          image-ref: priceradar/frontend:ci
-          severity: HIGH,CRITICAL
-          exit-code: "1"
-          ignore-unfixed: true
-      - name: Trivy ML image
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: image
-          image-ref: priceradar/ml:ci
-          severity: HIGH,CRITICAL
-          exit-code: "1"
-          ignore-unfixed: true
+        run: |
+          set -euo pipefail
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+          for image in priceradar/backend:ci priceradar/workers:ci priceradar/frontend:ci priceradar/ml:ci; do
+            echo "Scanning ${image}"
+            trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed "${image}"
+          done
