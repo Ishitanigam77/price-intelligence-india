@@ -142,6 +142,21 @@ Implemented after Phase 12 authentication. Background collection only:
 - Uses `RetailerRegistry` and mock/approved adapters only. No real-retailer scraping,
   notification delivery, billing, or collection UI.
 
+## Phase 14A — First real retailer integration batch (this increment)
+
+Implemented after Phase 13 collection. **Only** this batch:
+
+- Inspect the existing `RetailerAdapter` / `RetailerRegistry` contract (unchanged).
+- Add a small first batch of real Indian retailer adapters that have a legitimate, documented
+  data-acquisition path (official API or official affiliate API/feed).
+- **Implemented:** Amazon.in (Associates Creators API) and Flipkart (Affiliate API 1.0).
+- Other major Indian retailers were evaluated and skipped when no clearly permitted, documented
+  catalog API/feed was available (see `backend/app/retailer_adapters/INTEGRATIONS.md`).
+- Fixture/mocked tests only unless approved credentials are already configured. No scraping,
+  Playwright, CAPTCHA bypass, or hardcoded secrets.
+- Phase 13 collection architecture and the comparison engine are not modified.
+- **Explicitly excluded:** Phase 14B and later retailer-expansion work.
+
 ## Phase Ordering Notes
 
 - Phases are sequential by default but a later phase may be pulled forward only on explicit

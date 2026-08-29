@@ -13,6 +13,8 @@ FORBIDDEN_IMPORT_FRAGMENTS = (
     "app.retailer_adapters.mock_retailer_a",
     "app.retailer_adapters.mock_retailer_b",
     "app.retailer_adapters.mock_retailer_c",
+    "app.retailer_adapters.amazon_in",
+    "app.retailer_adapters.flipkart",
     "app.recommendation",
 )
 

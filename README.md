@@ -6,13 +6,14 @@ price history, detects genuine price drops and sale events, and recommends wheth
 **BUY_NOW**, **WAIT**, or **WATCH**.
 
 > **Status:** backend through sale-event intelligence, sale-price prediction, the BUY /
-> WAIT recommendation engine, Clerk authentication, and Phase 13 collection workers is
-> implemented (see `backend/README.md` and `ml/README.md`).
+> WAIT recommendation engine, Clerk authentication, Phase 13 collection workers, and
+> Phase 14A Amazon.in / Flipkart affiliate adapters is implemented (see
+> `backend/README.md` and `ml/README.md`).
 > The **Next.js frontend** (`frontend/`) consumes catalogue APIs for search, product details,
 > price history, deals, retailers, and about. **Phase 12** adds Clerk authentication and
 > user-owned watchlists, saved products, target prices, alerts, and profile (see
-> `AUTHENTICATION.md`). Real retailer integrations and notification dispatch do **not** exist
-> yet — see `ROADMAP.md`.
+> `AUTHENTICATION.md`). Live retailer E2E is not run without approved credentials —
+> see `backend/app/retailer_adapters/INTEGRATIONS.md`.
 
 ## Why This Exists
 

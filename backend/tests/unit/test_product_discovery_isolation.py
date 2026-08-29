@@ -19,6 +19,8 @@ FORBIDDEN_IMPORT_FRAGMENTS = (
     "app.retailer_adapters.mock_retailer_a",
     "app.retailer_adapters.mock_retailer_b",
     "app.retailer_adapters.mock_retailer_c",
+    "app.retailer_adapters.amazon_in",
+    "app.retailer_adapters.flipkart",
 )
 
 COMPARED_NAMES = {"retailer", "retailer_id", "retailer_name", "retailer_slug"}
@@ -54,6 +56,17 @@ def test_discovery_service_contains_no_retailer_identity_branches() -> None:
             if any(isinstance(comparator, ast.Constant) for comparator in node.comparators):
                 offenders.append(f"{path.name}:{node.lineno} compares {left.attr} to a constant")
     assert offenders == []
+
+
+def test_wiring_discovers_integrations_without_naming_them() -> None:
+    source = (BACKEND_ROOT / "app/retailer_adapters/wiring.py").read_text(encoding="utf-8")
+    assert "amazon_in" not in source
+    assert "flipkart" not in source
+    registry = build_retailer_registry(
+        settings=Settings(_env_file=None, retailer_adapter_kinds="integration"),
+        env={},
+    )
+    assert set(registry.retailer_ids()) == {"amazon-in", "flipkart"}
 
 
 def test_wiring_discovers_mocks_without_naming_them() -> None:

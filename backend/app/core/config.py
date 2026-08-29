@@ -69,9 +69,8 @@ class Settings(BaseSettings):
     #: Comma-separated retailer IDs to switch off globally, regardless of per-adapter config.
     retailer_adapters_disabled: str = ""
     #: Comma-separated adapter kinds to instantiate at startup (`mock`, `integration`).
-    #: Phase 4 product discovery uses the existing fixture-backed mock adapters only; real
-    #: integrations are a later phase. Production should switch this to `integration` once
-    #: legitimate retailer adapters exist.
+    #: Defaults to mock adapters so local discovery stays fixture-backed. Set to
+    #: `integration` to wire Amazon.in / Flipkart when their env credentials exist.
     retailer_adapter_kinds: str = "mock"
 
     # -- Authentication (Clerk) ----------------------------------------------------------------

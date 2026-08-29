@@ -17,8 +17,10 @@ is implemented. **Phase 11 BUY / WAIT recommendation** (`app/recommendation/`,
 `GET /api/v1/products/{id}/recommendation`) is implemented. **Phase 12 Clerk authentication
 and personalization** (`app/auth/`, `/api/v1/me`, watchlists, saved products, target prices,
 alerts) is implemented. **Phase 13 scalable data collection** (`app/collectors/`,
-`app/workers/`, Celery + Redis) is implemented. Real retailer integrations and notification
-dispatch are **not** implemented yet — see `../ROADMAP.md`.
+`app/workers/`, Celery + Redis) is implemented. **Phase 14A** adds Amazon.in (Creators API)
+and Flipkart (Affiliate API) adapters under `app/retailer_adapters/` — see
+`app/retailer_adapters/INTEGRATIONS.md`. Notification dispatch is **not** implemented yet —
+see `../ROADMAP.md`.
 
 > **Note on phase numbering**: `../ROADMAP.md` reserves "Phase 2" for the Retailer Adapter
 > Framework. That framework is implemented here (`app/retailer_adapters/`). A separate

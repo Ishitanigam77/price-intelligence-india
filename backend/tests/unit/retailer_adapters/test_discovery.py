@@ -9,10 +9,19 @@ from app.retailer_adapters.mock_retailer_b import RETAILER_ID as ID_B
 from app.retailer_adapters.mock_retailer_c import RETAILER_ID as ID_C
 
 
-def test_discovery_defaults_to_real_integrations_and_finds_none() -> None:
-    """Phase 2 ships mock adapters only; production discovery must not pick them up."""
+def test_discovery_defaults_to_real_integrations() -> None:
+    """Phase 14A registers Amazon.in and Flipkart as integration adapters."""
     discovered = discover_adapters()
-    assert discovered == ()
+    ids = tuple(entry.retailer_id for entry in discovered)
+    assert ids == ("amazon-in", "flipkart")
+    assert {entry.kind for entry in discovered} == {AdapterKind.INTEGRATION}
+
+
+def test_integration_factory_builds_amazon_in() -> None:
+    discovered = {entry.retailer_id: entry for entry in discover_adapters()}
+    adapter = discovered["amazon-in"].create(env={})
+    assert adapter.retailer_id == "amazon-in"
+    assert adapter.enabled is True
 
 
 def test_mock_adapters_are_discoverable_when_explicitly_requested() -> None:
