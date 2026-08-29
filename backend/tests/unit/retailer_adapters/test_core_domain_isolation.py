@@ -31,6 +31,8 @@ FORBIDDEN_IMPORT_FRAGMENTS = (
     "app.retailer_adapters.mock_retailer_a",
     "app.retailer_adapters.mock_retailer_b",
     "app.retailer_adapters.mock_retailer_c",
+    "app.retailer_adapters.amazon_in",
+    "app.retailer_adapters.flipkart",
 )
 
 REAL_RETAILER_NAMES = (
@@ -67,10 +69,14 @@ def test_core_packages_do_not_import_specific_adapters() -> None:
 
 
 def test_adapter_framework_does_not_name_real_retailers() -> None:
-    """The adapter framework and its mocks are fictional; real retailer names belong later."""
+    """Framework and mocks stay retailer-agnostic; named retailers live in their packages."""
     offenders: list[str] = []
     root = BACKEND_ROOT / "app/retailer_adapters"
     for path in _python_files(root):
+        relative = path.relative_to(root)
+        top = relative.parts[0]
+        if top != "base" and not top.startswith("mock_"):
+            continue
         lowered = _module_source(path).lower()
         for name in REAL_RETAILER_NAMES:
             if name in lowered:

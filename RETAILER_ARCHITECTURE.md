@@ -2,9 +2,10 @@
 
 > This document defines how retailers are integrated so that the network can grow from a
 > handful of retailers to 100+ without changes to the core comparison, matching, or pricing
-> engines. The common adapter interface, registry, configuration, standardized models, and
-> three fixture-backed mock adapters are implemented (see `backend/app/retailer_adapters/`).
-> No real retailer integration exists yet — mocks are in-process fixtures, not network clients.
+> engines. The common adapter interface, registry, configuration, standardized models, three
+> fixture-backed mock adapters, and the Phase 14A Amazon.in / Flipkart adapters are implemented
+> (see `backend/app/retailer_adapters/`). Mock adapters remain in-process fixtures. Real
+> adapters call official affiliate APIs only when environment credentials are present.
 
 ## 1. Design Goal
 
@@ -60,8 +61,8 @@ Each retailer adapter will implement a common interface responsible for:
 
 The adapter interface itself is implemented in `backend/app/retailer_adapters/base/`. Mock
 adapters in `mock_retailer_a/`, `mock_retailer_b/`, and `mock_retailer_c/` validate the
-contract against invented fixture data. Real retailer integrations are a later phase and
-must use a legitimate access method (see §2).
+contract against invented fixture data. Phase 14A adds `amazon_in/` and `flipkart/` using
+documented official affiliate APIs (see `backend/app/retailer_adapters/INTEGRATIONS.md`).
 
 ## 4. Directory Convention (Target)
 
@@ -115,7 +116,8 @@ retailers' native APIs are, they both ultimately populate the same Price Observa
 
 ## 7. Explicit Non-Goals
 
-- This document does not define any concrete *real* retailer integration. Mock adapters use
-  invented fixture data and `*.example.test` URLs; they are not stand-ins for a named retailer.
-- This document does not authorize scraping. Any future adapter must be justified by a
-  legitimate access method before implementation begins.
+- Mock adapters use invented fixture data and `*.example.test` URLs; they are not stand-ins
+  for a named retailer.
+- This document does not authorize scraping. Every real adapter must be justified by a
+  legitimate access method before implementation begins. Phase 14A adapters and the skipped
+  retailers are listed in `backend/app/retailer_adapters/INTEGRATIONS.md`.
