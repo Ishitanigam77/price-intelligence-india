@@ -13,12 +13,12 @@ quiet: false
 soft-fail: false
 
 skip-check:
-# Microsoft-hosted Azure DevOps / GitHub agents need Key Vault and storage data-plane
-# access during terraform apply and to read remote state. Operators should set
-# kv_allowed_ip_rules and/or use a self-hosted agent on the VNet, then enable
-# private endpoints. See infrastructure/CICD.md and infrastructure/IDENTITY.md.
-# CKV_AZURE_35 is the same bootstrap exception for the tfstate storage account
-# (default network action Allow until agent IPs or a VNet agent are in place).
+  # Microsoft-hosted Azure DevOps / GitHub agents need Key Vault and storage data-plane
+  # access during terraform apply and to read remote state. Operators should set
+  # kv_allowed_ip_rules and/or use a self-hosted agent on the VNet, then enable
+  # private endpoints. See infrastructure/CICD.md and infrastructure/IDENTITY.md.
+  # CKV_AZURE_35 is the same bootstrap exception for the tfstate storage account
+  # (default network action Allow until agent IPs or a VNet agent are in place).
   - CKV_AZURE_109
   - CKV_AZURE_189
   - CKV_AZURE_59

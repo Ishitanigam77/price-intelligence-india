@@ -45,7 +45,7 @@ ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL} \
     NEXT_PUBLIC_CLERK_SIGN_IN_URL=${NEXT_PUBLIC_CLERK_SIGN_IN_URL} \
     NEXT_PUBLIC_CLERK_SIGN_UP_URL=${NEXT_PUBLIC_CLERK_SIGN_UP_URL}
 
-RUN npm run build
+RUN mkdir -p public && npm run build
 
 # ---------------------------------------------------------------------------------------------
 # Runtime: standalone Node server, non-root.
