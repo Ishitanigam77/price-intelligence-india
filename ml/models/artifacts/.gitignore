@@ -1,0 +1,4 @@
+# Trained boosters, preprocessors, and metadata. Never commit fitted artifacts.
+*
+!.gitignore
+!README.md

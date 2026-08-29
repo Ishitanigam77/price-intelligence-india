@@ -22,3 +22,6 @@ price comparison + Phase 7 historical price intelligence + Phase 9 sale-event in
 - `sale_event_service.py` — loads persisted `SaleEvent` rows and stored observations, then asks
   `app.sales.SaleEventEngine` for lifecycle status and historical sale-price analysis.
   Does not predict future sale prices.
+- `sale_price_prediction_service.py` — loads the same stored observations and events, then asks
+  the Phase 10 `ml` inference layer for a labeled predicted effective sale price (or
+  `INSUFFICIENT_DATA`). Does not implement recommendations.

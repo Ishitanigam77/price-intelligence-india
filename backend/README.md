@@ -12,13 +12,14 @@ helpers, and three fixture-backed mock adapters). The **product identity matchin
 (`app/matching/`) and **price comparison engine** (`app/pricing/`,
 `GET /api/v1/products/{product_id}/prices`) are implemented. **Phase 9 sale-event intelligence**
 (`app/sales/`, `GET /api/v1/sale-events`, `GET /api/v1/products/{id}/sale-history`) is
-implemented. Collectors, real retailer integrations, recommendation, notifications, and auth
+implemented. **Phase 10 sale-price prediction** (`ml/`, `GET /api/v1/products/{id}/sale-price-prediction`)
+is implemented. Collectors, real retailer integrations, recommendation, notifications, and auth
 are **not** implemented yet — see `../ROADMAP.md`.
 
 > **Note on phase numbering**: `../ROADMAP.md` reserves "Phase 2" for the Retailer Adapter
 > Framework. That framework is implemented here (`app/retailer_adapters/`). A separate
 > FastAPI application-foundation increment (application factory, `/api/v1/`, Redis, Docker)
-> was merged independently and is also present. Recommendation and ML remain later-phase work.
+> was merged independently and is also present. Recommendation remains later-phase work.
 
 ## Layout
 
@@ -59,6 +60,8 @@ are **not** implemented yet — see `../ROADMAP.md`.
 - `Dockerfile`, `docker-entrypoint.sh`, `.dockerignore` — production-oriented backend image
 - `scripts/seed_dev_data.py` — seeds clearly-fake development data for manually validating the
   schema (not used by the automated test suite)
+- `scripts/train_sale_price_model.py` — offline Phase 10 training from stored observations
+  and sale events (`INSUFFICIENT_DATA` if history is inadequate; never fabricates rows)
 - `tests/unit/`, `tests/integration/` — test suites
 
 See also `../infrastructure/docker/docker-compose.yml` for the local development stack

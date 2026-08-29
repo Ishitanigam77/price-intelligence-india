@@ -113,7 +113,7 @@ product feed         │   - discovery / listing fetch               │
 
 ### 2.6 ML Inference
 
-- Consumes engineered features (see `TECH_STACK.md` / `ROADMAP.md` Phase 8) to predict a likely
+- Consumes engineered features (see `ml/README.md` / Phase 10) to predict a likely
   future sale price.
 - Explicitly returns `INSUFFICIENT_DATA` rather than a low-confidence guess when history is
   inadequate.

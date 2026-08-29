@@ -1,6 +1,6 @@
 # ml/training/
 
-Offline training pipeline for the XGBoost sale-price prediction model, including the
-`INSUFFICIENT_DATA` fallback path when historical data is inadequate.
+Offline training: labeled examples from stored observations and sale events, chronological
+splits, XGBoost fit, `INSUFFICIENT_DATA` when history is inadequate.
 
-**Status**: empty scaffold. Introduced in **Phase 8 — ML: Sale-Price Prediction**.
+**Status**: implemented in **Phase 10 — Sale-Price Prediction**.

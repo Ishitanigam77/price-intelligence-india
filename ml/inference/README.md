@@ -1,5 +1,6 @@
 # ml/inference/
 
-Serves sale-price predictions to the Recommendation Engine using trained model artifacts.
+Loads a versioned XGBoost artifact and returns a labeled sale-price prediction (or
+`INSUFFICIENT_DATA`). Consumed by `SalePricePredictionService`; not a recommendation engine.
 
-**Status**: empty scaffold. Introduced in **Phase 8 — ML: Sale-Price Prediction**.
+**Status**: implemented in **Phase 10 — Sale-Price Prediction**.

@@ -1,7 +1,5 @@
 # ml/features/
 
-Feature engineering shared by training and inference: current price, 7/30/90-day averages,
-historical min/max, volatility, previous sale prices, retailer, seller, category, brand, sale
-event, and days-until-sale.
+Leakage-safe feature engineering shared by training and inference (`features-v1`).
 
-**Status**: empty scaffold. Introduced in **Phase 8 — ML: Sale-Price Prediction**.
+**Status**: implemented in **Phase 10 — Sale-Price Prediction**.

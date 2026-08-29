@@ -52,6 +52,9 @@ ml/**/*.pkl
 ml/**/*.joblib
 ml/**/*.model
 ml/**/mlruns/
+ml/models/artifacts/**
+!ml/models/artifacts/README.md
+!ml/models/artifacts/.gitignore
 *.ipynb_checkpoints/
 
 # ---------------------------------------------------------------------------

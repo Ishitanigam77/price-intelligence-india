@@ -15,6 +15,8 @@ they cover, starting in **Phase 1**.
   price-drop, trend, insufficient-history, provenance, isolation).
 - `sales/` — Phase 9 sale-event intelligence (lifecycle, applicability, historical sale
   prices, calculated detection from concurrent drops, isolation).
+- `ml/` — Phase 10 sale-price prediction (feature cutoff, leakage, chronological splits,
+  INSUFFICIENT_DATA, XGBoost training, evaluation, inference schema, versioning).
 - `retailer_adapters/` — adapter contract, registry, config, timeout/retry, rate limits,
   mock retailers, normalization, extensibility, and core-domain isolation.
 
