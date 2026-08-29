@@ -7,6 +7,8 @@ autogenerate and for `Base.metadata.create_all(...)` in tests, and (b) callers c
 
 from app.db.models.brand import Brand
 from app.db.models.category import Category
+from app.db.models.collection_error import CollectionError
+from app.db.models.collection_job import CollectionJob
 from app.db.models.price_adjustment import PriceAdjustment
 from app.db.models.price_alert import PriceAlert
 from app.db.models.price_snapshot import PriceSnapshot
@@ -26,6 +28,8 @@ from app.db.models.watchlist_item import WatchlistItem
 __all__ = [
     "Brand",
     "Category",
+    "CollectionError",
+    "CollectionJob",
     "PriceAdjustment",
     "PriceAlert",
     "PriceSnapshot",

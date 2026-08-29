@@ -127,6 +127,43 @@ class SaleEventRepository(BaseRepository[SaleEvent]):
         stmt = stmt.order_by(SaleEvent.start_date.asc(), SaleEvent.id.asc())
         return list(self.session.scalars(stmt).all())
 
+    def get_equivalent_inferred_window(
+        self,
+        *,
+        name: str,
+        start_date: datetime,
+        end_date: datetime,
+        event_type: SaleEventType,
+        source: SaleEventSource,
+        retailer_id: uuid.UUID | None,
+        category_id: uuid.UUID | None,
+        brand_id: uuid.UUID | None,
+    ) -> SaleEvent | None:
+        """Return an existing inferred window with the same identity, if any."""
+        stmt = select(SaleEvent).where(
+            SaleEvent.name == name,
+            SaleEvent.start_date == start_date,
+            SaleEvent.end_date == end_date,
+            SaleEvent.event_type == event_type,
+            SaleEvent.source == source,
+        )
+        stmt = (
+            stmt.where(SaleEvent.retailer_id == retailer_id)
+            if retailer_id is not None
+            else stmt.where(SaleEvent.retailer_id.is_(None))
+        )
+        stmt = (
+            stmt.where(SaleEvent.category_id == category_id)
+            if category_id is not None
+            else stmt.where(SaleEvent.category_id.is_(None))
+        )
+        stmt = (
+            stmt.where(SaleEvent.brand_id == brand_id)
+            if brand_id is not None
+            else stmt.where(SaleEvent.brand_id.is_(None))
+        )
+        return self.session.scalars(stmt).first()
+
     def _filtered_stmt(
         self,
         *,

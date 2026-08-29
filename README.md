@@ -5,8 +5,9 @@ network of Indian online retailers, identifies identical products/variants acros
 price history, detects genuine price drops and sale events, and recommends whether to
 **BUY_NOW**, **WAIT**, or **WATCH**.
 
-> **Status:** backend through sale-event intelligence, sale-price prediction, and the BUY /
-> WAIT recommendation engine is implemented (see `backend/README.md` and `ml/README.md`).
+> **Status:** backend through sale-event intelligence, sale-price prediction, the BUY /
+> WAIT recommendation engine, Clerk authentication, and Phase 13 collection workers is
+> implemented (see `backend/README.md` and `ml/README.md`).
 > The **Next.js frontend** (`frontend/`) consumes catalogue APIs for search, product details,
 > price history, deals, retailers, and about. **Phase 12** adds Clerk authentication and
 > user-owned watchlists, saved products, target prices, alerts, and profile (see

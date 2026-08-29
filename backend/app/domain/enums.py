@@ -137,3 +137,39 @@ class SaleEventStatus(StrEnum):
     BEFORE_EVENT = "before_event"
     DURING_EVENT = "during_event"
     AFTER_EVENT = "after_event"
+
+
+class CollectionJobType(StrEnum):
+    """Logical background collection job kinds (Phase 13)."""
+
+    PRODUCT_SEARCH = "product_search"
+    PRODUCT_REFRESH = "product_refresh"
+    PRICE_REFRESH = "price_refresh"
+    AVAILABILITY_REFRESH = "availability_refresh"
+    SALE_EVENT_REFRESH = "sale_event_refresh"
+
+
+class CollectionJobStatus(StrEnum):
+    """Persistent lifecycle of one `CollectionJob` row."""
+
+    PENDING = "pending"
+    RUNNING = "running"
+    SUCCESS = "success"
+    PARTIAL_SUCCESS = "partial_success"
+    FAILED = "failed"
+
+
+class CollectionErrorCategory(StrEnum):
+    """Retailer-agnostic classification of a collection failure.
+
+    Permanent/validation categories are not retried. Transient categories may be retried
+    under the collection retry policy until attempts are exhausted.
+    """
+
+    TIMEOUT = "timeout"
+    RATE_LIMITED = "rate_limited"
+    TEMPORARY_FAILURE = "temporary_failure"
+    VALIDATION = "validation"
+    PERMANENT = "permanent"
+    CONFIGURATION = "configuration"
+    UNEXPECTED = "unexpected"

@@ -33,3 +33,7 @@ Phase 10 sale-price prediction + Phase 11 recommendation + Phase 12 personalizat
 - `user_service.py`, `watchlist_service.py`, `saved_product_service.py`,
   `target_price_service.py`, `alert_service.py` — Phase 12 personalization. Every mutating and
   listing method takes the authenticated `User` and scopes access by `user.id`.
+
+Background collection (Phase 13) lives in `app/collectors/` and `app/workers/`, not here.
+`product_discovery_service.py` exposes persist helpers that collectors reuse so listings and
+snapshots stay on the same uniqueness rules.

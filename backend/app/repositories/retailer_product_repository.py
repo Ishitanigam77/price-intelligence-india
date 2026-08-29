@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.db.models.product_variant import ProductVariant
+from app.db.models.retailer import Retailer
 from app.db.models.retailer_product import RetailerProduct
 from app.repositories.base import BaseRepository
 
@@ -25,6 +26,17 @@ class RetailerProductRepository(BaseRepository[RetailerProduct]):
     def list_for_variant(self, product_variant_id: uuid.UUID) -> list[RetailerProduct]:
         stmt = select(RetailerProduct).where(
             RetailerProduct.product_variant_id == product_variant_id
+        )
+        return list(self.session.scalars(stmt).all())
+
+    def list_active_for_retailer_slug(self, retailer_slug: str) -> list[RetailerProduct]:
+        """Active listings for the adapter identity `retailer_slug`."""
+        stmt = (
+            select(RetailerProduct)
+            .join(Retailer, RetailerProduct.retailer_id == Retailer.id)
+            .where(Retailer.slug == retailer_slug, RetailerProduct.is_active.is_(True))
+            .options(selectinload(RetailerProduct.retailer))
+            .order_by(RetailerProduct.retailer_sku.asc())
         )
         return list(self.session.scalars(stmt).all())
 

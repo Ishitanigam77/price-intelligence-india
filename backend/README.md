@@ -16,8 +16,9 @@ implemented. **Phase 10 sale-price prediction** (`ml/`, `GET /api/v1/products/{i
 is implemented. **Phase 11 BUY / WAIT recommendation** (`app/recommendation/`,
 `GET /api/v1/products/{id}/recommendation`) is implemented. **Phase 12 Clerk authentication
 and personalization** (`app/auth/`, `/api/v1/me`, watchlists, saved products, target prices,
-alerts) is implemented. Collectors, real retailer integrations, and notification dispatch are
-**not** implemented yet — see `../ROADMAP.md`.
+alerts) is implemented. **Phase 13 scalable data collection** (`app/collectors/`,
+`app/workers/`, Celery + Redis) is implemented. Real retailer integrations and notification
+dispatch are **not** implemented yet — see `../ROADMAP.md`.
 
 > **Note on phase numbering**: `../ROADMAP.md` reserves "Phase 2" for the Retailer Adapter
 > Framework. That framework is implemented here (`app/retailer_adapters/`). A separate
@@ -47,8 +48,8 @@ alerts) is implemented. Collectors, real retailer integrations, and notification
   (`app/db/models/`)
 - `app/retailer_adapters/` — common adapter interface, registry, execution helpers, and
   fixture-backed mock adapters (Phase 2). Real retailer integrations are later.
-- `app/collectors/` — orchestrates data acquisition via adapters (later; the adapter
-  framework is in place)
+- `app/collectors/` — Celery-backed collection orchestration (Phase 13): search, product/
+  price/availability refresh, sale-event refresh via `RetailerRegistry`
 - `app/normalization/` — raw listing → common normalized shape (Phase 3)
 - `app/matching/` — product/variant matching engine (this increment): four-stage pipeline
   (exact identifiers, normalized attributes, title/token similarity, embeddings). Independent
@@ -58,7 +59,7 @@ alerts) is implemented. Collectors, real retailer integrations, and notification
 - `app/sales/` — sale-event intelligence (Phase 9)
 - `app/recommendation/` — BUY_NOW / WAIT / WATCH engine (Phase 11)
 - `app/notifications/` — watchlist & price alert dispatch (Phase 6)
-- `app/workers/` — Celery app, tasks, schedules (Phase 2+)
+- `app/workers/` — Celery app and collection tasks (Phase 13)
 - `app/observability/` — structured JSON logging, correlation IDs, metrics seams
 - `alembic/` — database migrations
 - `Dockerfile`, `docker-entrypoint.sh`, `.dockerignore` — production-oriented backend image
@@ -104,6 +105,21 @@ sudo apt-get install redis-server && sudo service redis-server start
 ```
 
 `REDIS_URL` (see `.env.example`) defaults to `redis://localhost:6379/0`.
+
+### Celery workers (Phase 13)
+
+Redis must be running. Broker/result URLs come from `CELERY_BROKER_URL` and
+`CELERY_RESULT_BACKEND` (never hardcoded):
+
+```bash
+celery -A app.workers.celery_app worker --loglevel=INFO
+```
+
+Optional Beat scheduler (off unless `COLLECTION_BEAT_ENABLED=true`):
+
+```bash
+celery -A app.workers.celery_app beat --loglevel=INFO
+```
 
 ## Running Migrations
 
