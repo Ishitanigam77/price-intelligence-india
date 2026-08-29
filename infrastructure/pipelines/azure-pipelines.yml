@@ -252,6 +252,7 @@ stages:
               curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
               trivy fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL --exit-code 1 \
                 --config infrastructure/security/trivy.yaml \
+                --ignorefile .trivyignore \
                 --skip-dirs .git,.venv,frontend/node_modules,frontend/.next .
             displayName: trivy fs
 

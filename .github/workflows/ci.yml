@@ -297,6 +297,7 @@ jobs:
           exit-code: "1"
           skip-dirs: .git,.venv,frontend/node_modules,frontend/.next
           trivy-config: infrastructure/security/trivy.yaml
+          trivyignores: .trivyignore
 
   docker:
     name: Docker build

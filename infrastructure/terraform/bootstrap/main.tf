@@ -77,6 +77,14 @@ resource "azurerm_storage_account" "tfstate" {
     }
   }
 
+  # Default Allow is a bootstrap exception so Microsoft-hosted agents can reach remote state.
+  # Operators should switch default_action to Deny and add kv/storage IP rules once agents
+  # are known or self-hosted. See infrastructure/CICD.md.
+  network_rules {
+    default_action = "Allow"
+    bypass         = ["AzureServices"]
+  }
+
   tags = azurerm_resource_group.tfstate.tags
 
   lifecycle {
