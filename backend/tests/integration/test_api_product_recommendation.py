@@ -204,7 +204,7 @@ def test_recommendation_watch_for_neutral_history(
     response = client.get(f"/api/v1/products/{seed['product'].id}/recommendation")
     assert response.status_code == 200
     variant = response.json()["variants"][0]
-    assert variant["recommendation"] in {"WATCH", "BUY_NOW", "WAIT"}
+    assert variant["recommendation"] == "WATCH"
     # Tight cluster around the current price should not fabricate a saving.
     assert variant["expected_saving"] is None
     assert variant["prediction_used"] is False
