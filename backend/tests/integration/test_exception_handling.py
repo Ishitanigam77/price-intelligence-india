@@ -11,7 +11,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import OperationalError
 
-from app.api.errors import NotFoundError, register_exception_handlers
+from app.api.errors import ConflictError, NotFoundError, register_exception_handlers
+from app.auth.errors import AuthenticationError, AuthorizationError
 from app.domain.exceptions import InvalidSlugError
 
 
@@ -22,6 +23,18 @@ def _build_test_app() -> FastAPI:
     @app.get("/boom/not-found")
     def _not_found() -> None:
         raise NotFoundError("Widget 42 was not found.")
+
+    @app.get("/boom/unauthenticated")
+    def _unauthenticated() -> None:
+        raise AuthenticationError("Authentication required.")
+
+    @app.get("/boom/forbidden")
+    def _forbidden() -> None:
+        raise AuthorizationError("You are not allowed to access this resource.")
+
+    @app.get("/boom/conflict")
+    def _conflict() -> None:
+        raise ConflictError("The resource already exists.")
 
     @app.get("/boom/domain-error")
     def _domain_error() -> None:
@@ -53,6 +66,24 @@ def test_not_found_error_returns_structured_404(error_client: TestClient) -> Non
     body = response.json()
     assert body["error"]["code"] == "not_found"
     assert "Widget 42" in body["error"]["message"]
+
+
+def test_authentication_error_returns_structured_401(error_client: TestClient) -> None:
+    response = error_client.get("/boom/unauthenticated")
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "unauthenticated"
+
+
+def test_authorization_error_returns_structured_403(error_client: TestClient) -> None:
+    response = error_client.get("/boom/forbidden")
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "forbidden"
+
+
+def test_conflict_error_returns_structured_409(error_client: TestClient) -> None:
+    response = error_client.get("/boom/conflict")
+    assert response.status_code == 409
+    assert response.json()["error"]["code"] == "conflict"
 
 
 def test_domain_error_returns_structured_400(error_client: TestClient) -> None:

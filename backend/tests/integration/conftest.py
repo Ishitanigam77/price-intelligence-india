@@ -91,3 +91,29 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
             yield test_client
     finally:
         fastapi_app.dependency_overrides.pop(get_db, None)
+
+
+@pytest.fixture()
+def token_mapping() -> dict:
+    """Mutable Clerk-token → identity map used by `auth_client`."""
+    return {}
+
+
+@pytest.fixture()
+def auth_client(client: TestClient, token_mapping: dict) -> Generator[TestClient, None, None]:
+    """Like `client`, but Clerk verification is replaced with a static token map.
+
+    This does not fabricate a live Clerk session. It substitutes the verifier so authorization
+    and ownership can be tested without Clerk credentials. Tests that need the real verifier
+    should use `client` instead.
+    """
+    from app.auth.dependencies import get_token_verifier
+    from app.auth.tokens import StaticTokenVerifier
+    from app.main import app as fastapi_app
+
+    verifier = StaticTokenVerifier(token_mapping)
+    fastapi_app.dependency_overrides[get_token_verifier] = lambda: verifier
+    try:
+        yield client
+    finally:
+        fastapi_app.dependency_overrides.pop(get_token_verifier, None)

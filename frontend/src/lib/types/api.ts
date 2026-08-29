@@ -426,3 +426,63 @@ export interface ProductHistoryQuery extends PaginationQuery {
 export interface ListRetailersQuery extends PaginationQuery {
   active_only?: boolean;
 }
+
+export interface PreferenceRead {
+  email_alerts_enabled: boolean;
+  default_currency: string;
+}
+
+export interface UserProfileRead {
+  id: string;
+  clerk_user_id: string;
+  email: string | null;
+  display_name: string | null;
+  preferences: PreferenceRead;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserProfileUpdate {
+  display_name?: string | null;
+  preferences?: {
+    email_alerts_enabled?: boolean;
+    default_currency?: string;
+  };
+}
+
+export interface WatchlistRead {
+  id: string;
+  product_id: string;
+  product: ProductRead | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SavedProductItemRead {
+  id: string;
+  product_id: string;
+  product: ProductRead | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TargetPriceRead {
+  id: string;
+  product_id: string;
+  amount: MoneyAmount;
+  currency: string;
+  product: ProductRead | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AlertRead {
+  id: string;
+  product_id: string;
+  threshold_amount: MoneyAmount;
+  currency: string;
+  is_enabled: boolean;
+  product: ProductRead | null;
+  created_at: string;
+  updated_at: string;
+}

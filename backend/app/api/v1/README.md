@@ -28,6 +28,9 @@ and including its router there — nothing else needs to change.
   which exist yet.
 - `sale_events.py` — Phase 9 sale-event intelligence: `GET /sale-events`,
   `GET /sale-events/upcoming`, and `GET /sale-events/{event_id}`.
+- `me.py`, `watchlists.py`, `saved_products.py`, `target_prices.py`, `alerts.py` — Phase 12
+  authenticated personalization. Identity is derived from the verified Clerk token; owner ids
+  in the request body are rejected.
 
 No retailer scraping or product matching lives here. Catalogue routes are thin typed wrappers over Phase 1 repositories
 (`prices.py` uses a small service composing two repositories). `GET /products/search` is a

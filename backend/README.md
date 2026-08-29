@@ -14,8 +14,10 @@ helpers, and three fixture-backed mock adapters). The **product identity matchin
 (`app/sales/`, `GET /api/v1/sale-events`, `GET /api/v1/products/{id}/sale-history`) is
 implemented. **Phase 10 sale-price prediction** (`ml/`, `GET /api/v1/products/{id}/sale-price-prediction`)
 is implemented. **Phase 11 BUY / WAIT recommendation** (`app/recommendation/`,
-`GET /api/v1/products/{id}/recommendation`) is implemented. Collectors, real retailer
-integrations, notifications, and auth are **not** implemented yet — see `../ROADMAP.md`.
+`GET /api/v1/products/{id}/recommendation`) is implemented. **Phase 12 Clerk authentication
+and personalization** (`app/auth/`, `/api/v1/me`, watchlists, saved products, target prices,
+alerts) is implemented. Collectors, real retailer integrations, and notification dispatch are
+**not** implemented yet — see `../ROADMAP.md`.
 
 > **Note on phase numbering**: `../ROADMAP.md` reserves "Phase 2" for the Retailer Adapter
 > Framework. That framework is implemented here (`app/retailer_adapters/`). A separate
@@ -30,13 +32,14 @@ integrations, notifications, and auth are **not** implemented yet — see `../RO
   injection; `errors.py` is the centralized exception handling.
 - `app/api/v1/` — `/api/v1/` routers: `health` (liveness + per-dependency readiness),
   `products` (catalogue + `GET /products/search` discovery + prices/history/sale-history/
-  sale-price-prediction/recommendation), `retailers`, `prices`, `deals`, `sale_events`.
+  sale-price-prediction/recommendation), `retailers`, `prices`, `deals`, `sale_events`,
+  `me`, `watchlists`, `saved_products`, `target_prices`, `alerts`.
 - `app/schemas/` — Pydantic request/response DTOs, kept separate from the SQLAlchemy models.
 - `app/services/` — thin service-layer boundaries, added only where genuinely needed:
   `price_service.py` (listing vs observation existence) and `product_discovery_service.py`
   (retailer-agnostic search → normalize → persist → respond).
-- `app/auth/` — Clerk token verification (Phase 5+)
-- `app/core/` — settings (env-var driven: API, database, Redis, CORS, logging, and retailer
+- `app/auth/` — Clerk token verification and internal user mapping (Phase 12)
+- `app/core/` — settings (env-var driven: API, database, Redis, CORS, logging, Clerk, and retailer
   adapter defaults), structured logging setup, and Redis connection/client management.
 - `app/domain/` — framework-independent entities' invariants: enums, exceptions, validation
 - `app/repositories/` — data access layer over the SQLAlchemy models

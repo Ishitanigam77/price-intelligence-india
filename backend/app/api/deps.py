@@ -18,14 +18,21 @@ from app.db.session import get_db
 from app.observability.metrics import MetricsSink, NullMetricsSink
 from app.repositories.brand_repository import BrandRepository
 from app.repositories.category_repository import CategoryRepository
+from app.repositories.price_alert_repository import PriceAlertRepository
 from app.repositories.price_snapshot_repository import PriceSnapshotRepository
 from app.repositories.product_repository import ProductRepository
 from app.repositories.product_variant_repository import ProductVariantRepository
 from app.repositories.retailer_product_repository import RetailerProductRepository
 from app.repositories.retailer_repository import RetailerRepository
 from app.repositories.sale_event_repository import SaleEventRepository
+from app.repositories.saved_product_repository import SavedProductRepository
 from app.repositories.seller_repository import SellerRepository
+from app.repositories.target_price_repository import TargetPriceRepository
+from app.repositories.user_preference_repository import UserPreferenceRepository
+from app.repositories.user_repository import UserRepository
+from app.repositories.watchlist_repository import WatchlistRepository
 from app.retailer_adapters.base.registry import RetailerRegistry
+from app.services.alert_service import AlertService
 from app.services.price_comparison_service import PriceComparisonService
 from app.services.price_history_service import PriceHistoryService
 from app.services.price_service import PriceService
@@ -33,6 +40,10 @@ from app.services.product_discovery_service import ProductDiscoveryService
 from app.services.recommendation_service import RecommendationService
 from app.services.sale_event_service import SaleEventService
 from app.services.sale_price_prediction_service import SalePricePredictionService
+from app.services.saved_product_service import SavedProductService
+from app.services.target_price_service import TargetPriceService
+from app.services.user_service import UserService
+from app.services.watchlist_service import WatchlistService
 
 DbSession = Annotated[Session, Depends(get_db)]
 RedisClient = Annotated[Redis, Depends(get_redis)]
@@ -181,3 +192,79 @@ def get_recommendation_service(
 
 
 RecommendationServiceDep = Annotated[RecommendationService, Depends(get_recommendation_service)]
+
+
+def get_user_repository(db: DbSession) -> UserRepository:
+    return UserRepository(db)
+
+
+def get_user_preference_repository(db: DbSession) -> UserPreferenceRepository:
+    return UserPreferenceRepository(db)
+
+
+def get_watchlist_repository(db: DbSession) -> WatchlistRepository:
+    return WatchlistRepository(db)
+
+
+def get_saved_product_repository(db: DbSession) -> SavedProductRepository:
+    return SavedProductRepository(db)
+
+
+def get_target_price_repository(db: DbSession) -> TargetPriceRepository:
+    return TargetPriceRepository(db)
+
+
+def get_price_alert_repository(db: DbSession) -> PriceAlertRepository:
+    return PriceAlertRepository(db)
+
+
+UserRepositoryDep = Annotated[UserRepository, Depends(get_user_repository)]
+UserPreferenceRepositoryDep = Annotated[
+    UserPreferenceRepository, Depends(get_user_preference_repository)
+]
+WatchlistRepositoryDep = Annotated[WatchlistRepository, Depends(get_watchlist_repository)]
+SavedProductRepositoryDep = Annotated[SavedProductRepository, Depends(get_saved_product_repository)]
+TargetPriceRepositoryDep = Annotated[TargetPriceRepository, Depends(get_target_price_repository)]
+PriceAlertRepositoryDep = Annotated[PriceAlertRepository, Depends(get_price_alert_repository)]
+
+
+def get_user_service(
+    users: UserRepositoryDep,
+    preferences: UserPreferenceRepositoryDep,
+) -> UserService:
+    return UserService(users, preferences)
+
+
+def get_watchlist_service(
+    watchlists: WatchlistRepositoryDep,
+    products: ProductRepositoryDep,
+) -> WatchlistService:
+    return WatchlistService(watchlists, products)
+
+
+def get_saved_product_service(
+    saved_products: SavedProductRepositoryDep,
+    products: ProductRepositoryDep,
+) -> SavedProductService:
+    return SavedProductService(saved_products, products)
+
+
+def get_target_price_service(
+    target_prices: TargetPriceRepositoryDep,
+    products: ProductRepositoryDep,
+) -> TargetPriceService:
+    return TargetPriceService(target_prices, products)
+
+
+def get_alert_service(
+    alerts: PriceAlertRepositoryDep,
+    products: ProductRepositoryDep,
+) -> AlertService:
+    return AlertService(alerts, products)
+
+
+UserServiceDep = Annotated[UserService, Depends(get_user_service)]
+WatchlistServiceDep = Annotated[WatchlistService, Depends(get_watchlist_service)]
+SavedProductServiceDep = Annotated[SavedProductService, Depends(get_saved_product_service)]
+TargetPriceServiceDep = Annotated[TargetPriceService, Depends(get_target_price_service)]
+AlertServiceDep = Annotated[AlertService, Depends(get_alert_service)]

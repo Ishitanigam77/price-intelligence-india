@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { SkipLink } from "@/components/layout/SkipLink";
+import { ClerkAppProvider } from "@/components/auth/ClerkAppProvider";
 
 import "./globals.css";
 
@@ -33,12 +34,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en-IN" className={`${sans.variable} ${display.variable}`}>
       <body className="flex min-h-screen flex-col">
-        <SkipLink />
-        <Header />
-        <main id="main-content" className="mx-auto w-full max-w-page flex-1 px-4 py-8 sm:px-6">
-          {children}
-        </main>
-        <Footer />
+        <ClerkAppProvider>
+          <SkipLink />
+          <Header />
+          <main id="main-content" className="mx-auto w-full max-w-page flex-1 px-4 py-8 sm:px-6">
+            {children}
+          </main>
+          <Footer />
+        </ClerkAppProvider>
       </body>
     </html>
   );

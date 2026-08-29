@@ -2,12 +2,12 @@
 
 Next.js + TypeScript + Tailwind CSS application for **PriceRadar India**.
 
-This increment implements the public frontend: product search, product details with retailer
-comparison, historical price views, deals, retailers, and about. It talks only to the existing
-FastAPI backend through a typed API client.
+This increment implements the public frontend plus Phase 12 Clerk authentication and
+user-owned watchlist, alerts, and profile pages. It talks only to the existing FastAPI
+backend through a typed API client.
 
-**Out of scope here:** Clerk/authentication, watchlists/alerts, ML prediction UI, real retailer
-integrations, and recommendation (BUY_NOW / WAIT / WATCH).
+**Out of scope here:** notification dispatch, ML prediction UI, real retailer integrations,
+and recommendation (BUY_NOW / WAIT / WATCH).
 
 ## Stack
 
@@ -21,10 +21,13 @@ Copy `frontend/.env.example` to `frontend/.env.local` (never commit `.env.local`
 
 ```
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
 ```
 
 The API origin is read only from that environment variable. Backend URLs are not hardcoded.
-This frontend does not embed secrets.
+The browser receives only `NEXT_PUBLIC_*` values. `CLERK_SECRET_KEY` is server-only for Clerk
+middleware. See `../AUTHENTICATION.md`.
 
 The backend must allow the Next.js origin in `CORS_ALLOWED_ORIGINS` (see repo-root
 `.env.example`, default `http://localhost:3000`).
@@ -60,6 +63,10 @@ Open `http://localhost:3000`.
 | Deals           | `GET /api/v1/deals` (currently always empty — coming-soon state, no fabricated deals)           |
 | Retailers       | `GET /api/v1/retailers` (empty registry is shown honestly)                                      |
 | About           | Static explanation of observed vs calculated vs predicted data                                  |
+| Sign in / up    | Clerk components at `/sign-in` and `/sign-up`                                                   |
+| Watchlist       | Protected. `GET /api/v1/watchlists`                                                             |
+| Alerts          | Protected. `GET /api/v1/alerts`                                                                 |
+| Profile         | Protected. `GET`/`PATCH /api/v1/me`                                                             |
 
 The backend product model has **no image field**. Product cards use a labelled placeholder
 instead of inventing photos. Predicted values are never displayed: Phase 7 history responses

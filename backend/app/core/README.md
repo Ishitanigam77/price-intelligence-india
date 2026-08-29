@@ -14,7 +14,9 @@ concerns used across layers.
   `REDIS_SOCKET_TIMEOUT`, `REDIS_SOCKET_CONNECT_TIMEOUT`). The retailer adapter framework
   added framework-wide defaults (`RETAILER_ADAPTER_DEFAULT_*`, `RETAILER_ADAPTERS_DISABLED`).
   No secrets are hardcoded — see `.env.example`. Per-retailer credentials are added only
-  alongside a real adapter, never speculatively.
+  alongside a real adapter, never speculatively. Phase 12 added Clerk settings
+  (`CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_JWKS_URL`, `CLERK_ISSUER`,
+  `CLERK_AUDIENCE`) with empty placeholders.
 - `logging.py` — structured (JSON by default) logging configuration, applied once per process
   by the application factory (`app.main.create_app`).
 - `redis.py` — Redis connection pool/client management and a `check_redis_connection` health

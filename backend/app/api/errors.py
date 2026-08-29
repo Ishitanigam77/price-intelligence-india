@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.auth.errors import AuthenticationError, AuthorizationError
 from app.domain.exceptions import DomainError
 from app.schemas.common import ErrorDetail, ErrorResponse
 
@@ -33,6 +34,14 @@ class NotFoundError(Exception):
         self.message = message
 
 
+class ConflictError(Exception):
+    """Raised when a create would violate a uniqueness constraint (e.g. duplicate watchlist)."""
+
+    def __init__(self, message: str = "The resource already exists.") -> None:
+        super().__init__(message)
+        self.message = message
+
+
 def _error_response(
     status_code: int, code: str, message: str, fields: list[dict] | None = None
 ) -> JSONResponse:
@@ -46,6 +55,20 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(NotFoundError)
     async def handle_not_found(request: Request, exc: NotFoundError) -> JSONResponse:
         return _error_response(status.HTTP_404_NOT_FOUND, "not_found", exc.message)
+
+    @app.exception_handler(AuthenticationError)
+    async def handle_authentication_error(
+        request: Request, exc: AuthenticationError
+    ) -> JSONResponse:
+        return _error_response(status.HTTP_401_UNAUTHORIZED, "unauthenticated", exc.message)
+
+    @app.exception_handler(AuthorizationError)
+    async def handle_authorization_error(request: Request, exc: AuthorizationError) -> JSONResponse:
+        return _error_response(status.HTTP_403_FORBIDDEN, "forbidden", exc.message)
+
+    @app.exception_handler(ConflictError)
+    async def handle_conflict(request: Request, exc: ConflictError) -> JSONResponse:
+        return _error_response(status.HTTP_409_CONFLICT, "conflict", exc.message)
 
     @app.exception_handler(RequestValidationError)
     async def handle_validation_error(
@@ -67,8 +90,14 @@ def register_exception_handlers(app: FastAPI) -> None:
         # Preserves FastAPI/Starlette's own HTTPException usage (e.g. 503 from the readiness
         # check) while still returning the common error envelope.
         code = "http_error"
-        if exc.status_code == status.HTTP_404_NOT_FOUND:
+        if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+            code = "unauthenticated"
+        elif exc.status_code == status.HTTP_403_FORBIDDEN:
+            code = "forbidden"
+        elif exc.status_code == status.HTTP_404_NOT_FOUND:
             code = "not_found"
+        elif exc.status_code == status.HTTP_409_CONFLICT:
+            code = "conflict"
         elif exc.status_code == status.HTTP_503_SERVICE_UNAVAILABLE:
             code = "service_unavailable"
         return _error_response(exc.status_code, code, str(exc.detail))
