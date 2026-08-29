@@ -55,7 +55,7 @@ Image tag: `sha-<git commit SHA>`. Deployments reference that tag exactly.
 2. Lint (ruff, ESLint, TypeScript)
 3. Unit tests (frontend, backend, workers, ML, smoke-script tests)
 4. Integration tests
-5. Dependency/security scanning (pip-audit, npm audit, Checkov, Trivy filesystem)
+5. Dependency/security scanning (pip-audit on **shipped** backend/`[ml]` extras, npm audit, Checkov, Trivy filesystem)
 6. Frontend build (`next build`)
 7. Backend build (`compileall`)
 8. Worker build (`compileall`)

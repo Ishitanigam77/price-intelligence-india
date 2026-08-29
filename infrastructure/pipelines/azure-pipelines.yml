@@ -212,7 +212,7 @@ stages:
           - script: |
               set -euo pipefail
               python -m pip install --upgrade pip pip-audit
-              python -m pip install -e "./backend[dev]"
+              python -m pip install -e "./backend[ml]"
               pip-audit --progress-spinner off
             displayName: pip-audit backend
 
