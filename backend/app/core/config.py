@@ -34,6 +34,14 @@ class Settings(BaseSettings):
     environment: str = "development"
     log_level: str = "INFO"
     log_format: str = "json"
+    #: Process identity written on every structured log / metric. Override per container.
+    service_name: str = "backend"
+
+    # -- Observability (Phase 16). Connection string from env / Key Vault — never log it. ----
+    applicationinsights_connection_string: str = ""
+    worker_health_host: str = "0.0.0.0"
+    worker_health_port: int = 8081
+    worker_health_http: bool = False
 
     # -- API -----------------------------------------------------------------------------------
     api_host: str = "0.0.0.0"

@@ -168,6 +168,24 @@ Implemented after Phase 14A. Production-grade CI/CD and Azure infrastructure **a
 
 **Explicitly excluded:** Phase 16 and later. No additional retailers, no application redesign, no automatic production deploy from this repository change.
 
+## Phase 16 — Observability (this increment)
+
+Implemented after Phase 15. Application and Azure Monitor observability **only**:
+
+- Structured JSON logs (timestamp, service, environment, correlation ID, operation, status,
+  duration, error type) with secret redaction.
+- Custom metrics for API, retailer adapters/collection, workers, database, and ML.
+- Liveness, readiness, and dependency health checks (no secrets in probe bodies).
+- Application Insights export via environment-configured connection string (Key Vault /
+  managed identity from Phase 15). Missing telemetry config does not block startup.
+- Terraform workbooks, diagnostic settings, and alerts for API, collection, workers,
+  database, and ML. No `terraform apply` or `terraform destroy` in this change.
+- Frontend health plus error/navigation telemetry posted to a server route (connection
+  string stays server-side).
+
+**Explicitly excluded:** Phase 17 and later. Phase 15 CI/CD, Docker, ACR, and deploy
+pipelines are preserved. No production deploy from this increment.
+
 ## Phase Ordering Notes
 
 - Phases are sequential by default but a later phase may be pulled forward only on explicit

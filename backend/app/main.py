@@ -20,7 +20,11 @@ from app.api.v1 import api_router as api_v1_router
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
 from app.core.redis import close_redis_pool, get_redis_pool
+from app.db.session import engine
+from app.observability.database import instrument_engine
 from app.observability.metrics import NullMetricsSink
+from app.observability.middleware import RequestTelemetryMiddleware
+from app.observability.telemetry import configure_telemetry, get_process_metrics_sink
 from app.retailer_adapters.wiring import build_retailer_registry
 
 logger = logging.getLogger(__name__)
@@ -36,10 +40,21 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     need explicit disposal here.
     """
     settings = get_settings()
-    logger.info("Starting PriceRadar India API (environment=%s).", settings.environment)
-    get_redis_pool()
-    metrics_sink = getattr(app.state, "metrics_sink", None) or NullMetricsSink()
+    metrics_sink = getattr(app.state, "metrics_sink", None) or get_process_metrics_sink()
+    if metrics_sink is None:
+        metrics_sink = NullMetricsSink()
     app.state.metrics_sink = metrics_sink
+    instrument_engine(engine)
+    logger.info(
+        "api.startup",
+        extra={
+            "service": settings.service_name,
+            "environment": settings.environment,
+            "operation": "startup",
+            "status": "ok",
+        },
+    )
+    get_redis_pool()
     if getattr(app.state, "retailer_registry", None) is None:
         app.state.retailer_registry = build_retailer_registry(
             settings=settings, metrics_sink=metrics_sink
@@ -47,7 +62,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     try:
         yield
     finally:
-        logger.info("Shutting down PriceRadar India API.")
+        logger.info(
+            "api.shutdown",
+            extra={
+                "service": settings.service_name,
+                "environment": settings.environment,
+                "operation": "shutdown",
+                "status": "ok",
+            },
+        )
         close_redis_pool()
 
 
@@ -60,6 +83,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     """
     settings = settings or get_settings()
     configure_logging(settings)
+    configure_telemetry(
+        service_name=settings.service_name,
+        environment=settings.environment,
+        connection_string=settings.applicationinsights_connection_string,
+    )
 
     application = FastAPI(
         title="PriceRadar India API",
@@ -77,6 +105,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     register_exception_handlers(application)
+    application.add_middleware(RequestTelemetryMiddleware)
 
     # Unversioned liveness/readiness, kept for Phase 1 compatibility and simple orchestrator
     # probes; `/api/v1/health` (below) is the richer, per-dependency Phase 2 equivalent.

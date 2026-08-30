@@ -5,6 +5,8 @@ This document describes what is **implemented in code**, what operators must **c
 **Real Azure deployment was not performed as part of this change.** Apply and CD require an Azure subscription, service connections, and environment approvals that only operators can create.
 
 Phase 13 collection workers and Phase 14A retailer adapters are unchanged.
+Phase 16 adds observability resources (workbooks, diagnostic settings, alerts) on top of
+this DevOps foundation. It does not change the deploy path or add `terraform destroy`.
 
 ---
 

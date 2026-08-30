@@ -7,6 +7,7 @@ prediction as an observed price.
 
 from __future__ import annotations
 
+import time
 import uuid
 from collections import defaultdict
 from collections.abc import Callable
@@ -18,6 +19,8 @@ from sqlalchemy.orm import Session
 from app.api.errors import NotFoundError
 from app.observability.logging import get_logger
 from app.observability.metrics import MetricsSink, NullMetricsSink
+from app.observability.names import ML_PREDICTION_DURATION_MS, ML_PREDICTION_FAILURES, ML_PREDICTIONS
+from app.observability.telemetry import default_metric_tags
 from app.pricing.freshness import utc_now
 from app.repositories.price_snapshot_repository import PriceSnapshotRepository
 from app.repositories.product_repository import ProductRepository
@@ -62,6 +65,31 @@ class SalePricePredictionService:
             artifact_root if artifact_root is not None else self._config.artifact_dir
         )
 
+    def _record_prediction(
+        self,
+        *,
+        started: float,
+        status: str,
+        model_version: str,
+        failed: bool = False,
+        error_type: str | None = None,
+    ) -> None:
+        duration_ms = (time.perf_counter() - started) * 1000
+        tags = default_metric_tags(
+            operation="predict",
+            status=status,
+            model_version=model_version or "none",
+        )
+        self._metrics.increment(ML_PREDICTIONS, tags=tags)
+        self._metrics.observe(ML_PREDICTION_DURATION_MS, duration_ms, tags=tags)
+        if failed:
+            failure_tags = default_metric_tags(
+                operation="predict",
+                status="error",
+                error_type=error_type or "prediction_failure",
+            )
+            self._metrics.increment(ML_PREDICTION_FAILURES, tags=failure_tags)
+
     def predict_product(
         self,
         product_id: uuid.UUID,
@@ -70,6 +98,7 @@ class SalePricePredictionService:
         as_of: datetime | None = None,
         model_version: str | None = None,
     ) -> ProductSalePricePredictionRead:
+        started = time.perf_counter()
         product = self._products.get_by_id(product_id)
         if product is None:
             raise NotFoundError(f"Product {product_id} was not found.")
@@ -101,6 +130,11 @@ class SalePricePredictionService:
             logger.info(
                 "ml.product_prediction.insufficient_data",
                 extra={"product_id": str(product_id), "code": code.value},
+            )
+            self._record_prediction(
+                started=started,
+                status=PredictionStatus.INSUFFICIENT_DATA.value,
+                model_version=model_version or "none",
             )
             return ProductSalePricePredictionRead(
                 product_id=product_id,
@@ -161,7 +195,13 @@ class SalePricePredictionService:
                 "prediction_count": len(predictions),
                 "model_version": model.metadata.model_version,
                 "is_prediction": True,
+                "duration_ms": round((time.perf_counter() - started) * 1000, 3),
             },
+        )
+        self._record_prediction(
+            started=started,
+            status=status.value,
+            model_version=model.metadata.model_version,
         )
         return ProductSalePricePredictionRead(
             product_id=product_id,

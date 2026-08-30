@@ -13,7 +13,9 @@ Reusable Terraform modules composed by `platform/` and selected from `environmen
 | `storage` | StorageV2 for ML artifacts |
 | `monitoring` | Log Analytics, Application Insights, action group |
 | `container_apps` | Environment, apps, migrate + ML train jobs |
-| `alerts` | Metric alerts |
+| `alerts` | Metric and log alerts (Phase 15 + Phase 16) |
+| `diagnostics` | Diagnostic settings to Log Analytics |
+| `workbooks` | Azure Monitor workbooks for API, collection, workers, database, ML |
 | `platform` | Composition of the above |
 
 `prevent_destroy` is set on data-bearing resources. Do not remove it to force a replacement.

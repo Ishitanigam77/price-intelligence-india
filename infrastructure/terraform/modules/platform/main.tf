@@ -481,14 +481,41 @@ module "container_apps" {
 }
 
 module "alerts" {
-  source                   = "../alerts"
-  name                     = var.environment
-  resource_group_name      = azurerm_resource_group.this.name
-  action_group_id          = module.monitoring.action_group_id
-  backend_container_app_id = module.container_apps.backend_id
-  postgres_id              = module.postgresql.id
-  redis_id                 = module.redis.id
-  tags                     = var.tags
+  source                     = "../alerts"
+  name                       = var.environment
+  resource_group_name        = azurerm_resource_group.this.name
+  location                   = var.location
+  action_group_id            = module.monitoring.action_group_id
+  application_insights_id    = module.monitoring.application_insights_id
+  backend_container_app_id   = module.container_apps.backend_id
+  frontend_container_app_id  = module.container_apps.frontend_id
+  worker_container_app_id    = module.container_apps.worker_id
+  ml_container_app_id        = module.container_apps.ml_id
+  postgres_id                = module.postgresql.id
+  redis_id                   = module.redis.id
+  tags                       = var.tags
+}
+
+module "diagnostics" {
+  source                      = "../diagnostics"
+  name                        = var.environment
+  log_analytics_workspace_id  = module.monitoring.log_analytics_workspace_id
+  postgres_id                 = module.postgresql.id
+  redis_id                    = module.redis.id
+  key_vault_id                = module.key_vault.id
+  backend_container_app_id    = module.container_apps.backend_id
+  frontend_container_app_id   = module.container_apps.frontend_id
+  worker_container_app_id     = module.container_apps.worker_id
+  ml_container_app_id         = module.container_apps.ml_id
+}
+
+module "workbooks" {
+  source                  = "../workbooks"
+  name                    = var.environment
+  location                = var.location
+  resource_group_name     = azurerm_resource_group.this.name
+  application_insights_id = module.monitoring.application_insights_id
+  tags                    = var.tags
 }
 
 output "resource_group_name" {

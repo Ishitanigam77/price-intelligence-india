@@ -21,7 +21,10 @@ def test_v1_liveness_returns_ok() -> None:
     with TestClient(app) as test_client:
         response = test_client.get("/api/v1/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["service"] == "backend"
+    assert "environment" in body
 
 
 def test_v1_readiness_reports_postgresql_and_redis_independently() -> None:

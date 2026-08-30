@@ -22,8 +22,16 @@ REDACTED = "[REDACTED]"
 
 _SENSITIVE_KEY_PATTERN = re.compile(
     r"(secret|token|password|passwd|api[-_ ]?key|apikey|authorization|auth[-_ ]?header"
-    r"|credential|private[-_ ]?key|access[-_ ]?key|cookie|session[-_ ]?id)",
+    r"|credential|private[-_ ]?key|access[-_ ]?key|cookie|session[-_ ]?id"
+    r"|connection[-_ ]?string|database[-_ ]?url|redis[-_ ]?url|broker[-_ ]?url"
+    r"|result[-_ ]?backend|instrumentation[-_ ]?key|clerk[-_ ]?secret)",
     re.IGNORECASE,
+)
+
+_BEARER_IN_MESSAGE = re.compile(r"(?i)(bearer\s+)[^\s]+")
+_ASSIGNMENT_IN_MESSAGE = re.compile(
+    r"(?i)\b(api[-_]?key|token|password|secret|authorization|access[-_]?key"
+    r"|connection[-_]?string)\s*[:=]\s*\S+"
 )
 
 #: Attributes present on every `LogRecord`; anything else was supplied by the caller via
@@ -62,18 +70,38 @@ def redact(key: str, value: Any) -> Any:
     return value
 
 
+def sanitize_log_message(message: str) -> str:
+    """Redact credential-looking tokens that leaked into the log message text."""
+    text = _BEARER_IN_MESSAGE.sub(rf"\1{REDACTED}", message)
+    return _ASSIGNMENT_IN_MESSAGE.sub(lambda match: f"{match.group(1)}={REDACTED}", text)
+
+
 class JsonLogFormatter(logging.Formatter):
-    """Formats log records as single-line JSON objects, including caller-supplied extras."""
+    """Formats log records as single-line JSON objects, including caller-supplied extras.
+
+    Every record includes timestamp, level, service, environment, and (when bound)
+    correlation_id. Credential-looking extras and message fragments are redacted.
+    """
 
     def format(self, record: logging.LogRecord) -> str:
+        from app.observability.context import get_environment, get_service
+        from app.observability.correlation import get_correlation_id
+
         payload: dict[str, Any] = {
             "timestamp": datetime.fromtimestamp(record.created, UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
-            "message": record.getMessage(),
+            "message": sanitize_log_message(record.getMessage()),
+            "service": getattr(record, "service", None) or get_service(),
+            "environment": getattr(record, "environment", None) or get_environment(),
         }
+        correlation = getattr(record, "correlation_id", None) or get_correlation_id()
+        if correlation:
+            payload["correlation_id"] = correlation
         for key, value in vars(record).items():
             if key in _RESERVED_RECORD_ATTRS or key.startswith("_"):
+                continue
+            if key in payload:
                 continue
             payload[key] = redact(key, value)
         if record.exc_info:
