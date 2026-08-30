@@ -1,0 +1,14 @@
+# Example non-secret values only. Copy to terraform.tfvars (gitignored) for local applies.
+# Never put passwords, client secrets, or connection strings in this file.
+
+location                 = "centralindia"
+image_tag                = "bootstrap-placeholder"
+container_apps_enabled   = true
+alert_email              = ""
+cicd_principal_id        = ""
+cors_allowed_origins     = ""
+clerk_publishable_key    = ""
+clerk_jwks_url           = ""
+clerk_issuer             = ""
+clerk_audience           = ""
+kv_allowed_ip_rules      = []

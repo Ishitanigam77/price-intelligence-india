@@ -44,7 +44,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     API_HOST=0.0.0.0 \
     API_PORT=8000
 
+# Upgrade the slim base so known-fixed OS CVEs (e.g. OpenSSL CVE-2026-14456) are not
+# shipped in the scanned runtime image. Do not ignore those findings in Trivy.
 RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends libpq5 curl \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --shell /usr/sbin/nologin appuser
@@ -70,3 +73,25 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 # the environment at container start (see `.env.example`).
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# ---------------------------------------------------------------------------------------------
+# Worker: same runtime filesystem as the API, different process (Celery). Separate ACR image
+# via `--target worker`. Migrations must not run on workers — set RUN_DB_MIGRATIONS=false.
+# ---------------------------------------------------------------------------------------------
+FROM runtime AS worker
+
+ENV RUN_DB_MIGRATIONS=false
+
+USER appuser
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=25s --retries=3 \
+    CMD celery -A app.workers.celery_app inspect ping || exit 1
+
+# Entrypoint is inherited; with RUN_DB_MIGRATIONS=false it only execs this command.
+CMD ["celery", "-A", "app.workers.celery_app", "worker", "--loglevel=INFO"]
+
+# ---------------------------------------------------------------------------------------------
+# API: explicit target so `docker build` without `--target` is not the worker stage.
+# Keep this last so the default image remains the FastAPI process.
+# ---------------------------------------------------------------------------------------------
+FROM runtime AS api

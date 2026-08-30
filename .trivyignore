@@ -1,0 +1,8 @@
+# Justified Trivy ignores (not application CVE suppressions).
+#
+# AVD-AZURE-0012: bootstrap tfstate storage is reachable so Microsoft-hosted Azure DevOps /
+# GitHub agents can terraform init. Operators should set network_rules default Deny plus
+# known agent IPs (or a self-hosted VNet agent) after bootstrap. See infrastructure/CICD.md.
+
+AVD-AZURE-0012
+AZU-0012

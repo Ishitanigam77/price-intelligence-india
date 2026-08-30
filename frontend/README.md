@@ -52,6 +52,14 @@ Open `http://localhost:3000`.
 | `npm run build`        | Production build                         |
 | `GET /health`          | Frontend liveness (`{ "status": "ok" }`) |
 
+Production image (standalone Next.js server):
+
+```bash
+docker build -t priceradar/frontend:local --build-arg NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 .
+```
+
+Do not pass `CLERK_SECRET_KEY` as a build-arg. Compose: `infrastructure/docker/docker-compose.yml`.
+
 ## Pages and APIs
 
 | Page            | Backend contract                                                                                |

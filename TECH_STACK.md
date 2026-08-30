@@ -1,12 +1,11 @@
 # TECH_STACK.md — PriceRadar India
 
-> Status: Phase 1, plus the FastAPI backend application foundation and the retailer adapter
-> framework. This document records the *chosen* technology stack and the rationale for each
-> choice. PostgreSQL, SQLAlchemy, Alembic, a production-quality FastAPI application (versioned
-> API, CORS, centralized error handling), Redis (connection/health-check infrastructure only,
-> no caching business logic yet), and the retailer adapter framework (common interface plus
-> fixture-backed mock adapters) are wired up (see `backend/README.md`); everything else below
-> is still a target — see `ROADMAP.md` for when each remaining piece is introduced.
+> Status: Phases 1–14A application work plus **Phase 15 production DevOps** (GitHub Actions CI,
+> Azure DevOps CD, Docker images, Terraform for Azure). PostgreSQL, SQLAlchemy, Alembic, a
+> production-quality FastAPI application, Redis, Celery workers, the retailer adapter framework
+> (mock + Amazon.in / Flipkart affiliate adapters), and the Next.js frontend are wired up.
+> Azure resources are defined in Terraform but are **not** applied from a developer laptop in
+> this repository change — see `infrastructure/CICD.md`.
 
 ## Frontend
 

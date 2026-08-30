@@ -1,0 +1,7 @@
+# Copy to backend.hcl (gitignored) and fill in values from the bootstrap stack.
+#   terraform init -backend-config=backend.hcl
+resource_group_name  = "rg-priceradar-tfstate"
+storage_account_name = "stprtfstateREPLACE"
+container_name       = "tfstate"
+key                  = "dev.terraform.tfstate"
+use_azuread_auth     = true

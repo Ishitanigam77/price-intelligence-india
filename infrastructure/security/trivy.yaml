@@ -1,0 +1,10 @@
+# Trivy configuration used by GitHub Actions and Azure DevOps.
+#
+# Example env files contain documented placeholders such as `changeme`. Those are not
+# production credentials; skip them so secret scanning focuses on accidental real secrets.
+
+secret:
+  skip-files:
+    - "**/.env.example"
+    - "**/terraform.tfvars.example"
+    - "**/*.hcl.example"
