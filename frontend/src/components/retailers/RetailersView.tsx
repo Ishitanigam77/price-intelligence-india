@@ -5,6 +5,7 @@ import { ErrorState } from "@/components/status/ErrorState";
 import { LoadingSkeleton } from "@/components/status/LoadingSkeleton";
 import { listRetailers } from "@/lib/api";
 import { useAsync } from "@/lib/hooks/useAsync";
+import { safeExternalHref } from "@/lib/url/safeHref";
 
 export function RetailersView() {
   const state = useAsync(() => listRetailers({ limit: 50, offset: 0 }), []);
@@ -34,7 +35,9 @@ export function RetailersView() {
 
   return (
     <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      {items.map((retailer) => (
+      {items.map((retailer) => {
+        const websiteHref = safeExternalHref(retailer.website_url);
+        return (
         <li
           key={retailer.id}
           className="rounded-2xl border border-paper-muted bg-paper-card p-5 shadow-card"
@@ -50,9 +53,9 @@ export function RetailersView() {
               <dd className="mt-1 font-medium">{retailer.is_active ? "Active" : "Inactive"}</dd>
             </div>
           </dl>
-          {retailer.website_url ? (
+          {websiteHref ? (
             <a
-              href={retailer.website_url}
+              href={websiteHref}
               target="_blank"
               rel="noreferrer noopener"
               className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-brand underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
@@ -65,7 +68,8 @@ export function RetailersView() {
             </p>
           )}
         </li>
-      ))}
+        );
+      })}
     </ul>
   );
 }

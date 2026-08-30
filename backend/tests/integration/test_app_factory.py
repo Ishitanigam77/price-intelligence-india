@@ -71,6 +71,9 @@ def test_cors_allowed_origins_are_read_from_settings() -> None:
         )
     assert response.status_code == 200
     assert response.headers["access-control-allow-origin"] == "https://custom.example.com"
+    allow_methods = response.headers.get("access-control-allow-methods", "")
+    assert "*" not in allow_methods
+    assert "GET" in allow_methods
 
 
 def test_cors_rejects_an_origin_that_is_not_allowlisted() -> None:

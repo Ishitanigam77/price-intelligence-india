@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.api.security import sanitize_validation_errors
 from app.auth.errors import AuthenticationError, AuthorizationError
 from app.domain.exceptions import DomainError
 from app.schemas.common import ErrorDetail, ErrorResponse
@@ -78,7 +79,7 @@ def register_exception_handlers(app: FastAPI) -> None:
             422,  # RFC 9110 "Unprocessable Content" (named UNPROCESSABLE_ENTITY pre-Starlette 0.44)
             "validation_error",
             "Request validation failed.",
-            fields=exc.errors(),
+            fields=sanitize_validation_errors(exc.errors()),
         )
 
     @app.exception_handler(DomainError)

@@ -3,6 +3,7 @@
 import { useAuth, useUser } from "@clerk/nextjs";
 import { FormEvent, useCallback, useState } from "react";
 
+import { SignInRequired } from "@/components/auth/SignInRequired";
 import { ErrorState } from "@/components/status/ErrorState";
 import { LoadingSkeleton } from "@/components/status/LoadingSkeleton";
 import { getProfile, updateProfile } from "@/lib/api/profile";
@@ -27,7 +28,7 @@ export function ProfileView() {
       return;
     }
     const form = new FormData(event.currentTarget);
-    const displayName = String(form.get("display_name") ?? "").trim();
+    const displayName = String(form.get("display_name") ?? "").trim().slice(0, 120);
     const emailAlerts = form.get("email_alerts_enabled") === "on";
     const accessToken = await getToken();
     await updateProfile(
@@ -41,6 +42,9 @@ export function ProfileView() {
     state.reload();
   }
 
+  if (isLoaded && !isSignedIn) {
+    return <SignInRequired resource="profile" />;
+  }
   if (!isLoaded || state.status === "idle" || state.status === "loading") {
     return <LoadingSkeleton label="Loading your profile" rows={4} />;
   }
@@ -81,6 +85,7 @@ export function ProfileView() {
           <input
             name="display_name"
             defaultValue={profile.display_name ?? user?.fullName ?? ""}
+            maxLength={120}
             className="w-full rounded-xl border border-paper-muted bg-paper px-3 py-2 text-ink"
           />
         </label>

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -14,6 +15,11 @@ LATEST_POINTER = "latest.json"
 MODEL_FILE = "model.json"
 PREPROCESSOR_FILE = "preprocessor.json"
 METADATA_FILE = "metadata.json"
+_MODEL_VERSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+
+
+class InvalidModelVersionError(ValueError):
+    """Raised when a model version is not a safe single path segment."""
 
 
 def make_model_version(*, trained_at: datetime | None = None) -> str:
@@ -22,7 +28,13 @@ def make_model_version(*, trained_at: datetime | None = None) -> str:
 
 
 def version_dir(root: Path, model_version: str) -> Path:
-    return root / model_version
+    if not _MODEL_VERSION_RE.fullmatch(model_version) or ".." in model_version:
+        raise InvalidModelVersionError("Invalid model version.")
+    root_resolved = root.resolve()
+    directory = (root_resolved / model_version).resolve()
+    if not directory.is_relative_to(root_resolved):
+        raise InvalidModelVersionError("Invalid model version path.")
+    return directory
 
 
 def save_artifact(

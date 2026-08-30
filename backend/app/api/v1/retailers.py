@@ -7,7 +7,7 @@ retailer-agnostic reference data already captured in Phase 1 (`RETAILER_ARCHITEC
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 
 from app.api.deps import RetailerRepositoryDep, SellerRepositoryDep
 from app.api.errors import NotFoundError
@@ -47,7 +47,10 @@ def get_retailer(retailer_id: uuid.UUID, repo: RetailerRepositoryDep) -> Retaile
 
 
 @router.get("/slug/{slug}", response_model=RetailerRead)
-def get_retailer_by_slug(slug: str, repo: RetailerRepositoryDep) -> RetailerRead:
+def get_retailer_by_slug(
+    slug: Annotated[str, Path(min_length=1, max_length=200)],
+    repo: RetailerRepositoryDep,
+) -> RetailerRead:
     retailer = repo.get_by_slug(slug)
     if retailer is None:
         raise NotFoundError(f"Retailer with slug {slug!r} was not found.")

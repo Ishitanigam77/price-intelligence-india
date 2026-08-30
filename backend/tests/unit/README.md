@@ -7,6 +7,8 @@ they cover, starting in **Phase 1**.
   validation and product variant attribute normalization/`variant_key` derivation.
 - `test_config.py` (FastAPI backend application foundation) covers `app.core.config.Settings`:
   defaults, `log_level` validation, and `cors_allowed_origins_list` parsing.
+- `api/test_security.py` and `security/` — Phase 17 headers, rate limiting, CORS, production
+  config guards, and repository secret-marker scan (paths only).
 - `observability/` — JSON logging, correlation IDs, metrics sink.
 - `matching/` — product identity matching engine: identifier/attribute/title/embedding stages,
   classification, evaluation precision/recall, and core-domain isolation.

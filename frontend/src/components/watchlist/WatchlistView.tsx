@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import { useState } from "react";
 
+import { SignInRequired } from "@/components/auth/SignInRequired";
 import { EmptyState } from "@/components/status/EmptyState";
 import { ErrorState } from "@/components/status/ErrorState";
 import { LoadingSkeleton } from "@/components/status/LoadingSkeleton";
@@ -31,6 +32,9 @@ export function WatchlistView() {
     setReloadToken((value) => value + 1);
   }
 
+  if (isLoaded && !isSignedIn) {
+    return <SignInRequired resource="watchlist" />;
+  }
   if (!isLoaded || state.status === "idle" || state.status === "loading") {
     return <LoadingSkeleton label="Loading your watchlist" rows={4} />;
   }

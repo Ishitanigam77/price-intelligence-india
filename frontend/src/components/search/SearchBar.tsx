@@ -33,6 +33,10 @@ export function SearchBar({
       setError("Enter a product name to search.");
       return;
     }
+    if (text.length > 500) {
+      setError("Search text must be 500 characters or fewer.");
+      return;
+    }
     setError(null);
     router.push(`/search?q=${encodeURIComponent(text)}`);
   }
@@ -72,6 +76,7 @@ export function SearchBar({
           }}
           autoFocus={autoFocus}
           autoComplete="off"
+          maxLength={500}
           placeholder="Search products across Indian retailers"
           className={cn(
             "w-full rounded-xl border border-paper-muted bg-paper-card text-ink shadow-sm",
