@@ -7,11 +7,12 @@ import { reportFrontendError, reportFrontendNavigation } from "@/lib/observabili
 
 export function TelemetryProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const startedAt = useRef(typeof performance !== "undefined" ? performance.now() : 0);
+  const startedAt = useRef(0);
 
   useEffect(() => {
-    const duration = typeof performance !== "undefined" ? performance.now() - startedAt.current : 0;
-    startedAt.current = typeof performance !== "undefined" ? performance.now() : 0;
+    const now = performance.now();
+    const duration = startedAt.current === 0 ? 0 : now - startedAt.current;
+    startedAt.current = now;
     reportFrontendNavigation(pathname || "/", duration);
 
     const onError = (event: ErrorEvent) => {
