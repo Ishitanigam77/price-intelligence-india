@@ -364,7 +364,7 @@ stages:
               set -euo pipefail
               docker build --target api -t "priceradar/backend:$(imageTag)" backend
               docker build --target worker -t "priceradar/workers:$(imageTag)" backend
-              docker build -t "priceradar/frontend:$(imageTag)" frontend
+              docker build --build-arg NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 -t "priceradar/frontend:$(imageTag)" frontend
               docker build -f ml/Dockerfile -t "priceradar/ml:$(imageTag)" .
               curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
               for image in \
@@ -373,7 +373,8 @@ stages:
                 "priceradar/frontend:$(imageTag)" \
                 "priceradar/ml:$(imageTag)"; do
                 echo "Scanning ${image}"
-                trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed "${image}"
+                trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed \
+                  --config infrastructure/security/trivy.yaml --ignorefile .trivyignore "${image}"
               done
             displayName: trivy image HIGH/CRITICAL
 

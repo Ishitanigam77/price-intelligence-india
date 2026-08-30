@@ -128,6 +128,14 @@ uncertainty method, leakage-prevention summary.
 
 Artifacts live under `ml/models/artifacts/` (gitignored) with a `latest.json` pointer.
 
+## Tests
+
+ML tests live with the backend suite (repo-root `pythonpath`):
+
+```bash
+cd backend && pytest tests/unit/ml
+```
+
 ## Boundaries
 
 - Must not import `app.api`, FastAPI, or a named retailer adapter package.

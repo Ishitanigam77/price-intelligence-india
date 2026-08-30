@@ -105,19 +105,18 @@ def list_products(
 ) -> Page[ProductRead]:
     """List products, optionally filtered by category or brand."""
     if category_id is not None:
-        matching = repo.list_by_category(category_id)
+        total = repo.count_by_category(category_id)
+        items = repo.list_by_category(
+            category_id, limit=pagination.limit, offset=pagination.offset
+        )
     elif brand_id is not None:
-        matching = repo.list_by_brand(brand_id)
+        total = repo.count_by_brand(brand_id)
+        items = repo.list_by_brand(brand_id, limit=pagination.limit, offset=pagination.offset)
     else:
         total = repo.count()
         items = repo.list(limit=pagination.limit, offset=pagination.offset)
-        return Page[ProductRead](
-            items=items, total=total, limit=pagination.limit, offset=pagination.offset
-        )
-
-    window = matching[pagination.offset : pagination.offset + pagination.limit]
     return Page[ProductRead](
-        items=window, total=len(matching), limit=pagination.limit, offset=pagination.offset
+        items=items, total=total, limit=pagination.limit, offset=pagination.offset
     )
 
 

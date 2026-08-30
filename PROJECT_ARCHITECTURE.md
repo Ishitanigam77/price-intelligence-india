@@ -4,7 +4,8 @@
 > pricing, sales, ML, recommendations, Clerk, collection workers). **Phase 15** adds Azure
 > Terraform, Azure DevOps/GitHub CI/CD, and production Docker images — see
 > `infrastructure/CICD.md`. **Phase 16** adds observability. **Phase 17** adds security
-> review and localized hardening — see `SECURITY.md`. This document describes the target
+> review and localized hardening — see `SECURITY.md`. **Phase 18** is the production
+> readiness review — see `PRODUCTION_READINESS.md`. This document describes the target
 > architecture.
 
 ## 1. Vision

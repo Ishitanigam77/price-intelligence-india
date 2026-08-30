@@ -4,8 +4,10 @@
 > Azure DevOps CD, Docker images, Terraform for Azure). PostgreSQL, SQLAlchemy, Alembic, a
 > production-quality FastAPI application, Redis, Celery workers, the retailer adapter framework
 > (mock + Amazon.in / Flipkart affiliate adapters), and the Next.js frontend are wired up.
-> Azure resources are defined in Terraform but are **not** applied from a developer laptop in
-> this repository change — see `infrastructure/CICD.md`.
+> **Phase 16** adds observability; **Phase 17** adds localized security hardening
+> (`SECURITY.md`). Azure resources are defined in Terraform but live apply/verification
+> is **PENDING — LIVE AZURE VERIFICATION** — see `PRODUCTION_READINESS.md` and
+> `infrastructure/CICD.md`.
 
 ## Frontend
 
