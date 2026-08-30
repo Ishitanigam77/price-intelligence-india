@@ -260,8 +260,10 @@ Executed in this Phase 18 review environment (2026-08-30). **Not** a substitute 
 | Trivy filesystem | `trivy fs` HIGH/CRITICAL (vuln+secret+misconfig) | Clean (0 findings on scanned targets) |
 | pip-audit (backend runtime + ML extras) | Clean venv `pip install -e "./backend[ml]"` then `pip-audit` | No known vulnerabilities (`priceradar-backend` skipped — not on PyPI) |
 | npm audit | `npm audit --audit-level=high` | 0 vulnerabilities |
-| Docker image build + Trivy image | `docker build` ×4 | **NOT APPLICABLE** — Docker daemon unavailable on this VM |
-| Local Compose E2E | `docker compose … up` + `smoke_test.py` against localhost | **NOT APPLICABLE** — Docker unavailable |
+| Docker image build + Trivy image (this VM) | `docker build` ×4 | **NOT APPLICABLE** on the review VM (no Docker daemon) |
+| Docker image build + Trivy image (GitHub Actions) | CI job `Docker build` on commit `4d09ea7` | **Passed** — backend, worker, frontend, and ML images built; Trivy image HIGH/CRITICAL with repo config |
+| Local Compose E2E | `docker compose … up` + `smoke_test.py` against localhost | **NOT APPLICABLE** — Docker unavailable on the review VM |
+| GitHub Actions CI (PR #20, run 33314781391) | Validate, Terraform, backend, workers, ML, integration, frontend, security, Docker | **9/9 passed** |
 | Live Azure / ADO deploy / Monitor alerts | — | **PENDING — LIVE AZURE VERIFICATION** |
 | Live retailer E2E (Amazon.in / Flipkart) | — | **NOT APPLICABLE** — no approved live credentials used; fixture tests only |
 
@@ -275,7 +277,8 @@ Executed in this Phase 18 review environment (2026-08-30). **Not** a substitute 
 | Frontend component tests (jsdom, not a browser user journey) | **45 passed** |
 | CD smoke script against deployed URLs | **PENDING — LIVE AZURE VERIFICATION** |
 | Playwright / Cypress user journeys | **NOT APPLICABLE** — suite does not exist |
-| Compose full-stack smoke | **NOT APPLICABLE** — Docker unavailable |
+| Compose full-stack smoke | **NOT APPLICABLE** — Docker unavailable on the review VM |
+| GitHub Actions Docker build + image scans | **Passed** on PR #20 (not a live Azure deploy) |
 | Production traffic / Clerk live JWKS | **PENDING — LIVE AZURE VERIFICATION** |
 
 No Azure resources were created to fabricate E2E success.
