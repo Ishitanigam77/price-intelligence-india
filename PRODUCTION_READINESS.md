@@ -209,6 +209,7 @@ verified failures.
 | L10 | `refuse_secret_echo.sh` not wired into pipelines | `infrastructure/pipelines/scripts/refuse_secret_echo.sh` | Unused defense-in-depth | Optional wrapper | EXISTING / ACCEPTED |
 | L11 | No Azure management locks | Terraform modules | Portal/CLI delete still possible | `CanNotDelete` on prod data stores | EXISTING / ACCEPTED |
 | L12 | In-memory rate-limit maps can grow with unique IPs | `backend/app/api/security.py`, `frontend/src/app/api/telemetry/route.ts` | Slow memory growth | Periodic prune (not done; low risk at current limits) | EXISTING / ACCEPTED |
+| L13 | Next.js 16 deprecates the `middleware` file convention | `frontend/src/middleware.ts` | Build warning only; Clerk still uses `clerkMiddleware` | Migrate when Clerk/Next document a supported `proxy` path | EXISTING / ACCEPTED |
 
 ---
 
@@ -245,20 +246,20 @@ Executed in this Phase 18 review environment (2026-08-30). **Not** a substitute 
 
 | Suite | Command | Result |
 |---|---|---|
-| Backend lint | `cd backend && ruff check app tests` | *filled after execution* |
-| Backend unit (excl. workers/ML) | `pytest tests/unit --ignore=tests/unit/workers --ignore=tests/unit/ml` | *filled after execution* |
-| Worker unit | `pytest tests/unit/workers` | *filled after execution* |
-| ML unit | `pytest tests/unit/ml` | *filled after execution* |
-| Backend integration | `pytest tests/integration` | *filled after execution* |
-| Security unit | `pytest tests/unit/security tests/unit/api/test_security.py` | *filled after execution* |
-| Frontend Vitest | `cd frontend && npm test` | *filled after execution* |
-| Frontend lint / typecheck | `npm run lint` / `npm run typecheck` | *filled after execution* |
-| Pipeline YAML + smoke unit | `validate_yaml.py` + `pytest …/test_smoke_test.py` | *filled after execution* |
-| Terraform fmt + validate | bootstrap, dev, staging, prod (`-backend=false`) | *filled after execution* |
-| Checkov | `checkov -d infrastructure/terraform --config-file …/checkov.yaml` | *filled after execution* |
-| Trivy filesystem | `trivy fs` HIGH/CRITICAL | *filled after execution* |
-| pip-audit (backend runtime + ML extras) | `pip-audit` | *filled after execution* |
-| npm audit | `npm audit --audit-level=high` | *filled after execution* |
+| Backend lint | `cd backend && ruff check app tests` | Passed |
+| Backend unit (excl. workers/ML) | `pytest tests/unit --ignore=tests/unit/workers --ignore=tests/unit/ml` | **473 passed** (1 Starlette TestClient deprecation warning) |
+| Worker unit | `pytest tests/unit/workers` | **10 passed** |
+| ML unit | `pytest tests/unit/ml` | **43 passed** |
+| Backend integration | `pytest tests/integration` | **200 passed** (Postgres 16 + Redis 7 on this VM) |
+| Security unit | `pytest tests/unit/security tests/unit/api/test_security.py` | **16 passed** (subset of the 473 unit tests) |
+| Frontend Vitest | `cd frontend && npm test` | **45 passed** (20 files) |
+| Frontend lint / typecheck / build | `npm run lint` / `tsc --noEmit` / `NEXT_PUBLIC_API_BASE_URL=… npm run build` | Passed. Next.js 16 notes the `middleware` file convention is deprecated (`proxy`); not changed here. |
+| Pipeline YAML + smoke unit | `validate_yaml.py` + `pytest …/test_smoke_test.py` | YAML ok (4 files); **5 passed** |
+| Terraform fmt + validate | bootstrap, dev, staging, prod (`-backend=false`) | Passed (Terraform 1.6.6) |
+| Checkov | `checkov -d infrastructure/terraform --config-file …/checkov.yaml` | **68 passed, 0 failed, 0 skipped** |
+| Trivy filesystem | `trivy fs` HIGH/CRITICAL (vuln+secret+misconfig) | Clean (0 findings on scanned targets) |
+| pip-audit (backend runtime + ML extras) | Clean venv `pip install -e "./backend[ml]"` then `pip-audit` | No known vulnerabilities (`priceradar-backend` skipped — not on PyPI) |
+| npm audit | `npm audit --audit-level=high` | 0 vulnerabilities |
 | Docker image build + Trivy image | `docker build` ×4 | **NOT APPLICABLE** — Docker daemon unavailable on this VM |
 | Local Compose E2E | `docker compose … up` + `smoke_test.py` against localhost | **NOT APPLICABLE** — Docker unavailable |
 | Live Azure / ADO deploy / Monitor alerts | — | **PENDING — LIVE AZURE VERIFICATION** |
@@ -270,8 +271,8 @@ Executed in this Phase 18 review environment (2026-08-30). **Not** a substitute 
 
 | Check | Result |
 |---|---|
-| Backend integration (API + Postgres + Redis) | *filled after execution* |
-| Frontend component tests (jsdom, not a browser user journey) | *filled after execution* |
+| Backend integration (API + Postgres + Redis) | **200 passed** — local Postgres/Redis, not Azure |
+| Frontend component tests (jsdom, not a browser user journey) | **45 passed** |
 | CD smoke script against deployed URLs | **PENDING — LIVE AZURE VERIFICATION** |
 | Playwright / Cypress user journeys | **NOT APPLICABLE** — suite does not exist |
 | Compose full-stack smoke | **NOT APPLICABLE** — Docker unavailable |
