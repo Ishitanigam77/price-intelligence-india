@@ -19,7 +19,10 @@ from app.observability.telemetry import (
 def test_placeholder_connection_string_is_not_configured() -> None:
     assert connection_string_is_configured("") is False
     assert connection_string_is_configured("changeme") is False
-    assert connection_string_is_configured("InstrumentationKey=abc;IngestionEndpoint=https://x/") is True
+    configured = connection_string_is_configured(
+        "InstrumentationKey=abc;IngestionEndpoint=https://x/"
+    )
+    assert configured is True
 
 
 def test_parse_connection_string_does_not_require_logging() -> None:

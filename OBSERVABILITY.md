@@ -5,9 +5,10 @@ structured logs, custom metrics, health checks, Application Insights / Azure Mon
 integration, dashboards (workbooks), and alerts.
 
 **Live Azure telemetry, workbooks, and alerts were not verified against a real
-subscription in this change.** Terraform defines the resources; `terraform apply` and
-CD remain operator-controlled (Phase 15). Do not treat this document as proof that
-production alerts are firing.
+subscription in this change.** `terraform fmt` and `terraform validate` were run.
+`terraform plan` against Azure could not complete in this environment (no Azure CLI
+credentials / remote state). `terraform apply` and CD remain operator-controlled
+(Phase 15). Do not treat this document as proof that production alerts are firing.
 
 Phase 15 GitHub CI, Azure DevOps pipelines, Docker, ACR, Key Vault, managed identity,
 and deployment configuration are unchanged in purpose. This phase only adds

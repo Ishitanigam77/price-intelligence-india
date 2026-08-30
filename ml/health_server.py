@@ -55,7 +55,9 @@ def _readiness_payload() -> tuple[int, dict[str, object]]:
         "checks": {
             "process": {"status": "ok"},
             "model_artifact": {
-                "status": "ok" if present else ("not_configured" if not configured else "unavailable")
+                "status": (
+                    "ok" if present else ("not_configured" if not configured else "unavailable")
+                )
             },
         },
     }

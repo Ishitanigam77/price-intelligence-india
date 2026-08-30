@@ -91,7 +91,9 @@ def on_task_postrun(
     _record_queue_depth()
 
 
-def on_task_failure(sender: Any = None, exception: BaseException | None = None, **kwargs: Any) -> None:
+def on_task_failure(
+    sender: Any = None, exception: BaseException | None = None, **kwargs: Any
+) -> None:
     name = _task_name(sender, kwargs)
     error_type = type(exception).__name__ if exception is not None else "task_failure"
     get_process_metrics_sink().increment(

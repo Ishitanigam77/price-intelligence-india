@@ -19,7 +19,11 @@ from sqlalchemy.orm import Session
 from app.api.errors import NotFoundError
 from app.observability.logging import get_logger
 from app.observability.metrics import MetricsSink, NullMetricsSink
-from app.observability.names import ML_PREDICTION_DURATION_MS, ML_PREDICTION_FAILURES, ML_PREDICTIONS
+from app.observability.names import (
+    ML_PREDICTION_DURATION_MS,
+    ML_PREDICTION_FAILURES,
+    ML_PREDICTIONS,
+)
 from app.observability.telemetry import default_metric_tags
 from app.pricing.freshness import utc_now
 from app.repositories.price_snapshot_repository import PriceSnapshotRepository

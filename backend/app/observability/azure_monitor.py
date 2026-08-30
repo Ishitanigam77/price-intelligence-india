@@ -24,7 +24,6 @@ import httpx
 
 from app.observability.context import get_environment, get_service
 from app.observability.correlation import get_correlation_id
-from app.observability.metrics import MetricsSink
 
 logger = logging.getLogger(__name__)
 
@@ -285,7 +284,7 @@ class AzureMonitorMetricsSink:
 
 
 class LoggingMetricsSink:
-    """Emits metrics as DEBUG structured logs so Log Analytics can query them without App Insights."""
+    """Emit metrics as DEBUG structured logs for Log Analytics when App Insights is off."""
 
     def increment(
         self, name: str, *, value: int = 1, tags: Mapping[str, str] | None = None

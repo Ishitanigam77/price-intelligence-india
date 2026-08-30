@@ -6,6 +6,7 @@ Never raises. Never logs connection strings, Key Vault URLs, or other secrets.
 from __future__ import annotations
 
 import logging
+
 from app.observability.azure_monitor import (
     AzureMonitorExporter,
     AzureMonitorMetricsSink,

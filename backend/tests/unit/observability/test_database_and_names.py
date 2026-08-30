@@ -33,7 +33,9 @@ def test_instrument_engine_records_query_latency() -> None:
     instrument_engine(engine)
     with engine.connect() as connection:
         connection.execute(text("SELECT 1"))
-    observed = [values for (name, _), values in sink.observations.items() if name == DB_QUERY_DURATION_MS]
+    observed = [
+        values for (name, _), values in sink.observations.items() if name == DB_QUERY_DURATION_MS
+    ]
     assert observed
     assert observed[0][0] >= 0
 

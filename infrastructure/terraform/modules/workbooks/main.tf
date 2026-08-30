@@ -39,7 +39,7 @@ locals {
       { type = 3, content = { version = "KqlItem/1.0", title = "Request latency (ms)", query = "requests\n| summarize p50=percentile(duration, 50), p95=percentile(duration, 95) by bin(timestamp, 5m)\n| render timechart", size = 0, timeContext = { durationMs = 14400000 }, queryType = 0, resourceType = "microsoft.insights/components" } },
       { type = 3, content = { version = "KqlItem/1.0", title = "Custom API metrics", query = "customMetrics\n| where name in ('api.requests','api.errors','api.request.duration_ms','api.dependency.failures')\n| summarize value=sum(value) by name, bin(timestamp, 5m)\n| render timechart", size = 0, timeContext = { durationMs = 14400000 }, queryType = 0, resourceType = "microsoft.insights/components" } }
     ]
-    isLocked = false
+    isLocked            = false
     fallbackResourceIds = [var.application_insights_id]
   })
 
@@ -52,7 +52,7 @@ locals {
       { type = 3, content = { version = "KqlItem/1.0", title = "Price freshness (seconds)", query = "customMetrics\n| where name == 'price_freshness'\n| summarize freshness=max(value) by tostring(customDimensions.retailer_id), bin(timestamp, 15m)\n| render timechart", size = 0, timeContext = { durationMs = 86400000 }, queryType = 0, resourceType = "microsoft.insights/components" } },
       { type = 3, content = { version = "KqlItem/1.0", title = "Collection job duration (ms)", query = "customMetrics\n| where name == 'job_duration'\n| summarize p95=percentile(value, 95) by bin(timestamp, 15m)\n| render timechart", size = 0, timeContext = { durationMs = 86400000 }, queryType = 0, resourceType = "microsoft.insights/components" } }
     ]
-    isLocked = false
+    isLocked            = false
     fallbackResourceIds = [var.application_insights_id]
   })
 
@@ -64,7 +64,7 @@ locals {
       { type = 3, content = { version = "KqlItem/1.0", title = "Queue depth", query = "customMetrics\n| where name == 'worker.queue.depth'\n| summarize depth=max(value) by bin(timestamp, 5m)\n| render timechart", size = 0, timeContext = { durationMs = 14400000 }, queryType = 0, resourceType = "microsoft.insights/components" } },
       { type = 3, content = { version = "KqlItem/1.0", title = "Task duration (ms)", query = "customMetrics\n| where name == 'worker.task.duration_ms'\n| summarize p95=percentile(value, 95) by bin(timestamp, 5m)\n| render timechart", size = 0, timeContext = { durationMs = 14400000 }, queryType = 0, resourceType = "microsoft.insights/components" } }
     ]
-    isLocked = false
+    isLocked            = false
     fallbackResourceIds = [var.application_insights_id]
   })
 
@@ -76,7 +76,7 @@ locals {
       { type = 3, content = { version = "KqlItem/1.0", title = "Connection / dependency failures", query = "customMetrics\n| where name in ('db.connection.failures','db.dependency.failures')\n| summarize value=sum(value) by name, bin(timestamp, 5m)\n| render timechart", size = 0, timeContext = { durationMs = 14400000 }, queryType = 0, resourceType = "microsoft.insights/components" } },
       { type = 3, content = { version = "KqlItem/1.0", title = "Connection health gauge", query = "customMetrics\n| where name == 'db.connection.health'\n| summarize health=min(value) by bin(timestamp, 5m)\n| render timechart", size = 0, timeContext = { durationMs = 14400000 }, queryType = 0, resourceType = "microsoft.insights/components" } }
     ]
-    isLocked = false
+    isLocked            = false
     fallbackResourceIds = [var.application_insights_id]
   })
 
@@ -88,7 +88,7 @@ locals {
       { type = 3, content = { version = "KqlItem/1.0", title = "Prediction latency (ms)", query = "customMetrics\n| where name == 'ml.prediction.duration_ms'\n| summarize p95=percentile(value, 95) by bin(timestamp, 15m)\n| render timechart", size = 0, timeContext = { durationMs = 86400000 }, queryType = 0, resourceType = "microsoft.insights/components" } },
       { type = 3, content = { version = "KqlItem/1.0", title = "Prediction failures", query = "customMetrics\n| where name == 'ml.prediction.failures'\n| summarize value=sum(value) by bin(timestamp, 15m)\n| render timechart", size = 0, timeContext = { durationMs = 86400000 }, queryType = 0, resourceType = "microsoft.insights/components" } }
     ]
-    isLocked = false
+    isLocked            = false
     fallbackResourceIds = [var.application_insights_id]
   })
 }

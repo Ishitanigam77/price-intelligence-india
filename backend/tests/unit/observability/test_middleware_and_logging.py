@@ -37,18 +37,13 @@ def test_request_middleware_records_metrics_and_correlation_header() -> None:
         response = client.get("/api/v1/products", headers={"x-correlation-id": "fixed-id"})
     assert response.status_code == 200
     assert response.headers["x-correlation-id"] == "fixed-id"
-    assert (
-        sink.total_for_name(API_REQUESTS) >= 1
-        or sink.counter_value(API_REQUESTS, service="backend", environment="development", operation="products", status="2xx")
-        >= 0
-    )
-    assert sink.observed_values(
-        API_REQUEST_DURATION_MS,
-        service="backend",
-        environment="development",
-        operation="products",
-        status="2xx",
-    ) or sink.total_for_name(API_REQUESTS) >= 0
+    assert sink.total_for_name(API_REQUESTS) >= 1
+    durations = [
+        samples
+        for (name, _), samples in sink.observations.items()
+        if name == API_REQUEST_DURATION_MS
+    ]
+    assert durations
 
 
 def test_request_middleware_counts_errors() -> None:

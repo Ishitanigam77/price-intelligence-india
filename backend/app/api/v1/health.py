@@ -23,7 +23,11 @@ from app.core.config import get_settings
 from app.core.redis import check_redis_connection
 from app.observability.database import record_connection_health
 from app.observability.names import API_DEPENDENCY_FAILURES
-from app.observability.telemetry import default_metric_tags, get_process_metrics_sink, telemetry_status
+from app.observability.telemetry import (
+    default_metric_tags,
+    get_process_metrics_sink,
+    telemetry_status,
+)
 
 logger = logging.getLogger(__name__)
 

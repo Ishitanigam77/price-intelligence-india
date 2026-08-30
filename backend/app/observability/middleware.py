@@ -7,6 +7,7 @@ URL paths are recorded without query strings (tokens sometimes appear in query p
 from __future__ import annotations
 
 import time
+
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.observability.azure_monitor import AzureMonitorExporter
@@ -15,7 +16,11 @@ from app.observability.correlation import correlation_scope, get_correlation_id
 from app.observability.logging import get_logger
 from app.observability.metrics import MetricsSink, NullMetricsSink
 from app.observability.names import API_ERRORS, API_REQUEST_DURATION_MS, API_REQUESTS
-from app.observability.telemetry import default_metric_tags, get_azure_exporter, get_process_metrics_sink
+from app.observability.telemetry import (
+    default_metric_tags,
+    get_azure_exporter,
+    get_process_metrics_sink,
+)
 
 logger = get_logger(__name__)
 

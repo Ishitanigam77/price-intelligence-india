@@ -6,7 +6,11 @@ from typing import Any
 
 from app.core.config import Settings, get_settings
 from app.observability.names import WORKER_HEALTH
-from app.observability.telemetry import default_metric_tags, get_process_metrics_sink, telemetry_status
+from app.observability.telemetry import (
+    default_metric_tags,
+    get_process_metrics_sink,
+    telemetry_status,
+)
 
 
 def worker_liveness_payload(settings: Settings | None = None) -> dict[str, str]:
