@@ -1,14 +1,24 @@
 # app/observability/
 
-Structured logging configuration, correlation IDs, and metrics instrumentation shared across
-the backend.
+Structured logging, correlation IDs, metrics, request telemetry, and Azure Monitor
+export shared across the backend, workers, and (via the same primitives) ML.
 
-**Status**: started in **Phase 1** (health endpoints live under `app/api/health.py`) and
-extended in **Phase 2** with:
+**Status**: started in **Phase 1** (health endpoints under `app/api/health.py`),
+extended in **Phase 2** with JSON logs / correlation IDs / `MetricsSink`, and
+completed for export in **Phase 16**:
 
-- `logging.py` — JSON log formatter with credential redaction; installed at process start by
-  `app.main`.
-- `correlation.py` — `ContextVar`-backed correlation IDs for one logical operation.
-- `metrics.py` — `MetricsSink` protocol plus `NullMetricsSink` / `InMemoryMetricsSink`.
-  Adapter execution already emits request/success/failure/latency/timeout/retry/rate-limit
-  and health samples through this seam. Exporting them to Azure Monitor is Phase 11.
+- `logging.py` — JSON formatter with credential redaction and standard fields
+  (`timestamp`, `service`, `environment`, `correlation_id`).
+- `correlation.py` — `ContextVar`-backed correlation IDs.
+- `context.py` — process service/environment bindings.
+- `metrics.py` — `MetricsSink` protocol, null / in-memory / composite sinks.
+- `names.py` — stable custom metric names.
+- `azure_monitor.py` — optional Application Insights track-API exporter. Never logs
+  the connection string. Missing config does not fail startup.
+- `telemetry.py` — process-wide `configure_telemetry()`.
+- `middleware.py` — API request count, latency, status class, correlation header.
+- `database.py` — SQLAlchemy query latency and connection-failure metrics (no SQL
+  parameter logging).
+
+Adapter and collection call sites already emit through `MetricsSink`. Phase 16 adds
+the Azure Monitor implementation of that seam.

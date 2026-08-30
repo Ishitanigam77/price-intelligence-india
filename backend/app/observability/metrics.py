@@ -92,3 +92,36 @@ class InMemoryMetricsSink:
         self.counters.clear()
         self.observations.clear()
         self.gauges.clear()
+
+
+class CompositeMetricsSink:
+    """Fan-out sink. Each child is isolated so one exporter cannot break the request path."""
+
+    def __init__(self, sinks: list[MetricsSink] | None = None) -> None:
+        self._sinks: list[MetricsSink] = list(sinks or [])
+
+    def add(self, sink: MetricsSink) -> None:
+        self._sinks.append(sink)
+
+    def increment(
+        self, name: str, *, value: int = 1, tags: Mapping[str, str] | None = None
+    ) -> None:
+        for sink in self._sinks:
+            try:
+                sink.increment(name, value=value, tags=tags)
+            except Exception:
+                continue
+
+    def observe(self, name: str, value: float, *, tags: Mapping[str, str] | None = None) -> None:
+        for sink in self._sinks:
+            try:
+                sink.observe(name, value, tags=tags)
+            except Exception:
+                continue
+
+    def set_gauge(self, name: str, value: float, *, tags: Mapping[str, str] | None = None) -> None:
+        for sink in self._sinks:
+            try:
+                sink.set_gauge(name, value, tags=tags)
+            except Exception:
+                continue

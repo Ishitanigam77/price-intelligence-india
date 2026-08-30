@@ -194,3 +194,4 @@ Each Price Observation distinguishes:
 - `ROADMAP.md` — phase plan.
 - `RETAILER_ARCHITECTURE.md` — retailer adapter contract and data acquisition policy.
 - `DATA_FLOW.md` — end-to-end data flow from acquisition to UI.
+- `OBSERVABILITY.md` — Phase 16 logs, metrics, health checks, dashboards, and alerts.

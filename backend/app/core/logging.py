@@ -5,44 +5,18 @@ Per `DEVELOPMENT_RULES.md` §5.5, the application uses structured logging rather
 `app.core.config.Settings`); the format defaults to JSON lines, which is friendly to log
 aggregation in containerized/cloud deployments (Docker, Kubernetes, Azure Monitor).
 
-Nothing in this module ever logs secrets/credentials: application code is responsible for not
-passing sensitive values into log messages, and `app.core.config.Settings` values (which may
-include connection strings) must never be logged verbatim.
+This module delegates formatting and secret redaction to `app.observability.logging` so API,
+worker, and adapter logs share one schema (timestamp, service, environment, correlation ID).
 """
 
-import json
 import logging
 import sys
-from datetime import UTC, datetime
-from typing import Any
 
 from app.core.config import Settings
+from app.observability.context import set_log_context
+from app.observability.logging import JsonLogFormatter
 
 _CONFIGURED = False
-
-_RESERVED_RECORD_ATTRS = frozenset(logging.LogRecord("", 0, "", 0, "", (), None).__dict__)
-
-
-class JsonFormatter(logging.Formatter):
-    """Renders each log record as a single JSON line.
-
-    Includes any extra fields passed via `logger.info(..., extra={...})` so request-scoped
-    context (e.g. request path, status code) can be attached without string formatting.
-    """
-
-    def format(self, record: logging.LogRecord) -> str:
-        payload: dict[str, Any] = {
-            "timestamp": datetime.fromtimestamp(record.created, tz=UTC).isoformat(),
-            "level": record.levelname,
-            "logger": record.name,
-            "message": record.getMessage(),
-        }
-        for key, value in record.__dict__.items():
-            if key not in _RESERVED_RECORD_ATTRS and key not in payload:
-                payload[key] = value
-        if record.exc_info:
-            payload["exception"] = self.formatException(record.exc_info)
-        return json.dumps(payload, default=str)
 
 
 def configure_logging(settings: Settings) -> None:
@@ -52,6 +26,7 @@ def configure_logging(settings: Settings) -> None:
     setup) without installing duplicate handlers.
     """
     global _CONFIGURED
+    set_log_context(service=settings.service_name, environment=settings.environment)
     root_logger = logging.getLogger()
     root_logger.setLevel(settings.log_level)
 
@@ -60,7 +35,7 @@ def configure_logging(settings: Settings) -> None:
 
     handler = logging.StreamHandler(stream=sys.stdout)
     if settings.log_format.lower() == "json":
-        handler.setFormatter(JsonFormatter())
+        handler.setFormatter(JsonLogFormatter())
     else:
         handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s"))
 
@@ -74,3 +49,7 @@ def configure_logging(settings: Settings) -> None:
     )
 
     _CONFIGURED = True
+
+
+# Re-export so existing imports of JsonFormatter keep working.
+JsonFormatter = JsonLogFormatter

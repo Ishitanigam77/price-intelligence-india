@@ -17,6 +17,7 @@ from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.domain.enums import CollectionJobType
 from app.observability.metrics import NullMetricsSink
+from app.observability.telemetry import get_process_metrics_sink
 from app.retailer_adapters.wiring import build_retailer_registry
 from app.workers.celery_config import (
     TASK_AVAILABILITY_REFRESH,
@@ -42,7 +43,8 @@ def _run_collection_job(
     settings = get_settings()
     try:
         registry = build_retailer_registry(settings=settings)
-        orchestrator = CollectionOrchestrator(session, registry, metrics_sink=NullMetricsSink())
+        sink = get_process_metrics_sink() or NullMetricsSink()
+        orchestrator = CollectionOrchestrator(session, registry, metrics_sink=sink)
         result: CollectionRunResult = asyncio.run(
             orchestrator.run(
                 job_type,

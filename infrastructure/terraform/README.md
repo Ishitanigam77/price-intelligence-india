@@ -1,6 +1,6 @@
 # terraform/
 
-Azure infrastructure for PriceRadar India (Phase 15).
+Azure infrastructure for PriceRadar India (Phase 15 DevOps + Phase 16 observability).
 
 ## Workflow
 
@@ -13,7 +13,7 @@ Never `terraform destroy`. Never apply a plan that replaces PostgreSQL, Key Vaul
 ## Layout
 
 - `bootstrap/` — one-time remote state (resource group + storage account + `tfstate` container)
-- `modules/` — networking, ACR, Key Vault, identity, PostgreSQL, Redis, storage, monitoring, Container Apps, alerts, platform
+- `modules/` — networking, ACR, Key Vault, identity, PostgreSQL, Redis, storage, monitoring, Container Apps, alerts, diagnostics, workbooks, platform
 - `environments/dev|staging|prod/` — environment roots
 - `checkov.yaml` — IaC scan config and justified skips
 - `IMPORT.md` — adopting resources that already exist

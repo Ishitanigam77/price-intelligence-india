@@ -239,6 +239,10 @@ resource "azurerm_container_app" "backend" {
         value = var.environment
       }
       env {
+        name  = "SERVICE_NAME"
+        value = "backend"
+      }
+      env {
         name  = "LOG_LEVEL"
         value = "INFO"
       }
@@ -356,6 +360,12 @@ resource "azurerm_container_app" "frontend" {
     identity            = var.user_assigned_identity_id
   }
 
+  secret {
+    name                = "appinsights-connection-string"
+    key_vault_secret_id = var.appinsights_connection_string_secret_id
+    identity            = var.user_assigned_identity_id
+  }
+
   ingress {
     external_enabled = true
     target_port      = 3000
@@ -379,6 +389,18 @@ resource "azurerm_container_app" "frontend" {
       env {
         name        = "CLERK_SECRET_KEY"
         secret_name = "clerk-secret-key"
+      }
+      env {
+        name  = "ENVIRONMENT"
+        value = var.environment
+      }
+      env {
+        name  = "SERVICE_NAME"
+        value = "frontend"
+      }
+      env {
+        name        = "APPLICATIONINSIGHTS_CONNECTION_STRING"
+        secret_name = "appinsights-connection-string"
       }
 
       liveness_probe {
@@ -440,6 +462,10 @@ resource "azurerm_container_app" "worker" {
         value = var.environment
       }
       env {
+        name  = "SERVICE_NAME"
+        value = "worker"
+      }
+      env {
         name  = "LOG_LEVEL"
         value = "INFO"
       }
@@ -450,6 +476,18 @@ resource "azurerm_container_app" "worker" {
       env {
         name  = "RUN_DB_MIGRATIONS"
         value = "false"
+      }
+      env {
+        name  = "WORKER_HEALTH_HTTP"
+        value = "true"
+      }
+      env {
+        name  = "WORKER_HEALTH_PORT"
+        value = "8081"
+      }
+      env {
+        name        = "APPLICATIONINSIGHTS_CONNECTION_STRING"
+        secret_name = "appinsights-connection-string"
       }
       env {
         name        = "DATABASE_URL"
@@ -487,6 +525,20 @@ resource "azurerm_container_app" "worker" {
         name        = "RETAILER_FLIPKART_AFFILIATE_TOKEN"
         secret_name = "flipkart-affiliate-token"
       }
+
+      liveness_probe {
+        transport        = "HTTP"
+        path             = "/health"
+        port             = 8081
+        interval_seconds = 30
+      }
+
+      readiness_probe {
+        transport        = "HTTP"
+        path             = "/health/ready"
+        port             = 8081
+        interval_seconds = 15
+      }
     }
   }
 }
@@ -515,6 +567,12 @@ resource "azurerm_container_app" "ml" {
     identity            = var.user_assigned_identity_id
   }
 
+  secret {
+    name                = "appinsights-connection-string"
+    key_vault_secret_id = var.appinsights_connection_string_secret_id
+    identity            = var.user_assigned_identity_id
+  }
+
   ingress {
     external_enabled = false
     target_port      = 8080
@@ -540,6 +598,14 @@ resource "azurerm_container_app" "ml" {
         value = var.environment
       }
       env {
+        name  = "SERVICE_NAME"
+        value = "ml"
+      }
+      env {
+        name        = "APPLICATIONINSIGHTS_CONNECTION_STRING"
+        secret_name = "appinsights-connection-string"
+      }
+      env {
         name  = "ML_HEALTH_PORT"
         value = "8080"
       }
@@ -561,6 +627,13 @@ resource "azurerm_container_app" "ml" {
         path             = "/health"
         port             = 8080
         interval_seconds = 30
+      }
+
+      readiness_probe {
+        transport        = "HTTP"
+        path             = "/health/ready"
+        port             = 8080
+        interval_seconds = 15
       }
     }
   }

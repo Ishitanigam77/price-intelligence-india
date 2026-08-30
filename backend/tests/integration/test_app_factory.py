@@ -26,6 +26,7 @@ def test_create_app_mounts_legacy_and_versioned_health_routes() -> None:
     assert "/health/ready" in paths
     assert "/api/v1/health" in paths
     assert "/api/v1/health/ready" in paths
+    assert "/api/v1/health/live" in paths
 
 
 def test_create_app_mounts_every_v1_resource_route() -> None:
