@@ -77,6 +77,12 @@ def test_production_rejects_placeholder_database_url() -> None:
     )
     with pytest.raises(ValueError, match="Placeholder database"):
         validate_runtime_security(settings)
+    ok = settings.model_copy(
+        update={
+            "database_url": "postgresql+psycopg://app:not-a-placeholder@db.internal:5432/priceradar"
+        }
+    )
+    validate_runtime_security(ok)
 
 
 def test_production_requires_clerk_issuer_and_audience_when_configured() -> None:
@@ -125,12 +131,16 @@ def test_rate_limit_returns_structured_429() -> None:
     assert "Retry-After" in limited.headers
 
 
-def test_openapi_is_disabled_in_deployed_environments() -> None:
+def test_openapi_is_disabled_in_deployed_environments(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(
+        "DATABASE_URL",
+        "postgresql+psycopg://app:not-a-placeholder@db.internal:5432/priceradar",
+    )
     app = create_app(
         Settings(
             _env_file=None,
             environment="prod",
-            database_url="postgresql+psycopg://app:not-changeme@db.internal:5432/priceradar",
+            database_url="postgresql+psycopg://app:not-a-placeholder@db.internal:5432/priceradar",
         )
     )
     assert app.docs_url is None

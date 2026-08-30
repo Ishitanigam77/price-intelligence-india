@@ -228,6 +228,23 @@ None identified in this review.
 
 ## Security testing
 
-See the Phase 17 change summary for commands run and outcomes. Scanners that
-cannot run because of missing tooling or Azure credentials are recorded as
-limitations, not as passing results.
+Executed in the Phase 17 environment (not a substitute for GitHub Actions CI):
+
+| Check | Result |
+|---|---|
+| `ruff check app tests` | Passed |
+| Backend unit tests (`tests/unit` excluding workers) | 473 passed |
+| ML artifact / versioning / inference unit tests | 8 passed |
+| Integration: exception handling + app factory | Passed (no Postgres required) |
+| Integration: `test_api_authorization.py` | **Not run here** — PostgreSQL was not available on this VM |
+| Frontend Vitest | 45 passed |
+| Frontend ESLint / `tsc --noEmit` | Passed |
+| `pip-audit` on backend runtime + ML extras | No known vulnerabilities |
+| `npm audit` (frontend) | 0 vulnerabilities |
+| Checkov (`infrastructure/terraform`) | 68 passed, 0 failed, 0 skipped |
+| Trivy filesystem (HIGH/CRITICAL, vuln+secret+misconfig) | Clean (0 findings in scanned targets) |
+| Trivy **image** scans | **Not run here** — Docker was not available |
+| Live Azure RBAC / ADO approvals | **PENDING** — no Azure credentials |
+
+GitHub Actions CI on this branch re-runs lint, unit, integration (with Postgres),
+pip-audit, npm audit, Checkov, Trivy fs, and Docker image builds/scans.

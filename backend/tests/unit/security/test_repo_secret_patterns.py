@@ -44,7 +44,9 @@ def _tracked_text_files() -> list[Path]:
 
 
 @pytest.mark.parametrize(("parts", "kind"), _LIVE_SECRET_PATTERNS)
-def test_tracked_files_do_not_contain_live_secret_markers(parts: tuple[str, ...], kind: str) -> None:
+def test_tracked_files_do_not_contain_live_secret_markers(
+    parts: tuple[str, ...], kind: str
+) -> None:
     needle = "".join(parts)
     hits: list[str] = []
     for path in _tracked_text_files():

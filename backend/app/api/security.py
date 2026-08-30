@@ -81,7 +81,7 @@ def validate_runtime_security(settings: Settings) -> None:
             "CORS origin '*' is not allowed when credentials are enabled or the "
             "environment is production."
         )
-    if settings.is_production and "changeme" in settings.database_url.lower():
+    if settings.is_production and ":changeme@" in settings.database_url.lower():
         raise ValueError(
             "Placeholder database credentials are not allowed in production. "
             "Set DATABASE_URL from Key Vault."
@@ -89,7 +89,8 @@ def validate_runtime_security(settings: Settings) -> None:
     if settings.is_production and settings.clerk_is_configured:
         if not settings.clerk_issuer.strip() or not settings.clerk_audience.strip():
             raise ValueError(
-                "CLERK_ISSUER and CLERK_AUDIENCE are required in production when Clerk is configured."
+                "CLERK_ISSUER and CLERK_AUDIENCE are required in production "
+                "when Clerk is configured."
             )
 
 
