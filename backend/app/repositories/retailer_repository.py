@@ -1,6 +1,6 @@
 """Repository for `Retailer`."""
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.db.models.retailer import Retailer
 from app.repositories.base import BaseRepository
@@ -17,6 +17,12 @@ class RetailerRepository(BaseRepository[Retailer]):
         stmt = select(Retailer).where(Retailer.name == name)
         return self.session.scalars(stmt).first()
 
-    def list_active(self) -> list[Retailer]:
-        stmt = select(Retailer).where(Retailer.is_active.is_(True))
+    def list_active(self, *, limit: int | None = None, offset: int = 0) -> list[Retailer]:
+        stmt = select(Retailer).where(Retailer.is_active.is_(True)).offset(offset)
+        if limit is not None:
+            stmt = stmt.limit(limit)
         return list(self.session.scalars(stmt).all())
+
+    def count_active(self) -> int:
+        stmt = select(func.count()).select_from(Retailer).where(Retailer.is_active.is_(True))
+        return int(self.session.scalar(stmt) or 0)

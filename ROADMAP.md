@@ -201,6 +201,23 @@ Implemented after Phase 16 observability. Repository-wide security review and
 **Explicitly excluded:** Phase 18 and later. No application redesign, no Azure service
 replacement, no `terraform destroy`, no production deploy from this increment.
 
+## Phase 18 — Full Production Readiness Review (this increment)
+
+Implemented after Phase 17 security hardening. **Repository review only** — no new
+product phase, no architecture rewrite, and no unapproved production deploy:
+
+- Review architecture, code quality, database, APIs, frontend, adapters, matching,
+  pricing, history, sale events, ML, BUY/WAIT, Clerk, watchlists, alerts, workers,
+  Docker, Terraform, Azure/ADO configuration, monitoring, security, testing, and docs.
+- Run the complete available test suite. Live Azure verification is classified
+  **PENDING — LIVE AZURE VERIFICATION** when the subscription is not activated.
+- Fix only clearly safe, localized, backward-compatible issues.
+- Preserve Phase 15 CI/CD, Phase 16 observability, and Phase 17 security controls.
+- Record findings and readiness in `PRODUCTION_READINESS.md`.
+
+**Explicitly excluded:** Any Phase 19+. No `terraform destroy`, no unapproved
+production deployment, no technology replacements, no CI/CD or observability redesign.
+
 ## Phase Ordering Notes
 
 - Phases are sequential by default but a later phase may be pulled forward only on explicit

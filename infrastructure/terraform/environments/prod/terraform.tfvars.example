@@ -1,3 +1,9 @@
+# Production operators must replace empty values before go-live.
+# image_tag must match the immutable sha-<commit> last deployed via Azure DevOps,
+# otherwise a later terraform apply can reset Container Apps to the bootstrap placeholder.
+# alert_email: Phase 16 metric alerts stay disabled while this is empty.
+# cors_allowed_origins: required for browser calls (empty disables CORS).
+# cicd_principal_id: Entra object id of the Azure DevOps service connection.
 location                 = "centralindia"
 image_tag                = "bootstrap-placeholder"
 container_apps_enabled   = true

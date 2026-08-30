@@ -25,14 +25,11 @@ def list_retailers(
     active_only: bool = False,
 ) -> Page[RetailerRead]:
     if active_only:
-        matching = repo.list_active()
-        window = matching[pagination.offset : pagination.offset + pagination.limit]
-        return Page[RetailerRead](
-            items=window, total=len(matching), limit=pagination.limit, offset=pagination.offset
-        )
-
-    total = repo.count()
-    items = repo.list(limit=pagination.limit, offset=pagination.offset)
+        total = repo.count_active()
+        items = repo.list_active(limit=pagination.limit, offset=pagination.offset)
+    else:
+        total = repo.count()
+        items = repo.list(limit=pagination.limit, offset=pagination.offset)
     return Page[RetailerRead](
         items=items, total=total, limit=pagination.limit, offset=pagination.offset
     )

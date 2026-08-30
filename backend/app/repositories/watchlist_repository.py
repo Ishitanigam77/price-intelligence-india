@@ -3,6 +3,7 @@
 import uuid
 
 from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
 
 from app.db.models.watchlist_item import WatchlistItem
 from app.repositories.base import BaseRepository
@@ -12,8 +13,10 @@ class WatchlistRepository(BaseRepository[WatchlistItem]):
     model = WatchlistItem
 
     def get_for_user(self, user_id: uuid.UUID, item_id: uuid.UUID) -> WatchlistItem | None:
-        stmt = select(WatchlistItem).where(
-            WatchlistItem.id == item_id, WatchlistItem.user_id == user_id
+        stmt = (
+            select(WatchlistItem)
+            .options(selectinload(WatchlistItem.product))
+            .where(WatchlistItem.id == item_id, WatchlistItem.user_id == user_id)
         )
         return self.session.scalars(stmt).first()
 
@@ -30,6 +33,7 @@ class WatchlistRepository(BaseRepository[WatchlistItem]):
     ) -> list[WatchlistItem]:
         stmt = (
             select(WatchlistItem)
+            .options(selectinload(WatchlistItem.product))
             .where(WatchlistItem.user_id == user_id)
             .order_by(WatchlistItem.created_at)
             .limit(limit)
