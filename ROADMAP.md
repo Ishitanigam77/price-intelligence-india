@@ -186,6 +186,21 @@ Implemented after Phase 15. Application and Azure Monitor observability **only**
 **Explicitly excluded:** Phase 17 and later. Phase 15 CI/CD, Docker, ACR, and deploy
 pipelines are preserved. No production deploy from this increment.
 
+## Phase 17 — Application Security Review and Hardening (this increment)
+
+Implemented after Phase 16 observability. Repository-wide security review and
+**localized** hardening only:
+
+- Authentication/authorization review (Clerk JWT, ownership scoping). No Clerk redesign.
+- Input validation, CORS tightening, security headers, in-process API rate limiting.
+- Secret scanning, dependency/container/Terraform scanner execution where tooling exists.
+- Safe error responses and log redaction preserved from Phase 16.
+- Production ACR push moved behind the existing Azure DevOps `production` Environment approval.
+- `SECURITY.md` documents the model, findings, and pending live Azure verification.
+
+**Explicitly excluded:** Phase 18 and later. No application redesign, no Azure service
+replacement, no `terraform destroy`, no production deploy from this increment.
+
 ## Phase Ordering Notes
 
 - Phases are sequential by default but a later phase may be pulled forward only on explicit

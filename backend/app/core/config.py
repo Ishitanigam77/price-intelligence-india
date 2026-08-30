@@ -8,7 +8,7 @@ file.
 
 from functools import lru_cache
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _REDIS_SCHEMES = {"redis", "rediss"}
@@ -52,6 +52,12 @@ class Settings(BaseSettings):
     # Comma-separated list of allowed origins, e.g. "http://localhost:3000,https://app.example.com"
     cors_allowed_origins: str = "http://localhost:3000"
     cors_allow_credentials: bool = True
+
+    # -- API abuse protection (Phase 17). In-process; no extra infrastructure. -----------------
+    # auto = on for deployed environments (prod/staging/dev), off for local development/test.
+    api_rate_limit_enabled: str = "auto"
+    api_rate_limit_per_minute: int = Field(default=120, ge=1, le=10000)
+    api_rate_limit_expensive_per_minute: int = Field(default=20, ge=1, le=10000)
 
     # -- Database (PostgreSQL) ------------------------------------------------------------------
     database_url: str = "postgresql+psycopg://priceradar_app:changeme@localhost:5432/priceradar"
@@ -221,13 +227,42 @@ class Settings(BaseSettings):
             raise ValueError("collection_initial_backoff_seconds must be >= 0.")
         return value
 
+    @model_validator(mode="after")
+    def _reject_wildcard_cors_with_credentials(self) -> "Settings":
+        if self.cors_allow_credentials and "*" in self.cors_allowed_origins_list:
+            raise ValueError(
+                "CORS origin '*' cannot be used when CORS_ALLOW_CREDENTIALS is true."
+            )
+        return self
+
     @property
     def is_production(self) -> bool:
-        return self.environment.lower() == "production"
+        """True for Azure prod (`prod`) and the explicit `production` name."""
+        return self.environment.lower() in {"production", "prod"}
 
     @property
     def is_test(self) -> bool:
         return self.environment.lower() == "test"
+
+    @property
+    def is_local_or_test(self) -> bool:
+        """Local Compose / pytest — not an Azure environment (`dev`/`staging`/`prod`)."""
+        return self.environment.lower() in {"development", "test"}
+
+    @property
+    def is_deployed(self) -> bool:
+        """Azure Container Apps environments (`dev`, `staging`, `prod` / `production`)."""
+        return not self.is_local_or_test
+
+    @property
+    def rate_limiting_enabled(self) -> bool:
+        """In-process API rate limiting. Auto-on in deployed environments."""
+        normalized = self.api_rate_limit_enabled.strip().lower()
+        if normalized in {"1", "true", "yes", "on"}:
+            return True
+        if normalized in {"0", "false", "no", "off"}:
+            return False
+        return self.is_deployed
 
     @property
     def cors_allowed_origins_list(self) -> list[str]:

@@ -120,6 +120,8 @@ def test_request_validation_error_returns_structured_422_with_field_details(
     assert body["error"]["code"] == "validation_error"
     assert body["error"]["fields"]
     assert body["error"]["fields"][0]["loc"] == ["query", "count"]
+    assert "input" not in body["error"]["fields"][0]
+    assert "not-an-int" not in str(body)
 
 
 def test_unknown_route_returns_structured_404(error_client: TestClient) -> None:

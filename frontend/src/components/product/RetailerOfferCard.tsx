@@ -9,6 +9,7 @@ import { formatMoneyOrUnavailable } from "@/lib/format/money";
 import { formatAdjustmentLine, formatPriceKind, formatSourceType } from "@/lib/format/offer";
 import { cn } from "@/lib/cn";
 import type { ComparedOfferRead } from "@/lib/types/api";
+import { safeExternalHref } from "@/lib/url/safeHref";
 
 interface RetailerOfferCardProps {
   offer: ComparedOfferRead;
@@ -18,6 +19,7 @@ interface RetailerOfferCardProps {
 
 export function RetailerOfferCard({ offer, priceHistoryHref, className }: RetailerOfferCardProps) {
   const sellerName = offer.seller.name ?? "Seller not specified";
+  const retailerHref = safeExternalHref(offer.source_url);
 
   return (
     <article
@@ -103,9 +105,9 @@ export function RetailerOfferCard({ offer, priceHistoryHref, className }: Retail
       ) : null}
 
       <div className="mt-auto flex flex-col gap-2 sm:flex-row">
-        {offer.source_url ? (
+        {retailerHref ? (
           <a
-            href={offer.source_url}
+            href={retailerHref}
             target="_blank"
             rel="noreferrer noopener"
             className="inline-flex min-h-11 items-center justify-center rounded-xl border border-brand px-4 text-sm font-semibold text-brand hover:bg-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"

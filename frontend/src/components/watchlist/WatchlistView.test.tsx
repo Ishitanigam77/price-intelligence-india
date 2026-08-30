@@ -5,13 +5,10 @@ import { WatchlistView } from "@/components/watchlist/WatchlistView";
 import { productFixture } from "@/test/fixtures";
 
 const getToken = vi.fn(async () => "test-session-token");
+const authState = { isLoaded: true, isSignedIn: true, getToken };
 
 vi.mock("@clerk/nextjs", () => ({
-  useAuth: () => ({
-    isLoaded: true,
-    isSignedIn: true,
-    getToken,
-  }),
+  useAuth: () => authState,
 }));
 
 vi.mock("@/lib/api/watchlists", () => ({
@@ -46,5 +43,14 @@ describe("WatchlistView", () => {
       `/products/${productFixture.id}`,
     );
     expect(listWatchlists).toHaveBeenCalledWith({ accessToken: "test-session-token" });
+  });
+
+  it("asks the user to sign in instead of loading another account's data", () => {
+    vi.mocked(listWatchlists).mockClear();
+    authState.isSignedIn = false;
+    render(<WatchlistView />);
+    expect(screen.getByRole("heading", { name: "Sign in required" })).toBeInTheDocument();
+    expect(listWatchlists).not.toHaveBeenCalled();
+    authState.isSignedIn = true;
   });
 });

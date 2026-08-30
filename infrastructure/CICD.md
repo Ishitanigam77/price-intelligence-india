@@ -29,6 +29,7 @@ GitHub (source of truth)
        → Smoke tests (`/health`, `/health/ready`, frontend `/health`, ML `/health`)
        → Deploy staging (Environment `staging` — configure a check if desired)
        → Production Environment `production` **approval/check**
+       → Push the same immutable tag to production ACR (only after approval)
        → Deploy production (same git SHA tag, never `latest` only)
 ```
 
@@ -68,7 +69,8 @@ Image tag: `sha-<git commit SHA>`. Deployments reference that tag exactly.
 13. Deploy development
 14. Smoke tests
 15. Production approval (Azure DevOps Environment `production`)
-16. Deploy staging, then production (separate stages; staging first)
+16. After approval: push the same immutable tag to production ACR, then deploy production
+    (staging remains a separate earlier stage)
 
 Any failure in 1–11 skips deploy. Failed security or tests cannot proceed to deployment.
 

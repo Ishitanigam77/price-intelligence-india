@@ -4,12 +4,14 @@ import { describe, expect, it, vi } from "vitest";
 import { AlertsView } from "@/components/alerts/AlertsView";
 import { productFixture } from "@/test/fixtures";
 
+const authState = {
+  isLoaded: true,
+  isSignedIn: true,
+  getToken: async () => "test-session-token",
+};
+
 vi.mock("@clerk/nextjs", () => ({
-  useAuth: () => ({
-    isLoaded: true,
-    isSignedIn: true,
-    getToken: async () => "test-session-token",
-  }),
+  useAuth: () => authState,
 }));
 
 vi.mock("@/lib/api/alerts", () => ({
@@ -44,5 +46,14 @@ describe("AlertsView", () => {
     expect(await screen.findByRole("heading", { name: "Price alerts" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: productFixture.name })).toBeInTheDocument();
     expect(listAlerts).toHaveBeenCalledWith({ accessToken: "test-session-token" });
+  });
+
+  it("asks the user to sign in instead of showing another account's alerts", () => {
+    vi.mocked(listAlerts).mockClear();
+    authState.isSignedIn = false;
+    render(<AlertsView />);
+    expect(screen.getByRole("heading", { name: "Sign in required" })).toBeInTheDocument();
+    expect(listAlerts).not.toHaveBeenCalled();
+    authState.isSignedIn = true;
   });
 });

@@ -8,6 +8,7 @@ import xgboost as xgb
 
 from ml.models.artifact import (
     MODEL_FILE,
+    InvalidModelVersionError,
     latest_version,
     read_metadata,
     read_preprocessor,
@@ -47,7 +48,10 @@ def load_model(
     version = model_version if model_version else latest_version(root)
     if not version:
         return None
-    directory = version_dir(root, version)
+    try:
+        directory = version_dir(root, version)
+    except InvalidModelVersionError:
+        return None
     model_path = directory / MODEL_FILE
     if not model_path.is_file():
         return None

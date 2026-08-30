@@ -16,6 +16,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.errors import register_exception_handlers
 from app.api.health import router as legacy_health_router
+from app.api.security import (
+    CORS_ALLOW_HEADERS,
+    CORS_ALLOW_METHODS,
+    RateLimitMiddleware,
+    SecurityHeadersMiddleware,
+    validate_runtime_security,
+)
 from app.api.v1 import api_router as api_v1_router
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
@@ -82,6 +89,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     without mutating process-wide environment variables.
     """
     settings = settings or get_settings()
+    validate_runtime_security(settings)
     configure_logging(settings)
     configure_telemetry(
         service_name=settings.service_name,
@@ -89,20 +97,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         connection_string=settings.applicationinsights_connection_string,
     )
 
+    docs_enabled = not settings.is_deployed
     application = FastAPI(
         title="PriceRadar India API",
         version="0.1.0",
         description="India-focused price intelligence platform — API layer.",
         lifespan=lifespan,
+        docs_url="/docs" if docs_enabled else None,
+        redoc_url="/redoc" if docs_enabled else None,
+        openapi_url="/openapi.json" if docs_enabled else None,
     )
 
     application.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_allowed_origins_list,
         allow_credentials=settings.cors_allow_credentials,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=CORS_ALLOW_METHODS,
+        allow_headers=CORS_ALLOW_HEADERS,
     )
+    application.add_middleware(RateLimitMiddleware, settings=settings)
+    application.add_middleware(SecurityHeadersMiddleware, settings=settings)
 
     register_exception_handlers(application)
     application.add_middleware(RequestTelemetryMiddleware)

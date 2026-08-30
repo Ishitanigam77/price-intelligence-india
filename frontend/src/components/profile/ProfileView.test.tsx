@@ -3,12 +3,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ProfileView } from "@/components/profile/ProfileView";
 
+const authState = {
+  isLoaded: true,
+  isSignedIn: true,
+  getToken: async () => "test-session-token",
+};
+
 vi.mock("@clerk/nextjs", () => ({
-  useAuth: () => ({
-    isLoaded: true,
-    isSignedIn: true,
-    getToken: async () => "test-session-token",
-  }),
+  useAuth: () => authState,
   useUser: () => ({
     user: { fullName: "Ada Lovelace", primaryEmailAddress: { emailAddress: "ada@example.test" } },
   }),
@@ -39,5 +41,14 @@ describe("ProfileView", () => {
     expect(screen.getByText("user_ada")).toBeInTheDocument();
     expect(screen.getByText("ada@example.test")).toBeInTheDocument();
     expect(getProfile).toHaveBeenCalledWith({ accessToken: "test-session-token" });
+  });
+
+  it("asks the user to sign in instead of rendering another user's profile", () => {
+    vi.mocked(getProfile).mockClear();
+    authState.isSignedIn = false;
+    render(<ProfileView />);
+    expect(screen.getByRole("heading", { name: "Sign in required" })).toBeInTheDocument();
+    expect(getProfile).not.toHaveBeenCalled();
+    authState.isSignedIn = true;
   });
 });

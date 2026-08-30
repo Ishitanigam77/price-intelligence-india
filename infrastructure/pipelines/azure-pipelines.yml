@@ -537,40 +537,35 @@ stages:
     variables:
       - group: priceradar-prod
     jobs:
-      - job: PushProdAcr
-        displayName: Push the same immutable tag to production ACR
-        steps:
-          - checkout: self
-          - task: AzureCLI@2
-            displayName: Build and push production ACR
-            inputs:
-              azureSubscription: $(azureServiceConnectionProd)
-              scriptType: bash
-              scriptLocation: inlineScript
-              addSpnToEnvironment: false
-              inlineScript: |
-                set -euo pipefail
-                az acr login --name "${ACR_NAME}"
-                TAG="$(imageTag)"
-                docker build --target api -t "${ACR_LOGIN_SERVER}/priceradar/backend:${TAG}" backend
-                docker build --target worker -t "${ACR_LOGIN_SERVER}/priceradar/workers:${TAG}" backend
-                docker build \
-                  --build-arg "NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}" \
-                  -t "${ACR_LOGIN_SERVER}/priceradar/frontend:${TAG}" frontend
-                docker build -f ml/Dockerfile -t "${ACR_LOGIN_SERVER}/priceradar/ml:${TAG}" .
-                docker push "${ACR_LOGIN_SERVER}/priceradar/backend:${TAG}"
-                docker push "${ACR_LOGIN_SERVER}/priceradar/workers:${TAG}"
-                docker push "${ACR_LOGIN_SERVER}/priceradar/frontend:${TAG}"
-                docker push "${ACR_LOGIN_SERVER}/priceradar/ml:${TAG}"
       - deployment: DeployProdEnv
-        displayName: Deploy to production (environment approval required)
-        dependsOn: PushProdAcr
+        displayName: Approve, then push ACR and deploy production
         environment: production
         strategy:
           runOnce:
             deploy:
               steps:
                 - checkout: self
+                - task: AzureCLI@2
+                  displayName: Build and push production ACR (after approval)
+                  inputs:
+                    azureSubscription: $(azureServiceConnectionProd)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    addSpnToEnvironment: false
+                    inlineScript: |
+                      set -euo pipefail
+                      az acr login --name "${ACR_NAME}"
+                      TAG="$(imageTag)"
+                      docker build --target api -t "${ACR_LOGIN_SERVER}/priceradar/backend:${TAG}" backend
+                      docker build --target worker -t "${ACR_LOGIN_SERVER}/priceradar/workers:${TAG}" backend
+                      docker build \
+                        --build-arg "NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}" \
+                        -t "${ACR_LOGIN_SERVER}/priceradar/frontend:${TAG}" frontend
+                      docker build -f ml/Dockerfile -t "${ACR_LOGIN_SERVER}/priceradar/ml:${TAG}" .
+                      docker push "${ACR_LOGIN_SERVER}/priceradar/backend:${TAG}"
+                      docker push "${ACR_LOGIN_SERVER}/priceradar/workers:${TAG}"
+                      docker push "${ACR_LOGIN_SERVER}/priceradar/frontend:${TAG}"
+                      docker push "${ACR_LOGIN_SERVER}/priceradar/ml:${TAG}"
                 - task: AzureCLI@2
                   displayName: Migrate and update production apps
                   inputs:

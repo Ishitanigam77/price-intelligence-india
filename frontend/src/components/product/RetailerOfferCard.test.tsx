@@ -53,4 +53,17 @@ describe("RetailerOfferCard", () => {
     expect(screen.queryByText(/verified eligible/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/affects effective price/i)).not.toBeInTheDocument();
   });
+
+  it("does not render a javascript: retailer URL", () => {
+    render(
+      <RetailerOfferCard
+        offer={{
+          ...offerFixture,
+          source_url: "javascript:alert(1)",
+        }}
+      />,
+    );
+    expect(screen.queryByRole("link", { name: "View on retailer site" })).not.toBeInTheDocument();
+    expect(screen.getByText("No retailer link is available for this offer.")).toBeInTheDocument();
+  });
 });

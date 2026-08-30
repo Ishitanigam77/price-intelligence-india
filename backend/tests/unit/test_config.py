@@ -23,6 +23,7 @@ def test_defaults_are_sane_for_local_development() -> None:
 def test_is_production_is_case_insensitive() -> None:
     assert Settings(_env_file=None, environment="Production").is_production is True
     assert Settings(_env_file=None, environment="PRODUCTION").is_production is True
+    assert Settings(_env_file=None, environment="prod").is_production is True
     assert Settings(_env_file=None, environment="development").is_production is False
 
 

@@ -15,8 +15,9 @@ price history, detects genuine price drops and sale events, and recommends wheth
 > `AUTHENTICATION.md`). **Phase 15** adds production DevOps (GitHub + Azure DevOps CI/CD,
 > Docker, ACR, Terraform for Azure). **Phase 16** adds observability (structured logs,
 > metrics, health checks, Application Insights / Azure Monitor workbooks and alerts).
-> Live Azure telemetry was not verified in-repo. Live retailer E2E is not run without
-> approved credentials — see `backend/app/retailer_adapters/INTEGRATIONS.md`.
+> **Phase 17** documents application security review and localized hardening
+> (`SECURITY.md`). Live Azure RBAC was not verified in-repo. Live retailer E2E is not
+> run without approved credentials — see `backend/app/retailer_adapters/INTEGRATIONS.md`.
 
 ## Why This Exists
 
@@ -43,6 +44,7 @@ never fabricates retailer data.
 | [`DATA_FLOW.md`](./DATA_FLOW.md) | End-to-end data flow from acquisition to UI |
 | [`AUTHENTICATION.md`](./AUTHENTICATION.md) | Phase 12 Clerk setup, user mapping, authorization, protected routes |
 | [`OBSERVABILITY.md`](./OBSERVABILITY.md) | Phase 16 logs, metrics, health checks, dashboards, alerts, Azure config |
+| [`SECURITY.md`](./SECURITY.md) | Phase 17 authentication, authorization, secrets, Azure, API, CI/CD, findings |
 
 ## Repository Structure (Scaffolding)
 

@@ -20,7 +20,7 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Path, Query
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError as PydanticValidationError
 
@@ -62,7 +62,10 @@ async def search_products(
     ],
     category: Annotated[
         str | None,
-        Query(description="Optional category slug used to scope which adapters are consulted."),
+        Query(
+            max_length=200,
+            description="Optional category slug used to scope which adapters are consulted.",
+        ),
     ] = None,
 ) -> ProductSearchPage:
     """Discover products across enabled retailers and persist the observed listings.
@@ -127,7 +130,10 @@ def get_product(product_id: uuid.UUID, repo: ProductRepositoryDep) -> ProductRea
 
 
 @router.get("/slug/{slug}", response_model=ProductRead)
-def get_product_by_slug(slug: str, repo: ProductRepositoryDep) -> ProductRead:
+def get_product_by_slug(
+    slug: Annotated[str, Path(min_length=1, max_length=200)],
+    repo: ProductRepositoryDep,
+) -> ProductRead:
     product = repo.get_by_slug(slug)
     if product is None:
         raise NotFoundError(f"Product with slug {slug!r} was not found.")
@@ -206,7 +212,14 @@ def get_product_sale_price_prediction(
     service: SalePricePredictionServiceDep,
     variant_id: uuid.UUID | None = None,
     as_of: datetime | None = None,
-    model_version: str | None = None,
+    model_version: Annotated[
+        str | None,
+        Query(
+            max_length=128,
+            pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            description="Trained model version directory name. Path segments are rejected.",
+        ),
+    ] = None,
 ) -> ProductSalePricePredictionRead:
     """Return a labeled predicted effective sale price per listing.
 
@@ -227,7 +240,14 @@ def get_product_recommendation(
     service: RecommendationServiceDep,
     variant_id: uuid.UUID | None = None,
     as_of: datetime | None = None,
-    model_version: str | None = None,
+    model_version: Annotated[
+        str | None,
+        Query(
+            max_length=128,
+            pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            description="Trained model version directory name. Path segments are rejected.",
+        ),
+    ] = None,
 ) -> ProductRecommendationRead:
     """Return a deterministic BUY_NOW / WAIT / WATCH / INSUFFICIENT_DATA decision per variant.
 

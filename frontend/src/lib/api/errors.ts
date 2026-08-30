@@ -30,6 +30,9 @@ export function isApiError(error: unknown): error is ApiError {
 
 export function getErrorMessage(error: unknown): string {
   if (isApiError(error)) {
+    if (error.status >= 500) {
+      return "An unexpected error occurred. Please try again.";
+    }
     return error.message;
   }
   if (error instanceof ApiConfigError) {

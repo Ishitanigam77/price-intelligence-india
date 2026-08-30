@@ -33,4 +33,11 @@ describe("Home search interaction", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Enter a product name to search.");
     expect(navigationState.push).not.toHaveBeenCalled();
   });
+
+  it("caps the search input at 500 characters", () => {
+    render(<SearchBar />);
+    expect(
+      screen.getByRole("searchbox", { name: "Search products across Indian retailers" }),
+    ).toHaveAttribute("maxLength", "500");
+  });
 });
