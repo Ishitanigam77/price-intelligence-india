@@ -119,4 +119,30 @@ Search also additively includes persisted catalogue products whose name matches 
 
 ## Screenshots
 
-Browser and API captures from the running local app live in `docs/phase-19/screenshots/`.
+Browser and API captures from the running local app (`localhost:3000` + `localhost:8000`)
+for **DEVELOPMENT FIXTURE: Demo Phone Z** live in `docs/phase-19/screenshots/`.
+
+| File | What it shows |
+|---|---|
+| `01-product-search.png` | Search results for Demo Phone Z (128GB + 256GB variants) |
+| `02-all-retailer-offers-1.png` | All retailer offers, ranks 1–2 (F, E first-party) |
+| `02b-all-retailer-offers-middle.png` | Ranks 1–4 including Demo Retailer D and E marketplace seller |
+| `03-all-retailer-offers-2.png` | Remaining offers (C, B, A) — 6 retailers / 7 listings |
+| `04-current-best-price.png` | Current best ₹18,179 OBSERVED, Demo Retailer F, 128GB |
+| `05-historical-monthly-intelligence.png` | History chart + monthly stats (January best buying month) |
+| `06-upcoming-sale.png` | MAJOR CONFIRMED Demo Seasonal Mega Sale 2026 |
+| `07-predicted-sale-price.png` | `PREDICTED — NOT AVAILABLE` (no trained model) |
+| `08-expected-best-retailer.png` | Current F vs expected sale winner A ₹16,024 CALCULATED |
+| `09-ordinary-vs-major.png` | Ordinary insufficient; major CALCULATED ₹16,024 |
+| `10-recommendation.png` | Phase 11 primary decision WAIT |
+| `11-urgency.png` | Urgency selector (default / no urgency) |
+| `11b-urgency-urgent.png` | Urgency “I need it soon” → BUY_NOW |
+| `11c-urgency-patient.png` | Urgency “I can wait” → WAIT_FOR_MAJOR_SALE |
+| `12-api-prices.png` | `GET /prices` — all 7 offers |
+| `13-api-history.png` | `GET /history` including monthly |
+| `14-api-sale-intelligence.png` | `GET /sale-intelligence` |
+| `15-api-sale-price-prediction.png` | `GET /sale-price-prediction` INSUFFICIENT_DATA |
+| `16-api-recommendation.png` | `GET /recommendation` WAIT |
+| `16b-api-recommendation-urgent.png` | `GET /recommendation?urgency=urgent` BUY_NOW |
+| `17-api-calendar.png` | `GET /sale-events/calendar` |
+| `18-network-requests.png` | DevTools Network: frontend → `localhost:8000` on Demo Phone Z |
