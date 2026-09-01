@@ -109,7 +109,16 @@ export function SaleTimingPanel({
     (item) => item.product_variant_id === variantId,
   );
   const rec = recommendation?.variants.find((item) => item.product_variant_id === variantId);
-  const upcoming = intel?.major ?? intel?.ordinary ?? null;
+  const datedWindows = [intel?.ordinary, intel?.major].filter(
+    (item): item is SaleOpportunityRead =>
+      Boolean(item && item.window.expected_start_date && item.status !== "insufficient_history"),
+  );
+  datedWindows.sort(
+    (left, right) =>
+      Date.parse(left.window.expected_start_date ?? "") -
+      Date.parse(right.window.expected_start_date ?? ""),
+  );
+  const upcoming = datedWindows[0] ?? intel?.major ?? intel?.ordinary ?? null;
   const predictedRow =
     prediction?.predictions.find((item) => item.product_variant_id === variantId) ??
     prediction?.predictions[0];
@@ -129,9 +138,19 @@ export function SaleTimingPanel({
               {upcoming.sale_type} · {EVIDENCE_LABELS[upcoming.window.evidence_status]}
             </p>
             <p className="text-sm text-ink-muted">
+              Sale family: {upcoming.window.sale_family}
+            </p>
+            <p className="text-sm text-ink-muted">
               Expected start {formatDateTime(upcoming.window.expected_start_date)} · expected end{" "}
               {formatDateTime(upcoming.window.expected_end_date)} · confidence{" "}
               {upcoming.window.confidence}
+            </p>
+            <p className="text-sm text-ink-muted">
+              Mapping method {upcoming.window.mapping_method.replaceAll("_", " ")} · evidence count{" "}
+              {upcoming.window.evidence_count} · years used{" "}
+              {upcoming.window.historical_years_used.length > 0
+                ? upcoming.window.historical_years_used.join(", ")
+                : "UNKNOWN"}
             </p>
           </div>
         ) : (
@@ -174,38 +193,61 @@ export function SaleTimingPanel({
           </div>
         ) : (
           <EmptyState
-            title="Predicted sale price is not available"
+            title="PREDICTED — NOT AVAILABLE"
             description={
               prediction?.insufficient?.reason ??
-              "The model artifact or history is insufficient. A predicted price is not invented."
+              "INSUFFICIENT_DATA. The model artifact or history is insufficient. A predicted price is not invented."
             }
           />
         )}
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-display text-2xl">Best expected retailer</h2>
-        {intel?.expected_best_retailer && intel.expected_best_retailer.status === "available" ? (
+        <h2 className="font-display text-2xl">Expected best retailer during future sale</h2>
+        <p className="text-sm text-ink-muted">
+          Current best retailer and expected future retailer are separate. The currently cheapest
+          store is never copied forward as the sale winner.
+        </p>
+        <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-2 rounded-2xl bg-paper-card p-5 shadow-card">
-            <p className="font-medium text-ink">{intel.expected_best_retailer.retailer_name}</p>
-            <PriceDisplay
-              label="Expected sale price"
-              amount={intel.expected_best_retailer.expected_sale_price}
-              currency="INR"
-              kind={intel.expected_best_retailer.expected_sale_price_value_kind ?? "CALCULATED"}
-            />
-            <p className="text-sm text-ink">
-              Expected saving:{" "}
-              {formatMoneyOrUnavailable(intel.expected_best_retailer.expected_saving)} ·
-              confidence {intel.expected_best_retailer.confidence ?? "unknown"}
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              Current best retailer
             </p>
+            <p className="font-medium text-ink">
+              {intel?.current_cheapest_retailer_name ?? "UNKNOWN"}
+            </p>
+            <PriceDisplay
+              label="Current verified price"
+              amount={intel?.current_effective_price ?? intel?.current_cheapest_price}
+              currency="INR"
+              kind="CALCULATED"
+            />
           </div>
-        ) : (
-          <EmptyState
-            title="Expected best retailer is unknown"
-            description="The currently cheapest retailer is not assumed to win a future sale."
-          />
-        )}
+          {intel?.expected_best_retailer && intel.expected_best_retailer.status === "available" ? (
+            <div className="space-y-2 rounded-2xl bg-paper-card p-5 shadow-card">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                Expected best retailer during sale
+              </p>
+              <p className="font-medium text-ink">{intel.expected_best_retailer.retailer_name}</p>
+              <PriceDisplay
+                label="Expected sale price"
+                amount={intel.expected_best_retailer.expected_sale_price}
+                currency="INR"
+                kind={intel.expected_best_retailer.expected_sale_price_value_kind ?? "CALCULATED"}
+              />
+              <p className="text-sm text-ink">
+                Expected saving:{" "}
+                {formatMoneyOrUnavailable(intel.expected_best_retailer.expected_saving)} ·
+                confidence {intel.expected_best_retailer.confidence ?? "unknown"}
+              </p>
+            </div>
+          ) : (
+            <EmptyState
+              title="EXPECTED BEST RETAILER — UNKNOWN"
+              description="INSUFFICIENT_DATA. The currently cheapest retailer is not assumed to win a future sale."
+            />
+          )}
+        </div>
       </section>
 
       <section className="space-y-3">
@@ -230,15 +272,56 @@ export function SaleTimingPanel({
 
       <section className="space-y-3">
         <h2 className="font-display text-2xl">Buying recommendation</h2>
+        <p className="text-sm text-ink-muted">
+          Phase 11 remains the primary decision. Sale timing is supporting evidence, not a second
+          recommendation engine.
+        </p>
         {rec ? (
           <div className="space-y-3 rounded-2xl bg-paper-card p-5 shadow-card">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              Primary recommendation (Phase 11)
+            </p>
             <p className="text-xl font-semibold text-ink">{rec.recommendation}</p>
             {rec.buying_window ? (
               <p className="text-sm text-ink-muted">Buying window: {rec.buying_window}</p>
             ) : null}
             <p className="text-sm text-ink">{decisionCopy(rec.recommendation, rec.buying_window)}</p>
+            <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-ink-muted">Current price</dt>
+                <dd>{formatMoneyOrUnavailable(rec.evidence.current_effective_price)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-ink-muted">Historical low</dt>
+                <dd>{formatMoneyOrUnavailable(rec.evidence.historical_low)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-ink-muted">30-day average</dt>
+                <dd>{formatMoneyOrUnavailable(rec.evidence.average_30d)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-ink-muted">90-day average</dt>
+                <dd>{formatMoneyOrUnavailable(rec.evidence.average_90d)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-ink-muted">Upcoming sale</dt>
+                <dd>{rec.evidence.upcoming_sale_name ?? "UNKNOWN"}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-ink-muted">Days until sale</dt>
+                <dd>{rec.evidence.upcoming_sale_days ?? "UNKNOWN"}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-ink-muted">Expected saving</dt>
+                <dd>{formatMoneyOrUnavailable(rec.expected_saving)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-ink-muted">Urgency</dt>
+                <dd>{rec.urgency ?? "No urgency"}</dd>
+              </div>
+            </dl>
             <ul className="list-disc space-y-1 pl-5 text-sm text-ink-muted">
-              {rec.reasons.slice(0, 4).map((reason) => (
+              {rec.reasons.map((reason) => (
                 <li key={reason}>{reason}</li>
               ))}
             </ul>
@@ -255,7 +338,8 @@ export function SaleTimingPanel({
       <section className="space-y-3">
         <h2 className="font-display text-2xl">Urgency</h2>
         <p className="text-sm text-ink-muted">
-          Optional. Existing recommendations stay the same when urgency is not set.
+          Optional and additive. Existing Phase 11 recommendations stay the same when urgency is
+          not set.
         </p>
         <fieldset className="flex flex-wrap gap-2">
           <legend className="sr-only">Purchase urgency</legend>

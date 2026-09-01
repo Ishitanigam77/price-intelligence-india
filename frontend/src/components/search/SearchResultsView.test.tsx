@@ -30,7 +30,8 @@ describe("Search results rendering", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/Exact variant: 128 GB · Midnight/)).toBeInTheDocument();
     expect(screen.getByText("Lowest verified price")).toBeInTheDocument();
-    expect(screen.getByText("Retailers")).toBeInTheDocument();
+    expect(screen.getByText("Available retailers")).toBeInTheDocument();
+    expect(screen.getByText("Cheapest retailer")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View product details" })).toHaveAttribute(
       "href",
       `/products/${searchHitFixture.product.id}?variant=${searchHitFixture.variant.id}`,

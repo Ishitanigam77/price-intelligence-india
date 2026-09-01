@@ -15,6 +15,10 @@ Persistence uses existing Phase 1 uniqueness only:
 - a `(retailer, retailer_sku)` listing that already exists is updated in place;
 - otherwise a new Product / ProductVariant / RetailerProduct is created.
 
+After adapter results are persisted, search also merges already-stored catalogue products whose
+name matches the query (same `ProductSearchHit` shape, no invented listings). This does not
+perform semantic matching or merge different variants.
+
 No semantic matching, embeddings, or cross-retailer deduplication beyond those constraints.
 """
 
@@ -150,7 +154,8 @@ class ProductDiscoveryService:
             )
             self._metrics.increment(DISCOVERY_SEARCHES, tags={"category": category or "any"})
             outcome = await self._fleet.search(query)
-            hits = self._persist_outcome(outcome)
+            adapter_hits = self._persist_outcome(outcome)
+            hits = self._merge_catalogue_hits(text, adapter_hits)
             duration_ms = (self._monotonic() - started_at) * 1000.0
             self._metrics.observe(DISCOVERY_DURATION_MS, duration_ms)
             self._metrics.increment(DISCOVERY_RESULTS, value=len(hits))
@@ -194,6 +199,74 @@ class ProductDiscoveryService:
             if hit is not None:
                 hits.append(hit)
         hits.sort(key=lambda item: (item.retailer.slug, item.retailer_sku))
+        return hits
+
+    def _merge_catalogue_hits(
+        self, text: str, adapter_hits: list[ProductSearchHit]
+    ) -> list[ProductSearchHit]:
+        """Add persisted catalogue listings whose product name matches `text`.
+
+        Adapter discovery remains the primary search path. This merge is additive so a
+        development-seeded (or previously persisted) product can appear when its name matches,
+        without inventing listings or weakening variant identity. Listings already returned by
+        adapters are not duplicated.
+        """
+        seen = {
+            (hit.retailer_product_id, hit.seller.id if hit.seller is not None else None)
+            for hit in adapter_hits
+        }
+        catalogue = self._catalogue_hits(text, seen)
+        return [*catalogue, *adapter_hits]
+
+    def _catalogue_hits(
+        self,
+        text: str,
+        seen_keys: set[tuple[uuid.UUID, uuid.UUID | None]],
+    ) -> list[ProductSearchHit]:
+        products = self._products.search_active_by_name(text, limit=50)
+        if not products:
+            return []
+        products_by_id = {item.id: item for item in products}
+        hits: list[ProductSearchHit] = []
+        for product in products:
+            listings = self._listings.list_for_product(product.id)
+            listing_ids = [item.id for item in listings]
+            if not listing_ids:
+                continue
+            snapshots = self._snapshots.latest_per_seller_for_retailer_products(listing_ids)
+            for snapshot in snapshots:
+                listing = snapshot.retailer_product
+                seller_key = snapshot.seller_id
+                identity = (listing.id, seller_key)
+                if identity in seen_keys:
+                    continue
+                variant = listing.product_variant
+                variant.product = products_by_id[variant.product_id]
+                hits.append(
+                    ProductSearchHit(
+                        product=ProductRead.model_validate(variant.product),
+                        variant=ProductVariantRead.model_validate(variant),
+                        retailer=RetailerRead.model_validate(listing.retailer),
+                        seller=(
+                            SellerRead.model_validate(snapshot.seller)
+                            if snapshot.seller is not None
+                            else None
+                        ),
+                        retailer_product_id=listing.id,
+                        retailer_sku=listing.retailer_sku,
+                        displayed_price=snapshot.displayed_price,
+                        mrp=snapshot.mrp,
+                        effective_price=snapshot.effective_price,
+                        currency=snapshot.currency,
+                        availability=snapshot.availability,
+                        source_url=snapshot.source_url,
+                        observed_at=snapshot.observed_at,
+                        source_type=snapshot.source_type,
+                        confidence=snapshot.confidence,
+                    )
+                )
+                seen_keys.add(identity)
+        hits.sort(key=lambda item: (item.product.slug, item.retailer.slug, item.retailer_sku))
         return hits
 
     def persist_discovered_listing(

@@ -16,6 +16,8 @@ export interface GroupedSearchCard {
   variant: ProductVariantRead;
   hits: ProductSearchHit[];
   retailerCount: number;
+  offerCount: number;
+  cheapestRetailerName: string | null;
   observedMinPrice: MoneyAmount | null;
   observedMaxPrice: MoneyAmount | null;
   currency: string;
@@ -43,6 +45,8 @@ export function groupSearchHits(hits: ProductSearchHit[]): GroupedSearchCard[] {
       variant: hit.variant,
       hits: [hit],
       retailerCount: 0,
+      offerCount: 0,
+      cheapestRetailerName: null,
       observedMinPrice: null,
       observedMaxPrice: null,
       currency: hit.currency,
@@ -65,9 +69,26 @@ function finalizeGroup(group: GroupedSearchCard): GroupedSearchCard {
   const min = prices.length ? Math.min(...prices) : null;
   const max = prices.length ? Math.max(...prices) : null;
 
+  const cheapestFromHits = [...group.hits].sort((left, right) => {
+    const leftPrice = parseMoney(left.effective_price) ?? parseMoney(left.displayed_price);
+    const rightPrice = parseMoney(right.effective_price) ?? parseMoney(right.displayed_price);
+    if (leftPrice === null && rightPrice === null) {
+      return 0;
+    }
+    if (leftPrice === null) {
+      return 1;
+    }
+    if (rightPrice === null) {
+      return -1;
+    }
+    return leftPrice - rightPrice;
+  })[0];
+
   return {
     ...group,
     retailerCount: retailerIds.size,
+    offerCount: group.hits.length,
+    cheapestRetailerName: cheapestFromHits?.retailer.name ?? null,
     observedMinPrice: min,
     observedMaxPrice: max,
     currency: group.hits[0]?.currency ?? group.currency,
@@ -82,9 +103,17 @@ export function attachVerifiedPrices(
 ): GroupedSearchCard[] {
   return cards.map((card) => {
     const prices = variantPricesByKey.get(priceKey(card.product.id, card.variant.id));
+    if (!prices) {
+      return card;
+    }
+    const retailerIds = new Set(prices.offers.map((offer) => offer.retailer_id));
     return {
       ...card,
-      lowestVerifiedOffer: prices?.lowest_verified_offer ?? null,
+      retailerCount: retailerIds.size || card.retailerCount,
+      offerCount: prices.offers.length || card.offerCount,
+      cheapestRetailerName:
+        prices.lowest_verified_offer?.retailer_name ?? card.cheapestRetailerName,
+      lowestVerifiedOffer: prices.lowest_verified_offer ?? null,
     };
   });
 }

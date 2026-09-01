@@ -27,8 +27,10 @@ Historical Price Intelligence**.
   averages (7/30/90/180-day), historical min/max, current-price percentile, volatility,
   percentage change, deterministic price-drop detection, a non-ML historical trend, and
   Phase 19 monthly price intelligence (`monthly.py`). Calculations use only stored verified
-  observations. Insufficient history is explicit; values are never fabricated. Predicted
-  values are not produced here.
+  observations. Insufficient history is explicit; values are never fabricated. A missing
+  `best_buying_month` does not suppress month-level statistics. Predicted values are not
+  produced here. The comparison engine returns **every** matching offer for the exact variant;
+  there is no 3-retailer cap. A retailer identity and a seller/listing remain distinct.
 
 Observed, calculated, and estimated values stay distinct (`price_kind` is
 `verified_effective` or `displayed_only`; any unverified promotional figure is labeled

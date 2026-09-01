@@ -28,7 +28,8 @@ retailer announcements.
 - `classification.py` — MAJOR / ORDINARY / UNKNOWN from duration, recurrence, and discount evidence
 - `calendar.py` — previous-year → current-year mapping (fixed, festival-relative, recurring)
 - `analysis.py` — historical per-event, per-retailer sale statistics
-- `intelligence.py` — current vs expected retailer comparison and major vs ordinary
+- `intelligence.py` — current vs expected retailer comparison and major vs ordinary.
+  Current cheapest retailer is never copied forward as the expected sale winner.
 - `lifecycle.py` — BEFORE / DURING / AFTER from `start_date` / `end_date`
 - `applicability.py` — which events apply to a product/observation
 - `history.py` — historical sale-price analysis from stored observations

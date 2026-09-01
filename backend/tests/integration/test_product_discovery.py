@@ -502,3 +502,38 @@ class TestHttpFailureIsolation:
         assert body["consulted_retailer_ids"] == ["mock-retailer-a"]
         assert {hit["retailer"]["slug"] for hit in body["items"]} == {"mock-retailer-a"}
         assert body["total"] == 2
+
+
+class TestCatalogueNameMatch:
+    async def test_persisted_catalogue_products_are_merged_into_search(
+        self, discovery_service: ProductDiscoveryService, db_session: Session
+    ) -> None:
+        from tests.factories import (
+            make_price_snapshot,
+            make_product,
+            make_retailer,
+            make_retailer_product,
+            make_variant,
+        )
+
+        product = make_product(name="DEVELOPMENT FIXTURE Catalogue Needle Phone")
+        db_session.add(product)
+        db_session.flush()
+        variant = make_variant(product)
+        db_session.add(variant)
+        retailer = make_retailer(name="Demo Catalogue Mart")
+        db_session.add(retailer)
+        db_session.flush()
+        listing = make_retailer_product(variant, retailer, retailer_sku="CAT-NEEDLE-1")
+        db_session.add(listing)
+        db_session.flush()
+        db_session.add(make_price_snapshot(listing, displayed_price="12345.00"))
+        db_session.flush()
+
+        page = await discovery_service.search(text="Catalogue Needle", limit=50, offset=0)
+        skus = {hit.retailer_sku for hit in page.items}
+        assert "CAT-NEEDLE-1" in skus
+        matched = next(hit for hit in page.items if hit.retailer_sku == "CAT-NEEDLE-1")
+        assert matched.product.id == product.id
+        assert matched.displayed_price == Decimal("12345.00")
+        assert matched.variant.id == variant.id

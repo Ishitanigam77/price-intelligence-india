@@ -72,7 +72,10 @@ see `../ROADMAP.md`.
 - `app/observability/` — structured JSON logging, correlation IDs, metrics seams
 - `alembic/` — database migrations
 - `Dockerfile`, `docker-entrypoint.sh`, `.dockerignore` — production-oriented backend image
-- `scripts/seed_dev_data.py` — seeds clearly-fake development data for manually validating the
+- `scripts/seed_dev_data.py` — seeds clearly labelled DEVELOPMENT / TEST FIXTURE data (six
+  fictional Demo Retailer identities on one exact variant, plus a separate 256GB variant,
+  monthly history, and ordinary/major sale windows) for local Phase 19 verification. Not live
+  retailer prices.
   schema (not used by the automated test suite)
 - `scripts/train_sale_price_model.py` — offline Phase 10 training from stored observations
   and sale events (`INSUFFICIENT_DATA` if history is inadequate; never fabricates rows)
@@ -190,16 +193,19 @@ The backend container applies Alembic migrations on startup by default (see
 run as their own deployment step). This is local development tooling only — production
 Azure/Kubernetes deployment is out of scope until `../ROADMAP.md` Phase 11.
 
-## Seeding Fake Development Data
+## Seeding DEVELOPMENT / TEST FIXTURE data
 
-Optional, and only useful for manually poking at the schema (e.g. with `psql`):
+Optional. Use only against a local/dev database. Re-running replaces previous copies of these
+fixture rows.
 
 ```bash
 python -m scripts.seed_dev_data
 ```
 
-This inserts a small, clearly-fictional product/retailer/price dataset — no real retailer
-names, URLs, or prices. Never run this against anything but a local/dev database.
+This inserts invented Demo Retailer A–F listings for `DEVELOPMENT FIXTURE: Demo Phone Z`.
+Those prices, sellers, and sale windows are **not** live Amazon/Flipkart/Ubuy/Myntra data.
+Search for `Demo Phone Z` after seeding; product details must render every matching offer
+(no 3-offer cap). See `../docs/phase-19/README.md`.
 
 ## Linting & Formatting
 

@@ -15,7 +15,9 @@ Phase 19 sale-timing intelligence.
   computation, comparison, or prediction logic lives here.
 - `product_discovery_service.py` — retailer-agnostic on-demand search: `RetailerFleet` over the
   `RetailerRegistry`, adapter `normalize_product`, persist via Phase 1 repositories, return
-  standardized results. Timeouts/retries stay in the adapter executor. No semantic matching.
+  standardized results, then additively merge already-stored catalogue products whose name
+  matches the query. Timeouts/retries stay in the adapter executor. No semantic matching and
+  no invented listings.
 - `price_comparison_service.py` — loads matched listings/snapshots/adjustments for a product
   and asks `app.pricing.PriceComparisonEngine` to rank verified offers per variant.
 - `price_history_service.py` — loads stored observations for a product and asks

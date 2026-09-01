@@ -1,11 +1,17 @@
 """Repository for the internal `User` mapped from a Clerk identity."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from app.auth.identity import ClerkIdentity
 from app.db.models.user import User
 from app.repositories.base import BaseRepository
+
+if TYPE_CHECKING:
+    from app.auth.identity import ClerkIdentity
 
 
 class UserRepository(BaseRepository[User]):

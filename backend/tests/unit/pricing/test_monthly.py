@@ -145,3 +145,24 @@ def test_retailer_specific_monthly_buckets_stay_separate() -> None:
     by_retailer = {(item.retailer_id, item.month): item for item in result.retailer_months}
     assert by_retailer[(RETAILER_A, 4)].median.value == Decimal("90.00")
     assert by_retailer[(RETAILER_B, 4)].median.value == Decimal("140.00")
+
+
+def test_monthly_statistics_remain_when_best_month_cannot_be_named() -> None:
+    product_id = uuid4()
+    listing = uuid4()
+    points = [
+        history_point(
+            product_id=product_id,
+            listing_id=listing,
+            displayed_price="80.00",
+            observed_at=NOW.replace(year=2025, month=6, day=day),
+        )
+        for day in (4, 12, 20)
+    ]
+    result = compute_monthly_intelligence(points, as_of=NOW, config=_config())
+    june = result.months[5]
+    assert june.median.status is MetricStatus.AVAILABLE
+    assert june.median.value == Decimal("80.00")
+    assert june.observation_count == 3
+    assert result.best_buying_month is None
+    assert result.best_buying_month_price.status is MetricStatus.INSUFFICIENT_HISTORY

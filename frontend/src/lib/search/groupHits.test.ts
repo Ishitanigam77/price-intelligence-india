@@ -21,6 +21,8 @@ describe("groupSearchHits", () => {
     expect(grouped).toHaveLength(2);
     const first = grouped.find((card) => card.variant.id === variantFixture.id);
     expect(first?.retailerCount).toBe(2);
+    expect(first?.offerCount).toBe(2);
+    expect(first?.cheapestRetailerName).toBe("Fictional Mock Mart A");
     expect(first?.observedMinPrice).toBe(58499);
     expect(first?.observedMaxPrice).toBe(59999);
   });

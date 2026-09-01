@@ -25,6 +25,8 @@ HTTP lives in `GET /api/v1/products/{id}/recommendation` via `RecommendationServ
 When `urgency` is absent, Phase 11 BUY_NOW / WAIT / WATCH / INSUFFICIENT_DATA behaviour is
 unchanged. Optional urgency may select `BUY_IN_ORDINARY_SALE` or `WAIT_FOR_MAJOR_SALE` as a
 buying window; the primary `recommendation` field remains one of the four Phase 11 values.
+A future sale without a usable expected saving does not override a strongly favourable
+current price (near historical low / strong percentile).
 
 ## Decision rules (summary)
 

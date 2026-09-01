@@ -24,17 +24,19 @@ describe("Sale timing panel", () => {
       />,
     );
 
-    expect(screen.getByText("Upcoming sale")).toBeInTheDocument();
+    expect(screen.getAllByText("Upcoming sale").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Fixture Major Sale").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/MAJOR/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Expected/).length).toBeGreaterThan(0);
     expect(screen.getByText("Predicted sale price")).toBeInTheDocument();
-    expect(screen.getByText("Best expected retailer")).toBeInTheDocument();
+    expect(screen.getByText("Expected best retailer during future sale")).toBeInTheDocument();
     expect(screen.getAllByText("Fictional Mock Mart A").length).toBeGreaterThan(0);
     expect(
       screen.getAllByText(/not guaranteed retailer announcements/i).length,
     ).toBeGreaterThan(0);
     expect(screen.getByText(/This is an estimate, not a guaranteed retailer price/)).toBeInTheDocument();
+    expect(screen.getByText("Primary recommendation (Phase 11)")).toBeInTheDocument();
+    expect(screen.getByText("WAIT")).toBeInTheDocument();
   });
 
   it("renders insufficient-data states without inventing prices", () => {
@@ -50,8 +52,8 @@ describe("Sale timing panel", () => {
     );
 
     expect(screen.getByText("No upcoming sale window")).toBeInTheDocument();
-    expect(screen.getByText("Predicted sale price is not available")).toBeInTheDocument();
-    expect(screen.getByText("Expected best retailer is unknown")).toBeInTheDocument();
+    expect(screen.getByText("PREDICTED — NOT AVAILABLE")).toBeInTheDocument();
+    expect(screen.getByText("EXPECTED BEST RETAILER — UNKNOWN")).toBeInTheDocument();
     expect(screen.getByText("Recommendation is not available")).toBeInTheDocument();
   });
 });

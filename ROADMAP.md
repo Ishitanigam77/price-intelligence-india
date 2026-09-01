@@ -223,8 +223,9 @@ production deployment, no technology replacements, no CI/CD or observability red
 Implemented after Phase 18. Extends existing comparison, history, sale-event, Phase 10
 XGBoost, and Phase 11 recommendation systems. Does **not** create duplicate engines.
 
-- Monthly price intelligence from stored `PriceSnapshot` observations (does not replace
-  7/30/90/180-day history).
+- Complete retailer comparison for an exact product/variant: every matching offer is returned
+  and rendered. Distinct retailer identities are counted separately from sellers/listings.
+  There is no 3-retailer cap.
 - MAJOR / ORDINARY / UNKNOWN classification and reusable sale families.
 - Previous-year → current-year mapping: fixed-calendar, festival-relative, recurring,
   retailer-specific. CONFIRMED only when a persisted permitted/curated future event exists.

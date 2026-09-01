@@ -81,8 +81,13 @@ Do not pass `CLERK_SECRET_KEY` as a build-arg. Compose: `infrastructure/docker/d
 | Profile         | Protected. `GET`/`PATCH /api/v1/me`                                                             |
 
 The backend product model has **no image field**. Product cards use a labelled placeholder
-instead of inventing photos. Predicted values are never displayed: Phase 7 history responses
-set `predicted` to `null` unless a labeled Phase 10 prediction is returned.
+instead of inventing photos. Predicted values are never displayed as observed prices: Phase 7
+history responses set `predicted` to `null` unless a labeled Phase 10 prediction is returned.
+
+Search cards show the lowest verified price, **distinct retailer count**, cheapest retailer,
+and offer count. They do not list every offer. Product details render the **complete**
+`offers[]` list (`offers.map`) with no 3-offer cap. A retailer identity and a seller/listing
+are counted separately. Monthly statistics remain visible when `best_buying_month` is null.
 
 ## Data integrity
 

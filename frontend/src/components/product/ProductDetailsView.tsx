@@ -7,6 +7,7 @@ import { MetricCard } from "@/components/price/MetricCard";
 import { PriceDisplay } from "@/components/price/PriceDisplay";
 import { PriceHistoryChart } from "@/components/price/PriceHistoryChart";
 import { ValueKindBadge } from "@/components/price/ValueKindBadge";
+import { MonthlyIntelligencePanel } from "@/components/product/MonthlyIntelligencePanel";
 import { RetailerOfferCard } from "@/components/product/RetailerOfferCard";
 import { SaleTimingPanel } from "@/components/product/SaleTimingPanel";
 import { AvailabilityBadge } from "@/components/status/AvailabilityBadge";
@@ -185,7 +186,7 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
         <div className="space-y-3">
           {lowest ? <AvailabilityBadge status={lowest.availability} /> : null}
           <p className="text-sm text-ink">
-            Cheapest retailer: {lowest?.retailer_name ?? "Not available"}
+            Current best retailer: {lowest?.retailer_name ?? "NOT_AVAILABLE"}
           </p>
           <p className="text-sm text-ink-muted">
             {formatRankingSummary(selected?.priceVariant?.ranking_reason)}
@@ -198,9 +199,17 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 className="font-display text-2xl">Retailer offers</h2>
+          <div>
+            <h2 className="font-display text-2xl">All retailer offers</h2>
+            <p className="text-sm text-ink-muted">
+              A retailer is a store identity. A seller/listing is one offer on that store. Multiple
+              sellers on the same retailer still count as one retailer.
+            </p>
+          </div>
           <p className="text-sm text-ink-muted">
-            {offers.length} retailer offer{offers.length === 1 ? "" : "s"}.
+            {new Set(offers.map((offer) => offer.retailer_id)).size} distinct retailer
+            {new Set(offers.map((offer) => offer.retailer_id)).size === 1 ? "" : "s"} ·{" "}
+            {offers.length} offer{offers.length === 1 ? "" : "s"}.
           </p>
         </div>
         {offers.length === 0 ? (
@@ -267,36 +276,7 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
           history and is not a forecast.
         </p>
         {historyVariant?.monthly ? (
-          historyVariant.monthly.best_buying_month ? (
-            <>
-              <p className="text-sm text-ink">
-                Best historical buying month: {historyVariant.monthly.best_buying_month.month_name}
-              </p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {historyVariant.monthly.months
-                  .filter((month) => month.median.status === "available")
-                  .map((month) => (
-                    <MetricCard
-                      key={month.month}
-                      title={`${month.month_name} median`}
-                      metric={month.median}
-                    />
-                  ))}
-                <MetricCard
-                  title="January historical low"
-                  metric={
-                    historyVariant.monthly.months.find((item) => item.month === 1)?.historical_low ??
-                    historyVariant.monthly.best_buying_month.historical_low
-                  }
-                />
-              </div>
-            </>
-          ) : (
-            <EmptyState
-              title="Insufficient monthly history"
-              description="Monthly averages are not invented when too few observations exist."
-            />
-          )
+          <MonthlyIntelligencePanel monthly={historyVariant.monthly} />
         ) : (
           <EmptyState
             title="Monthly price intelligence is not available"

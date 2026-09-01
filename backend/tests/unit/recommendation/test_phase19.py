@@ -5,7 +5,7 @@ from decimal import Decimal
 from app.pricing.enums import TrendDirection, ValueKind
 from app.recommendation.enums import BuyingWindow, Recommendation, RuleId, Urgency
 from app.recommendation.models import OpportunitySnapshot
-from tests.unit.recommendation.helpers import calculated, engine, payload, prediction
+from tests.unit.recommendation.helpers import calculated, engine, payload, prediction, upcoming
 
 
 def opportunity(**overrides: object) -> OpportunitySnapshot:
@@ -161,3 +161,19 @@ def test_predicted_saving_percentage_is_additive() -> None:
     assert result.expected_saving_percentage == Decimal("25.00")
     assert result.expected_saving_value_kind is ValueKind.CALCULATED
     assert result.buying_window is BuyingWindow.WAIT
+
+
+def test_near_historical_low_is_buy_now_even_when_a_future_sale_exists() -> None:
+    result = engine().recommend(
+        payload(
+            current_effective_price=Decimal("100.00"),
+            historical_percentile=calculated("8.00", unit="percentile"),
+            historical_low=calculated("99.00"),
+            average_30d=calculated("140.00", window_days=30),
+            average_90d=calculated("150.00", window_days=90),
+            upcoming_events=(upcoming(days=12),),
+        )
+    )
+    assert result.recommendation is Recommendation.BUY_NOW
+    assert RuleId.WAIT_UPCOMING_SALE not in result.triggered_rule_ids
+    assert result.expected_saving is None
