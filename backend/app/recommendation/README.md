@@ -4,7 +4,8 @@ Deterministic BUY_NOW / WAIT / WATCH / INSUFFICIENT_DATA engine. Combines Phase 
 price intelligence, Phase 9 sale-event context, and optional Phase 10 XGBoost predictions
 into an explainable decision.
 
-**Status**: implemented in **Phase 11 — BUY / WAIT Recommendation Engine**.
+**Status**: implemented in **Phase 11 — BUY / WAIT Recommendation Engine**, extended
+additively in **Phase 19**.
 
 This package is independent of FastAPI and of specific retailer adapters. It does **not**
 train or invoke XGBoost, does **not** use an LLM / GPT / Claude / Gemini / Grok (or any
@@ -13,13 +14,17 @@ confidence. Observed, calculated, and predicted values stay labeled separately.
 
 ## Layout
 
-- `enums.py` — `Recommendation`, `RuleId`, insufficient-data codes
-- `config.py` — `RECOMMENDATION_*` thresholds
+- `enums.py` — `Recommendation`, `BuyingWindow`, `Urgency`, `RuleId`, insufficient-data codes
+- `config.py` — `RECOMMENDATION_*` thresholds including urgency horizons
 - `models.py` — retailer-agnostic inputs/outputs
-- `rules.py` — explicit documented rule evaluation
+- `rules.py` — explicit documented rule evaluation, including optional Phase 19 windows
 - `engine.py` — composes rules into one repeatable decision
 
 HTTP lives in `GET /api/v1/products/{id}/recommendation` via `RecommendationService`.
+
+When `urgency` is absent, Phase 11 BUY_NOW / WAIT / WATCH / INSUFFICIENT_DATA behaviour is
+unchanged. Optional urgency may select `BUY_IN_ORDINARY_SALE` or `WAIT_FOR_MAJOR_SALE` as a
+buying window; the primary `recommendation` field remains one of the four Phase 11 values.
 
 ## Decision rules (summary)
 

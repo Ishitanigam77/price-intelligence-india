@@ -36,6 +36,10 @@ class PricingConfig(BaseSettings):
     min_observations_for_percentile: int = Field(default=2, ge=2, le=1000)
     #: Minimum qualifying observations required for a historical trend.
     min_observations_for_trend: int = Field(default=2, ge=2, le=1000)
+    #: Minimum qualifying observations in a calendar month before monthly stats are returned.
+    min_observations_for_monthly: int = Field(default=3, ge=1, le=1000)
+    #: Minimum distinct months with usable stats before a best-buying-month is named.
+    min_months_for_best_buying_month: int = Field(default=2, ge=1, le=12)
 
     @model_validator(mode="after")
     def _windows_are_ordered(self) -> "PricingConfig":

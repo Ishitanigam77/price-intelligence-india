@@ -189,6 +189,39 @@ class TrendResult(_FrozenModel):
     insufficient: InsufficientHistory | None = None
 
 
+class MonthlyBucket(_FrozenModel):
+    """One calendar month-of-year (1–12) of CALCULATED price statistics."""
+
+    month: int = Field(ge=1, le=12)
+    month_name: str
+    retailer_id: uuid.UUID | None = None
+    retailer_slug: str | None = None
+    retailer_name: str | None = None
+    years_used: tuple[int, ...] = ()
+    observation_count: int = Field(ge=0)
+    minimum: CalculatedMetric
+    average: CalculatedMetric
+    median: CalculatedMetric
+    maximum: CalculatedMetric
+    historical_low: CalculatedMetric
+    historical_high: CalculatedMetric
+    volatility: CalculatedMetric
+
+
+class MonthlyPriceIntelligence(_FrozenModel):
+    """Derived monthly view of stored observations. Does not replace rolling windows."""
+
+    value_kind: Literal[ValueKind.CALCULATED] = ValueKind.CALCULATED
+    months: tuple[MonthlyBucket, ...]
+    retailer_months: tuple[MonthlyBucket, ...] = ()
+    best_buying_month: MonthlyBucket | None = None
+    best_buying_month_price: CalculatedMetric
+    qualifying_observation_count: int = Field(ge=0)
+    calculated_at: datetime
+    method: str
+    predicted: None = None
+
+
 class HistoryProvenance(_FrozenModel):
     observations_value_kind: Literal[ValueKind.OBSERVED] = ValueKind.OBSERVED
     calculations_value_kind: Literal[ValueKind.CALCULATED] = ValueKind.CALCULATED
@@ -220,6 +253,7 @@ class VariantHistory(_FrozenModel):
     percentage_change: CalculatedMetric
     price_drop: PriceDropResult
     trend: TrendResult
+    monthly: MonthlyPriceIntelligence
     data_freshness: DataFreshness
     provenance: HistoryProvenance
     calculated_at: datetime

@@ -45,6 +45,9 @@ Numeric (missing → `None` / `NaN`, never zero-filled except where zero is a re
 Categorical (unknown at train time → missing, not a new code): `retailer_id`, `seller_id`,
 `brand_id`, `category_id`, `sale_event_id`, `sale_event_type`.
 
+Phase 19 reuses this `features-v1` catalog and trained artifacts. Additional sale-family
+features are not required for inference; missing artifacts still return `INSUFFICIENT_DATA`.
+
 ## Leakage prevention
 
 Mandatory rules, also stored on every `ModelMetadata.leakage_prevention`:

@@ -6,7 +6,8 @@ no additional layer.
 
 **Status**: FastAPI backend application foundation + Phase 4 product discovery + Phase 6
 price comparison + Phase 7 historical price intelligence + Phase 9 sale-event intelligence +
-Phase 10 sale-price prediction + Phase 11 recommendation + Phase 12 personalization.
+Phase 10 sale-price prediction + Phase 11 recommendation + Phase 12 personalization +
+Phase 19 sale-timing intelligence.
 
 - `price_service.py` — composes `RetailerProductRepository` + `PriceSnapshotRepository` so
   "get the price for a retailer listing" can distinguish "the listing doesn't exist" (404) from
@@ -26,10 +27,13 @@ Phase 10 sale-price prediction + Phase 11 recommendation + Phase 12 personalizat
 - `sale_price_prediction_service.py` — loads the same stored observations and events, then asks
   the Phase 10 `ml` inference layer for a labeled predicted effective sale price (or
   `INSUFFICIENT_DATA`). Does not implement recommendations.
+- `sale_intelligence_service.py` — loads comparison offers, stored observations, and sale
+  events, then asks `app.sales.SaleIntelligenceEngine` for expected windows, retailer outlooks,
+  and major vs ordinary comparison. Reuses Phase 10 predictions when usable.
 - `recommendation_service.py` — loads stored history and sale events, calls the existing
-  Phase 10 `SalePricePredictionService` without retraining, and asks
+  Phase 10 `SalePricePredictionService` without retraining, asks
   `app.recommendation.RecommendationEngine` for a deterministic BUY_NOW / WAIT / WATCH /
-  INSUFFICIENT_DATA decision with explicit reasons.
+  INSUFFICIENT_DATA decision, and optionally overlays Phase 19 urgency-aware buying windows.
 - `user_service.py`, `watchlist_service.py`, `saved_product_service.py`,
   `target_price_service.py`, `alert_service.py` — Phase 12 personalization. Every mutating and
   listing method takes the authenticated `User` and scopes access by `user.id`.

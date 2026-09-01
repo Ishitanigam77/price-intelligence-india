@@ -6,8 +6,12 @@ This increment implements the public frontend plus Phase 12 Clerk authentication
 user-owned watchlist, alerts, and profile pages. It talks only to the existing FastAPI
 backend through a typed API client.
 
-**Out of scope here:** notification dispatch, ML prediction UI, real retailer integrations,
-and recommendation (BUY_NOW / WAIT / WATCH).
+**Out of scope here:** notification dispatch and real retailer integrations. Sale-price
+prediction and BUY/WAIT recommendation are shown on product details when the backend
+returns them; missing artifacts render as insufficient data, never as invented prices.
+
+Projected sale dates and prices are evidence-based estimates and are not guaranteed
+retailer announcements.
 
 ## Stack
 
@@ -66,7 +70,7 @@ Do not pass `CLERK_SECRET_KEY` as a build-arg. Compose: `infrastructure/docker/d
 | --------------- | ----------------------------------------------------------------------------------------------- |
 | Home            | Search form → `/search?q=`                                                                      |
 | Search results  | `GET /api/v1/products/search`; verified price enrichment via `GET /api/v1/products/{id}/prices` |
-| Product details | `GET /api/v1/products/{id}`, `/variants`, `/prices`, `/history`                                 |
+| Product details | `GET /api/v1/products/{id}`, `/variants`, `/prices`, `/history`, `/sale-intelligence`, `/recommendation`, `/sale-price-prediction` |
 | Price history   | `GET /api/v1/products/{id}/history`                                                             |
 | Deals           | `GET /api/v1/deals` (currently always empty — coming-soon state, no fabricated deals)           |
 | Retailers       | `GET /api/v1/retailers` (empty registry is shown honestly)                                      |
@@ -78,7 +82,7 @@ Do not pass `CLERK_SECRET_KEY` as a build-arg. Compose: `infrastructure/docker/d
 
 The backend product model has **no image field**. Product cards use a labelled placeholder
 instead of inventing photos. Predicted values are never displayed: Phase 7 history responses
-set `predicted` to `null`.
+set `predicted` to `null` unless a labeled Phase 10 prediction is returned.
 
 ## Data integrity
 

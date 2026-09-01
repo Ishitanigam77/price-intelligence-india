@@ -208,6 +208,9 @@ def test_history_api_returns_observations_and_calculated_aggregates(
     assert "retailer listing" in v128["price_drop"]["baseline_description"]
     assert v128["trend"]["value_kind"] == "CALCULATED"
     assert v128["trend"]["direction"] in {"falling", "rising", "stable"}
+    assert v128["monthly"]["value_kind"] == "CALCULATED"
+    assert len(v128["monthly"]["months"]) == 12
+    assert v128["monthly"]["predicted"] is None
     assert v128["data_freshness"]["newest_observation"] is not None
     assert v128["data_freshness"]["as_of"] == body["calculated_at"]
 

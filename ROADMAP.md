@@ -215,8 +215,29 @@ product phase, no architecture rewrite, and no unapproved production deploy:
 - Preserve Phase 15 CI/CD, Phase 16 observability, and Phase 17 security controls.
 - Record findings and readiness in `PRODUCTION_READINESS.md`.
 
-**Explicitly excluded:** Any Phase 19+. No `terraform destroy`, no unapproved
+**Explicitly excluded:** Any Phase 20+. No `terraform destroy`, no unapproved
 production deployment, no technology replacements, no CI/CD or observability redesign.
+
+## Phase 19 — Sale Timing + Price Intelligence (this increment)
+
+Implemented after Phase 18. Extends existing comparison, history, sale-event, Phase 10
+XGBoost, and Phase 11 recommendation systems. Does **not** create duplicate engines.
+
+- Monthly price intelligence from stored `PriceSnapshot` observations (does not replace
+  7/30/90/180-day history).
+- MAJOR / ORDINARY / UNKNOWN classification and reusable sale families.
+- Previous-year → current-year mapping: fixed-calendar, festival-relative, recurring,
+  retailer-specific. CONFIRMED only when a persisted permitted/curated future event exists.
+- Expected sale windows, expected sale prices (reusing Phase 10 when usable), expected
+  savings, current vs expected best retailer, ordinary vs major comparison.
+- Optional urgency overlay on Phase 11 (`BUY_IN_ORDINARY_SALE` / `WAIT_FOR_MAJOR_SALE`).
+  Absent urgency preserves BUY_NOW / WAIT / WATCH / INSUFFICIENT_DATA.
+
+**Projected sale dates and prices are evidence-based estimates and are not guaranteed
+retailer announcements.**
+
+**Explicitly excluded:** Phase 20+. No scraping, no Terraform apply/destroy, no production
+deploy, no second ML or recommendation engine.
 
 ## Phase Ordering Notes
 

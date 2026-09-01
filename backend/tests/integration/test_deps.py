@@ -27,6 +27,7 @@ from app.api.deps import (
     get_retailer_repository,
     get_sale_event_repository,
     get_sale_event_service,
+    get_sale_intelligence_service,
     get_seller_repository,
 )
 from app.observability.metrics import NullMetricsSink
@@ -46,6 +47,7 @@ from app.services.price_service import PriceService
 from app.services.product_discovery_service import ProductDiscoveryService
 from app.services.recommendation_service import RecommendationService
 from app.services.sale_event_service import SaleEventService
+from app.services.sale_intelligence_service import SaleIntelligenceService
 
 
 def test_repository_provider_functions_bind_the_given_session(db_session: Session) -> None:
@@ -92,6 +94,11 @@ def test_get_sale_event_service_binds_session(db_session: Session) -> None:
 def test_get_recommendation_service_binds_session(db_session: Session) -> None:
     service = get_recommendation_service(db_session, NullMetricsSink())
     assert isinstance(service, RecommendationService)
+
+
+def test_get_sale_intelligence_service_binds_session(db_session: Session) -> None:
+    service = get_sale_intelligence_service(db_session, NullMetricsSink())
+    assert isinstance(service, SaleIntelligenceService)
 
 
 def test_get_product_discovery_service_binds_session_and_registry(db_session: Session) -> None:

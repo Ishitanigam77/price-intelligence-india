@@ -20,12 +20,15 @@ Historical Price Intelligence**.
   timestamps. Distinguishes `fresh` / `aging` / `stale` / `missing`.
 - `models.py` — retailer-agnostic `OfferInput` / `ComparedOffer` / `ProductComparison`.
 - `config.py` — `PRICING_FRESH_WITHIN_HOURS` / `PRICING_STALE_AFTER_HOURS`, plus Phase 7
-  historical thresholds (`PRICING_TREND_STABLE_PERCENT`, minimum observation counts).
+  historical thresholds (`PRICING_TREND_STABLE_PERCENT`, minimum observation counts) and
+  Phase 19 monthly thresholds (`PRICING_MIN_OBSERVATIONS_FOR_MONTHLY`,
+  `PRICING_MIN_MONTHS_FOR_BEST_BUYING_MONTH`).
 - `history.py` / `history_models.py` — Phase 7 historical price intelligence. Window
   averages (7/30/90/180-day), historical min/max, current-price percentile, volatility,
-  percentage change, deterministic price-drop detection, and a non-ML historical trend.
-  Calculations use only stored verified observations. Insufficient history is explicit;
-  values are never fabricated. Predicted values are not produced.
+  percentage change, deterministic price-drop detection, a non-ML historical trend, and
+  Phase 19 monthly price intelligence (`monthly.py`). Calculations use only stored verified
+  observations. Insufficient history is explicit; values are never fabricated. Predicted
+  values are not produced here.
 
 Observed, calculated, and estimated values stay distinct (`price_kind` is
 `verified_effective` or `displayed_only`; any unverified promotional figure is labeled

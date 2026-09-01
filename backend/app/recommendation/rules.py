@@ -13,9 +13,10 @@ from app.domain.enums import ConfidenceLevel, SaleEventSource, SaleEventStatus
 from app.pricing.enums import FreshnessStatus, MetricStatus, TrendDirection, ValueKind
 from app.pricing.money import quantize_money, quantize_ratio
 from app.recommendation.config import RecommendationConfig
-from app.recommendation.enums import Recommendation, RuleId
+from app.recommendation.enums import BuyingWindow, Recommendation, RuleId, Urgency
 from app.recommendation.models import (
     EvaluatedRule,
+    OpportunitySnapshot,
     OptionalMetric,
     PredictionInput,
     RecommendationInput,
@@ -679,3 +680,138 @@ def wait_evidence_from(wait_rules: tuple[EvaluatedRule, ...]) -> bool:
             RuleId.WAIT_UPCOMING_SALE,
         }
     )
+
+
+def _opportunity_usable(
+    snapshot: OpportunitySnapshot | None,
+    config: RecommendationConfig,
+) -> bool:
+    if snapshot is None:
+        return False
+    if snapshot.status == "insufficient_history":
+        return False
+    if snapshot.expected_price is None or snapshot.days_until_start is None:
+        return False
+    if snapshot.expected_saving is None or snapshot.expected_saving_percentage is None:
+        return False
+    return snapshot.expected_saving_percentage >= _dec(config.min_predicted_savings_percent)
+
+
+def _major_worthwhile(
+    payload: RecommendationInput,
+    config: RecommendationConfig,
+    *,
+    ordinary_ok: bool,
+    major_ok: bool,
+) -> bool:
+    major = payload.major_opportunity
+    ordinary = payload.ordinary_opportunity
+    if not major_ok or major is None:
+        return False
+    if major.days_until_start is None or major.days_until_start > config.patient_horizon_days:
+        return False
+    if not ordinary_ok or ordinary is None or ordinary.expected_saving is None:
+        return (major.expected_saving_percentage or Decimal("0")) >= _dec(
+            config.min_predicted_savings_percent
+        )
+    extra = (major.expected_saving or Decimal("0")) - ordinary.expected_saving
+    current = current_price(payload)
+    extra_pct = (
+        quantize_ratio(extra / current * _HUNDRED)
+        if current is not None and current > 0 and extra > 0
+        else None
+    )
+    if extra_pct is not None and extra_pct >= _dec(config.min_additional_major_savings_percent):
+        return True
+    return extra > 0 and (major.expected_saving_percentage or Decimal("0")) >= _dec(
+        config.min_predicted_savings_percent
+    )
+
+
+def evaluate_phase19_windows(
+    payload: RecommendationInput,
+    config: RecommendationConfig,
+    *,
+    strongly_favorable: bool,
+) -> tuple[tuple[EvaluatedRule, ...], BuyingWindow | None, Recommendation | None]:
+    """Urgency-aware ordinary vs major choice. No-op when urgency is absent."""
+    if payload.urgency is None:
+        return (), None, None
+    ordinary = payload.ordinary_opportunity
+    major = payload.major_opportunity
+    ordinary_ok = _opportunity_usable(ordinary, config)
+    major_ok = _opportunity_usable(major, config)
+    ordinary_days = ordinary.days_until_start if ordinary is not None else None
+    major_days = major.days_until_start if major is not None else None
+
+    if payload.urgency is Urgency.URGENT:
+        ordinary_soon = (
+            ordinary_ok
+            and ordinary_days is not None
+            and ordinary_days <= config.urgent_horizon_days
+        )
+        major_soon = (
+            major_ok and major_days is not None and major_days <= config.urgent_horizon_days
+        )
+        ordinary_rule = _rule(
+            RuleId.WAIT_ORDINARY_SALE_SOON,
+            ordinary_soon and not strongly_favorable,
+            (
+                f"Urgency is urgent. An ordinary sale is {ordinary_days} day(s) away with "
+                f"expected saving {ordinary.expected_saving} {payload.currency} "
+                f"({ordinary.expected_saving_percentage}%). Waiting several weeks for a "
+                "major sale is not recommended for an urgent purchase."
+                if ordinary is not None and ordinary_soon
+                else "No ordinary sale is soon enough for an urgent purchase."
+            ),
+            Recommendation.WAIT,
+        )
+        major_rule = _rule(
+            RuleId.WAIT_MAJOR_SALE_WORTHWHILE,
+            major_soon and not ordinary_soon and not strongly_favorable,
+            (
+                f"Urgency is urgent and a major sale is {major_days} day(s) away."
+                if major_soon
+                else "Major sale is not inside the urgent horizon."
+            ),
+            Recommendation.WAIT,
+        )
+        rules = (ordinary_rule, major_rule)
+        if strongly_favorable:
+            return rules, BuyingWindow.BUY_NOW, None
+        if ordinary_rule.fired:
+            return rules, BuyingWindow.BUY_IN_ORDINARY_SALE, Recommendation.WAIT
+        if major_rule.fired:
+            return rules, BuyingWindow.WAIT_FOR_MAJOR_SALE, Recommendation.WAIT
+        return rules, BuyingWindow.BUY_NOW, Recommendation.BUY_NOW
+
+    worthwhile = _major_worthwhile(payload, config, ordinary_ok=ordinary_ok, major_ok=major_ok)
+    major_rule = _rule(
+        RuleId.WAIT_MAJOR_SALE_WORTHWHILE,
+        worthwhile,
+        (
+            f"Urgency is patient. A major sale is {major_days} day(s) away with expected "
+            f"saving {major.expected_saving} {payload.currency} "
+            f"({major.expected_saving_percentage}%). Additional waiting is treated as "
+            "worthwhile from absolute and percentage savings, not an arbitrary price cutoff."
+            if worthwhile and major is not None
+            else "Major-sale waiting is not worthwhile from available savings evidence."
+        ),
+        Recommendation.WAIT,
+    )
+    ordinary_rule = _rule(
+        RuleId.WAIT_ORDINARY_SALE_SOON,
+        ordinary_ok and not worthwhile,
+        (
+            f"Urgency is patient. An ordinary sale is {ordinary_days} day(s) away."
+            if ordinary_ok
+            else "No usable ordinary-sale opportunity."
+        ),
+        Recommendation.WAIT,
+    )
+    rules = (ordinary_rule, major_rule)
+    if major_rule.fired:
+        return rules, BuyingWindow.WAIT_FOR_MAJOR_SALE, Recommendation.WAIT
+    if ordinary_rule.fired:
+        return rules, BuyingWindow.BUY_IN_ORDINARY_SALE, Recommendation.WAIT
+    return rules, None, None

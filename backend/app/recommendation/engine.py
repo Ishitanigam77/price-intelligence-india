@@ -24,9 +24,16 @@ from app.recommendation.config import (
     RecommendationConfig,
     get_recommendation_config,
 )
-from app.recommendation.enums import InsufficientRecommendationReason, Recommendation, RuleId
+from app.recommendation.enums import (
+    BuyingWindow,
+    InsufficientRecommendationReason,
+    Recommendation,
+    RuleId,
+    Urgency,
+)
 from app.recommendation.models import (
     EvidenceSnapshot,
+    OpportunitySnapshot,
     OptionalMetric,
     PredictionInput,
     RecommendationInput,
@@ -37,6 +44,7 @@ from app.recommendation.rules import (
     current_price,
     evaluate_buy_signals,
     evaluate_gates,
+    evaluate_phase19_windows,
     evaluate_prediction_usability,
     evaluate_wait_signals,
     evaluate_watch_signals,
@@ -83,6 +91,9 @@ def input_from_variant_history(
     upcoming_events: Sequence[UpcomingSaleInput] = (),
     as_of: datetime | None = None,
     pricing_config: PricingConfig | None = None,
+    urgency: Urgency | None = None,
+    ordinary_opportunity: OpportunitySnapshot | None = None,
+    major_opportunity: OpportunitySnapshot | None = None,
 ) -> RecommendationInput:
     """Project Phase 7 variant history into engine input. Missing metrics stay None."""
     current = history.current_observation
@@ -129,6 +140,9 @@ def input_from_variant_history(
         trend_direction=history.trend.direction,
         prediction=prediction,
         upcoming_events=tuple(upcoming_events),
+        urgency=urgency,
+        ordinary_opportunity=ordinary_opportunity,
+        major_opportunity=major_opportunity,
     )
 
 
@@ -276,8 +290,27 @@ class RecommendationEngine:
             if not chosen:
                 chosen = unused_pred_rules or watch_rules[:1]
 
-        expected_saving, saving_basis = self._expected_saving(
-            payload, prediction_used=prediction_used
+        phase19_rules, buying_window, override = evaluate_phase19_windows(
+            payload, config, strongly_favorable=strongly
+        )
+        if decision is not Recommendation.INSUFFICIENT_DATA and override is not None:
+            decision = override
+            fired_phase19 = tuple(rule for rule in phase19_rules if rule.fired)
+            if fired_phase19:
+                chosen = fired_phase19
+        if buying_window is None:
+            buying_window = {
+                Recommendation.BUY_NOW: BuyingWindow.BUY_NOW,
+                Recommendation.WAIT: BuyingWindow.WAIT,
+                Recommendation.WATCH: BuyingWindow.WATCH,
+                Recommendation.INSUFFICIENT_DATA: BuyingWindow.INSUFFICIENT_DATA,
+            }[decision]
+
+        expected_saving, saving_pct, saving_basis = self._expected_saving(
+            payload,
+            prediction_used=prediction_used,
+            decision=decision,
+            buying_window=buying_window,
         )
         confidence = _recommendation_confidence(
             payload,
@@ -290,18 +323,22 @@ class RecommendationEngine:
             payload,
             prediction_used=prediction_used,
             expected_saving_basis=saving_basis,
+            buying_window=buying_window,
         )
         reasons = self._reasons(
             decision=decision,
             chosen=chosen,
             unused_pred_rules=unused_pred_rules,
             prediction_used=prediction_used,
+            buying_window=buying_window,
+            urgency=payload.urgency,
         )
         triggered = tuple(rule.rule_id for rule in chosen if rule.fired)
-        evaluated = gates + unused_pred_rules + buy_rules + wait_rules + watch_rules
+        evaluated = gates + unused_pred_rules + buy_rules + wait_rules + watch_rules + phase19_rules
         result = RecommendationResult(
             recommendation=decision,
             expected_saving=expected_saving,
+            expected_saving_percentage=saving_pct,
             expected_saving_value_kind=ValueKind.CALCULATED
             if expected_saving is not None
             else None,
@@ -313,6 +350,10 @@ class RecommendationEngine:
             insufficient=insufficient,
             evidence=evidence,
             evaluated_rules=evaluated,
+            buying_window=buying_window,
+            urgency=payload.urgency,
+            ordinary_opportunity=payload.ordinary_opportunity,
+            major_opportunity=payload.major_opportunity,
             product_id=payload.product_id,
             product_variant_id=payload.product_variant_id,
             as_of=payload.as_of,
@@ -338,16 +379,34 @@ class RecommendationEngine:
         payload: RecommendationInput,
         *,
         prediction_used: bool,
-    ) -> tuple[Decimal | None, str | None]:
-        """CALCULATED saving from a usable PREDICTED price vs current. Never fabricated."""
+        decision: Recommendation,
+        buying_window: BuyingWindow,
+    ) -> tuple[Decimal | None, Decimal | None, str | None]:
+        """CALCULATED saving. Phase 19 windows used only when urgency selected them."""
+        if buying_window is BuyingWindow.WAIT_FOR_MAJOR_SALE and payload.major_opportunity:
+            opp = payload.major_opportunity
+            if opp.expected_saving is not None:
+                return (
+                    opp.expected_saving,
+                    opp.expected_saving_percentage,
+                    "major_sale_expected_price_vs_current",
+                )
+        if buying_window is BuyingWindow.BUY_IN_ORDINARY_SALE and payload.ordinary_opportunity:
+            opp = payload.ordinary_opportunity
+            if opp.expected_saving is not None:
+                return (
+                    opp.expected_saving,
+                    opp.expected_saving_percentage,
+                    "ordinary_sale_expected_price_vs_current",
+                )
         if not prediction_used or payload.prediction is None:
-            return None, None
-        amount, _percent = predicted_savings(
+            return None, None, None
+        amount, percent = predicted_savings(
             current_price(payload), payload.prediction.predicted_price
         )
         if amount is None:
-            return None, None
-        return amount, "predicted_sale_price_vs_current"
+            return None, None, None
+        return amount, percent, "predicted_sale_price_vs_current"
 
     def _evidence(
         self,
@@ -355,6 +414,7 @@ class RecommendationEngine:
         *,
         prediction_used: bool,
         expected_saving_basis: str | None,
+        buying_window: BuyingWindow | None,
     ) -> EvidenceSnapshot:
         upcoming = select_credible_upcoming(payload.upcoming_events, self._config)
         predicted = (
@@ -367,6 +427,8 @@ class RecommendationEngine:
             if prediction_used and payload.prediction is not None
             else None
         )
+        ordinary = payload.ordinary_opportunity
+        major = payload.major_opportunity
         return EvidenceSnapshot(
             current_effective_price=payload.current_effective_price,
             current_price_value_kind=payload.current_price_value_kind,
@@ -383,6 +445,12 @@ class RecommendationEngine:
             freshness_status=payload.freshness_status,
             qualifying_observation_count=payload.qualifying_observation_count,
             expected_saving_basis=expected_saving_basis,
+            urgency=payload.urgency,
+            buying_window=buying_window,
+            ordinary_sale_name=ordinary.display_name if ordinary is not None else None,
+            ordinary_sale_days=ordinary.days_until_start if ordinary is not None else None,
+            major_sale_name=major.display_name if major is not None else None,
+            major_sale_days=major.days_until_start if major is not None else None,
         )
 
     def _reasons(
@@ -392,10 +460,19 @@ class RecommendationEngine:
         chosen: tuple,
         unused_pred_rules: tuple,
         prediction_used: bool,
+        buying_window: BuyingWindow | None,
+        urgency: Urgency | None,
     ) -> tuple[str, ...]:
         lines: list[str] = [
             f"Recommendation is {decision.value}. This is not a guaranteed price or saving."
         ]
+        if buying_window is not None:
+            lines.append(
+                f"Buying window is {buying_window.value}. Projected sale dates and prices "
+                "are evidence-based estimates and are not guaranteed retailer announcements."
+            )
+        if urgency is not None:
+            lines.append(f"Urgency input: {urgency.value}.")
         for rule in chosen:
             if rule.fired:
                 lines.append(f"[{rule.rule_id.value}] {rule.reason}")

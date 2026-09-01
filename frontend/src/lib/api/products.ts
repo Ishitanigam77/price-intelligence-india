@@ -5,9 +5,13 @@ import type {
   ProductHistoryRead,
   ProductPricesRead,
   ProductRead,
+  ProductRecommendationRead,
+  ProductSaleIntelligenceRead,
+  ProductSalePricePredictionRead,
   ProductSearchPage,
   ProductVariantRead,
   SearchProductsQuery,
+  Urgency,
 } from "@/lib/types/api";
 
 export function searchProducts(query: SearchProductsQuery): Promise<ProductSearchPage> {
@@ -45,4 +49,33 @@ export function getProductHistory(
     limit: query?.limit,
     offset: query?.offset,
   });
+}
+
+export function getProductSaleIntelligence(
+  productId: string,
+  query?: { variant_id?: string },
+): Promise<ProductSaleIntelligenceRead> {
+  return apiGet<ProductSaleIntelligenceRead>(`/products/${productId}/sale-intelligence`, {
+    variant_id: query?.variant_id,
+  });
+}
+
+export function getProductRecommendation(
+  productId: string,
+  query?: { variant_id?: string; urgency?: Urgency },
+): Promise<ProductRecommendationRead> {
+  return apiGet<ProductRecommendationRead>(`/products/${productId}/recommendation`, {
+    variant_id: query?.variant_id,
+    urgency: query?.urgency,
+  });
+}
+
+export function getProductSalePricePrediction(
+  productId: string,
+  query?: { variant_id?: string },
+): Promise<ProductSalePricePredictionRead> {
+  return apiGet<ProductSalePricePredictionRead>(
+    `/products/${productId}/sale-price-prediction`,
+    { variant_id: query?.variant_id },
+  );
 }

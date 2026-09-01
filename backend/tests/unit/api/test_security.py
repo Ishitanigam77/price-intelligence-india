@@ -22,6 +22,7 @@ def test_health_and_expensive_path_classification() -> None:
     assert is_expensive_path("/api/v1/products/search")
     assert is_expensive_path("/api/v1/products/abc/sale-price-prediction")
     assert is_expensive_path("/api/v1/products/abc/recommendation")
+    assert is_expensive_path("/api/v1/products/abc/sale-intelligence")
     assert not is_expensive_path("/api/v1/products")
 
 

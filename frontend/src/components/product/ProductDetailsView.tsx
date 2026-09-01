@@ -8,12 +8,21 @@ import { PriceDisplay } from "@/components/price/PriceDisplay";
 import { PriceHistoryChart } from "@/components/price/PriceHistoryChart";
 import { ValueKindBadge } from "@/components/price/ValueKindBadge";
 import { RetailerOfferCard } from "@/components/product/RetailerOfferCard";
+import { SaleTimingPanel } from "@/components/product/SaleTimingPanel";
 import { AvailabilityBadge } from "@/components/status/AvailabilityBadge";
 import { DataFreshness } from "@/components/status/DataFreshness";
 import { EmptyState } from "@/components/status/EmptyState";
 import { ErrorState } from "@/components/status/ErrorState";
 import { LoadingSkeleton } from "@/components/status/LoadingSkeleton";
-import { getProduct, getProductHistory, getProductPrices, listProductVariants } from "@/lib/api";
+import {
+  getProduct,
+  getProductHistory,
+  getProductPrices,
+  getProductRecommendation,
+  getProductSaleIntelligence,
+  getProductSalePricePrediction,
+  listProductVariants,
+} from "@/lib/api";
 import { formatRankingSummary } from "@/lib/format/offer";
 import { formatVariant } from "@/lib/format/variant";
 import { useAsync } from "@/lib/hooks/useAsync";
@@ -21,7 +30,11 @@ import type {
   ProductHistoryRead,
   ProductPricesRead,
   ProductRead,
+  ProductRecommendationRead,
+  ProductSaleIntelligenceRead,
+  ProductSalePricePredictionRead,
   ProductVariantRead,
+  Urgency,
   VariantHistoryRead,
   VariantPricesRead,
 } from "@/lib/types/api";
@@ -57,6 +70,7 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     initialVariantId ?? null,
   );
+  const [urgency, setUrgency] = useState<Urgency | "">("");
   const state = useAsync(async (): Promise<DetailsPayload> => {
     const [product, variantPage, prices, history] = await Promise.all([
       getProduct(productId),
@@ -66,6 +80,22 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
     ]);
     return { product, variants: variantPage.items, prices, history };
   }, [productId]);
+
+  const timingState = useAsync(
+    async (): Promise<{
+      intelligence: ProductSaleIntelligenceRead;
+      recommendation: ProductRecommendationRead;
+      prediction: ProductSalePricePredictionRead;
+    }> => {
+      const [intelligence, recommendation, prediction] = await Promise.all([
+        getProductSaleIntelligence(productId),
+        getProductRecommendation(productId, { urgency: urgency || undefined }),
+        getProductSalePricePrediction(productId),
+      ]);
+      return { intelligence, recommendation, prediction };
+    },
+    [productId, urgency],
+  );
 
   const selected = useMemo(() => {
     if (state.status !== "success") {
@@ -142,15 +172,21 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
       )}
 
       <section className="grid gap-6 rounded-2xl bg-paper-card p-5 shadow-card lg:grid-cols-2">
-        <PriceDisplay
-          label="Lowest verified price"
-          amount={lowest?.effective_price ?? lowest?.displayed_price}
-          currency={lowest?.currency ?? "INR"}
-          kind={lowest?.price_kind === "verified_effective" ? "CALCULATED" : "OBSERVED"}
-          size="lg"
-        />
+        <div className="space-y-3">
+          <h2 className="font-display text-2xl">Current best price</h2>
+          <PriceDisplay
+            label="Lowest verified price"
+            amount={lowest?.effective_price ?? lowest?.displayed_price}
+            currency={lowest?.currency ?? "INR"}
+            kind={lowest?.price_kind === "verified_effective" ? "CALCULATED" : "OBSERVED"}
+            size="lg"
+          />
+        </div>
         <div className="space-y-3">
           {lowest ? <AvailabilityBadge status={lowest.availability} /> : null}
+          <p className="text-sm text-ink">
+            Cheapest retailer: {lowest?.retailer_name ?? "Not available"}
+          </p>
           <p className="text-sm text-ink-muted">
             {formatRankingSummary(selected?.priceVariant?.ranking_reason)}
           </p>
@@ -223,6 +259,70 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
           />
         )}
       </section>
+
+      <section className="space-y-4">
+        <h2 className="font-display text-2xl">Monthly price intelligence</h2>
+        <p className="text-sm text-ink-muted">
+          Calculated from stored observations by calendar month. This does not replace 7/30/90/180-day
+          history and is not a forecast.
+        </p>
+        {historyVariant?.monthly ? (
+          historyVariant.monthly.best_buying_month ? (
+            <>
+              <p className="text-sm text-ink">
+                Best historical buying month: {historyVariant.monthly.best_buying_month.month_name}
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {historyVariant.monthly.months
+                  .filter((month) => month.median.status === "available")
+                  .map((month) => (
+                    <MetricCard
+                      key={month.month}
+                      title={`${month.month_name} median`}
+                      metric={month.median}
+                    />
+                  ))}
+                <MetricCard
+                  title="January historical low"
+                  metric={
+                    historyVariant.monthly.months.find((item) => item.month === 1)?.historical_low ??
+                    historyVariant.monthly.best_buying_month.historical_low
+                  }
+                />
+              </div>
+            </>
+          ) : (
+            <EmptyState
+              title="Insufficient monthly history"
+              description="Monthly averages are not invented when too few observations exist."
+            />
+          )
+        ) : (
+          <EmptyState
+            title="Monthly price intelligence is not available"
+            description="Monthly statistics are never fabricated for display."
+          />
+        )}
+      </section>
+
+      {timingState.status === "loading" || timingState.status === "idle" ? (
+        <LoadingSkeleton label="Loading sale timing intelligence" rows={4} />
+      ) : timingState.status === "error" ? (
+        <ErrorState
+          title="Sale timing intelligence could not be loaded"
+          error={timingState.error}
+          onRetry={timingState.reload}
+        />
+      ) : (
+        <SaleTimingPanel
+          intelligence={timingState.data.intelligence}
+          recommendation={timingState.data.recommendation}
+          prediction={timingState.data.prediction}
+          variantId={selected?.variantId ?? null}
+          urgency={urgency}
+          onUrgencyChange={setUrgency}
+        />
+      )}
     </div>
   );
 }

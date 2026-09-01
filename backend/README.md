@@ -14,7 +14,10 @@ helpers, and three fixture-backed mock adapters). The **product identity matchin
 (`app/sales/`, `GET /api/v1/sale-events`, `GET /api/v1/products/{id}/sale-history`) is
 implemented. **Phase 10 sale-price prediction** (`ml/`, `GET /api/v1/products/{id}/sale-price-prediction`)
 is implemented. **Phase 11 BUY / WAIT recommendation** (`app/recommendation/`,
-`GET /api/v1/products/{id}/recommendation`) is implemented. **Phase 12 Clerk authentication
+`GET /api/v1/products/{id}/recommendation`) is implemented. **Phase 19 sale timing + price
+intelligence** (`app/sales/` calendar/classification, monthly history, optional urgency,
+`GET /api/v1/products/{id}/sale-intelligence`, `GET /api/v1/sale-events/calendar`) is
+implemented. **Phase 12 Clerk authentication
 and personalization** (`app/auth/`, `/api/v1/me`, watchlists, saved products, target prices,
 alerts) is implemented. **Phase 13 scalable data collection** (`app/collectors/`,
 `app/workers/`, Celery + Redis) is implemented. **Phase 14A** adds Amazon.in (Creators API)
@@ -35,12 +38,13 @@ see `../ROADMAP.md`.
   injection; `errors.py` is the centralized exception handling.
 - `app/api/v1/` — `/api/v1/` routers: `health` (liveness + per-dependency readiness),
   `products` (catalogue + `GET /products/search` discovery + prices/history/sale-history/
-  sale-price-prediction/recommendation), `retailers`, `prices`, `deals`, `sale_events`,
+  sale-price-prediction/recommendation/sale-intelligence), `retailers`, `prices`, `deals`, `sale_events`,
   `me`, `watchlists`, `saved_products`, `target_prices`, `alerts`.
 - `app/schemas/` — Pydantic request/response DTOs, kept separate from the SQLAlchemy models.
 - `app/services/` — thin service-layer boundaries, added only where genuinely needed:
-  `price_service.py` (listing vs observation existence) and `product_discovery_service.py`
-  (retailer-agnostic search → normalize → persist → respond).
+  `price_service.py` (listing vs observation existence), `product_discovery_service.py`
+  (retailer-agnostic search → normalize → persist → respond), and
+  `sale_intelligence_service.py` (Phase 19 sale-timing assembly over existing engines).
 - `app/auth/` — Clerk token verification and internal user mapping (Phase 12)
 - `app/core/` — settings (env-var driven: API, database, Redis, CORS, logging, Clerk, and retailer
   adapter defaults), structured logging setup, and Redis connection/client management.
@@ -57,9 +61,12 @@ see `../ROADMAP.md`.
   (exact identifiers, normalized attributes, title/token similarity, embeddings). Independent
   of FastAPI routes and of specific retailer adapters.
 - `app/pricing/` — price comparison engine (Phase 6) and historical price intelligence
-  (Phase 7: window averages, extrema, percentile, volatility, drop detection, trend)
-- `app/sales/` — sale-event intelligence (Phase 9)
-- `app/recommendation/` — BUY_NOW / WAIT / WATCH engine (Phase 11)
+  (Phase 7: window averages, extrema, percentile, volatility, drop detection, trend;
+  Phase 19 monthly aggregates from stored observations)
+- `app/sales/` — sale-event intelligence (Phase 9) plus Phase 19 sale-timing calendar,
+  MAJOR/ORDINARY classification, and expected-window comparison
+- `app/recommendation/` — BUY_NOW / WAIT / WATCH engine (Phase 11), with optional Phase 19
+  urgency overlay (`BUY_IN_ORDINARY_SALE` / `WAIT_FOR_MAJOR_SALE`)
 - `app/notifications/` — watchlist & price alert dispatch (Phase 6)
 - `app/workers/` — Celery app and collection tasks (Phase 13)
 - `app/observability/` — structured JSON logging, correlation IDs, metrics seams

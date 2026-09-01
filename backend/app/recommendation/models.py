@@ -17,9 +17,15 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.domain.enums import ConfidenceLevel, SaleEventSource, SaleEventStatus
 from app.pricing.enums import FreshnessStatus, MetricStatus, TrendDirection, ValueKind
-from app.pricing.money import quantize_money
+from app.pricing.money import quantize_money, quantize_ratio
 from app.recommendation.config import RECOMMENDATION_DISCLAIMER
-from app.recommendation.enums import InsufficientRecommendationReason, Recommendation, RuleId
+from app.recommendation.enums import (
+    BuyingWindow,
+    InsufficientRecommendationReason,
+    Recommendation,
+    RuleId,
+    Urgency,
+)
 
 
 class _FrozenModel(BaseModel):
@@ -88,6 +94,29 @@ class UpcomingSaleInput(_FrozenModel):
         return value
 
 
+class OpportunitySnapshot(_FrozenModel):
+    """Phase 19 sale opportunity as the recommendation engine sees it.
+
+    Prices remain labeled. Missing opportunities stay None — never invented.
+    """
+
+    sale_type: str
+    display_name: str | None = None
+    evidence_status: str | None = None
+    expected_start_date: datetime | None = None
+    expected_end_date: datetime | None = None
+    days_until_start: int | None = Field(default=None, ge=0)
+    expected_price: Decimal | None = None
+    expected_price_value_kind: ValueKind | None = None
+    expected_saving: Decimal | None = None
+    expected_saving_percentage: Decimal | None = None
+    expected_saving_value_kind: Literal[ValueKind.CALCULATED] | None = None
+    likely_best_retailer_name: str | None = None
+    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    historical_reliability: str | None = None
+    status: str | None = None
+
+
 class RecommendationInput(_FrozenModel):
     """All signals available for one product variant at `as_of`. Variants are never mixed."""
 
@@ -107,6 +136,9 @@ class RecommendationInput(_FrozenModel):
     trend_direction: TrendDirection | None = None
     prediction: PredictionInput | None = None
     upcoming_events: tuple[UpcomingSaleInput, ...] = ()
+    urgency: Urgency | None = None
+    ordinary_opportunity: OpportunitySnapshot | None = None
+    major_opportunity: OpportunitySnapshot | None = None
 
     @field_validator("as_of")
     @classmethod
@@ -150,6 +182,12 @@ class EvidenceSnapshot(_FrozenModel):
     freshness_status: FreshnessStatus
     qualifying_observation_count: int = Field(ge=0)
     expected_saving_basis: str | None = None
+    urgency: Urgency | None = None
+    buying_window: BuyingWindow | None = None
+    ordinary_sale_name: str | None = None
+    ordinary_sale_days: int | None = None
+    major_sale_name: str | None = None
+    major_sale_days: int | None = None
 
 
 class RecommendationResult(_FrozenModel):
@@ -157,6 +195,7 @@ class RecommendationResult(_FrozenModel):
 
     recommendation: Recommendation
     expected_saving: Decimal | None = None
+    expected_saving_percentage: Decimal | None = None
     expected_saving_value_kind: Literal[ValueKind.CALCULATED] | None = None
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     reasons: tuple[str, ...]
@@ -166,6 +205,10 @@ class RecommendationResult(_FrozenModel):
     insufficient: InsufficientRecommendationReason | None = None
     evidence: EvidenceSnapshot
     evaluated_rules: tuple[EvaluatedRule, ...] = ()
+    buying_window: BuyingWindow | None = None
+    urgency: Urgency | None = None
+    ordinary_opportunity: OpportunitySnapshot | None = None
+    major_opportunity: OpportunitySnapshot | None = None
     product_id: uuid.UUID
     product_variant_id: uuid.UUID
     as_of: datetime
@@ -177,3 +220,10 @@ class RecommendationResult(_FrozenModel):
         if value is None:
             return None
         return quantize_money(value)
+
+    @field_validator("expected_saving_percentage")
+    @classmethod
+    def _quantize_saving_pct(cls, value: Decimal | None) -> Decimal | None:
+        if value is None:
+            return None
+        return quantize_ratio(value)

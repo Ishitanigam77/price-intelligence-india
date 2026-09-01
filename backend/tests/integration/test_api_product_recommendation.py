@@ -122,6 +122,9 @@ def test_recommendation_buy_now_from_favorable_fresh_history(
     variant = response.json()["variants"][0]
     assert variant["recommendation"] == "BUY_NOW"
     assert variant["expected_saving"] is None
+    assert variant["expected_saving_percentage"] is None
+    assert variant["buying_window"] == "BUY_NOW"
+    assert variant["urgency"] is None
     assert variant["prediction_used"] is False
     assert any("BUY_FAVORABLE_PERCENTILE" in reason for reason in variant["reasons"])
     assert variant["provenance"]["current_price_value_kind"] == "CALCULATED"
@@ -273,4 +276,37 @@ def test_recommendation_keeps_variants_separate(
     assert len(variants) == 2
     ids = {item["product_variant_id"] for item in variants}
     assert ids == {str(seed["variant"].id), str(other.id)}
+    get_ml_config.cache_clear()
+
+
+def test_recommendation_urgency_is_optional_and_invalid_value_is_rejected(
+    client: TestClient, db_session: Session, monkeypatch, tmp_path
+) -> None:
+    monkeypatch.setenv("ML_MODEL_ARTIFACT_PATH", str(tmp_path))
+    from ml.config import get_ml_config
+
+    get_ml_config.cache_clear()
+    seed = _seed_listing(db_session, slug_prefix="rec-urg")
+    _add_snapshots(
+        db_session,
+        seed["listing"],
+        prices=["200.00", "180.00", "160.00", "140.00", "100.00"],
+        seller_id=seed["seller"].id,
+    )
+    none = client.get(f"/api/v1/products/{seed['product'].id}/recommendation")
+    urgent = client.get(
+        f"/api/v1/products/{seed['product'].id}/recommendation",
+        params={"urgency": "urgent"},
+    )
+    assert none.status_code == 200
+    assert urgent.status_code == 200
+    assert none.json()["variants"][0]["recommendation"] == "BUY_NOW"
+    assert urgent.json()["variants"][0]["recommendation"] == "BUY_NOW"
+    assert urgent.json()["variants"][0]["urgency"] == "urgent"
+    assert none.json()["variants"][0]["urgency"] is None
+    bad = client.get(
+        f"/api/v1/products/{seed['product'].id}/recommendation",
+        params={"urgency": "panic"},
+    )
+    assert bad.status_code == 422
     get_ml_config.cache_clear()

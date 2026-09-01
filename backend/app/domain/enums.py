@@ -139,6 +139,43 @@ class SaleEventStatus(StrEnum):
     AFTER_EVENT = "after_event"
 
 
+class SaleSeverity(StrEnum):
+    """Evidence-based sale magnitude. Not a named campaign list.
+
+    Derived at analysis time from duration, recurrence, discount magnitude, and event
+    type. Never inferred from a hardcoded real-world sale name.
+    """
+
+    MAJOR = "MAJOR"
+    ORDINARY = "ORDINARY"
+    UNKNOWN = "UNKNOWN"
+
+
+class SaleEvidenceStatus(StrEnum):
+    """How strongly a future sale window is supported.
+
+    `confirmed` requires a persisted event from curation or a permitted source whose
+    dates are already on the record. Historical mapping is `expected` or `inferred`.
+    Insufficient evidence is `unknown`. Projected dates are never guaranteed offers.
+    """
+
+    CONFIRMED = "confirmed"
+    EXPECTED = "expected"
+    INFERRED = "inferred"
+    UNKNOWN = "unknown"
+
+
+class SaleMappingMethod(StrEnum):
+    """How a current-year expected window was derived from historical events."""
+
+    FIXED_CALENDAR = "fixed_calendar"
+    FESTIVAL_RELATIVE = "festival_relative"
+    RECURRING = "recurring"
+    RETAILER_SPECIFIC = "retailer_specific"
+    CONFIRMED_SCHEDULE = "confirmed_schedule"
+    INSUFFICIENT = "insufficient"
+
+
 class CollectionJobType(StrEnum):
     """Logical background collection job kinds (Phase 13)."""
 

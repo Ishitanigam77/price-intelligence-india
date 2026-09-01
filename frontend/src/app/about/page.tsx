@@ -18,8 +18,11 @@ export default function AboutPage() {
       <p className="mt-3 text-ink-muted">
         Prices and availability on this site come from stored retailer observations. Calculated
         figures — effective price, windowed averages, historical low/high, percentile, volatility,
-        percentage change, and trend — are labelled as calculated. This release does not include
-        machine-learning sale-price prediction, and the UI never fabricates predicted values.
+        percentage change, trend, and monthly statistics — are labelled as calculated. Predicted
+        sale prices from the Phase 10 model are labelled predicted when a trained artifact exists;
+        otherwise the UI shows insufficient data and never fabricates a number. Projected sale
+        dates and prices are evidence-based estimates and are not guaranteed retailer
+        announcements.
       </p>
       <h2 className="mt-8 font-display text-2xl">What is not claimed</h2>
       <p className="mt-3 text-ink-muted">
