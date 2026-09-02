@@ -228,6 +228,35 @@ class VariantComparison(_FrozenModel):
     ranking: RankingExplanation
     data_freshness: DataFreshness
 
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def offer_count(self) -> int:
+        return len(self.offers)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def distinct_retailer_count(self) -> int:
+        return len({offer.retailer_id for offer in self.offers})
+
+    def _displayed_prices(self) -> tuple[Decimal, ...]:
+        return tuple(
+            offer.displayed_price
+            for offer in self.offers
+            if offer.displayed_price is not None
+        )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def displayed_price_min(self) -> Decimal | None:
+        prices = self._displayed_prices()
+        return min(prices) if prices else None
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def displayed_price_max(self) -> Decimal | None:
+        prices = self._displayed_prices()
+        return max(prices) if prices else None
+
 
 class ProductComparison(_FrozenModel):
     """Comparison result for every variant of a product."""

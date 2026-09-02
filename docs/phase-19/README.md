@@ -117,6 +117,21 @@ Search for `Demo Phone Z`. These prices are not live retailer observations.
 
 Search also additively includes persisted catalogue products whose name matches `q`.
 
+## Backend is the calculation source of truth
+
+Price intelligence is never computed in React. The flow is:
+
+`PriceSnapshot` → `PriceHistoryService` → `PriceHistoryEngine` (`window_average`,
+`historical_low`, `historical_high`, `historical_trend`, `compute_monthly_intelligence`)
+→ `GET /api/v1/products/{id}/history` → Product Details display.
+
+Current-offer counts and displayed-price min/max come from `PriceComparisonEngine` via
+`GET /api/v1/products/{id}/prices` (`offer_count`, `distinct_retailer_count`,
+`displayed_price_min`, `displayed_price_max`). Search cards copy those fields; they do not
+average or min/max search hits independently.
+
+Sale timing, expected retailer, and Phase 11 recommendations remain backend-only.
+
 ## Screenshots
 
 Browser and API captures from the running local app (`localhost:3000` + `localhost:8000`)

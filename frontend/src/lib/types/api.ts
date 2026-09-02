@@ -262,6 +262,10 @@ export interface VariantPricesRead {
   lowest_verified_offer: ComparedOfferRead | null;
   ranking_reason: RankingReasonRead;
   data_freshness: DataFreshnessRead;
+  offer_count: number;
+  distinct_retailer_count: number;
+  displayed_price_min: MoneyAmount | null;
+  displayed_price_max: MoneyAmount | null;
 }
 
 export interface ProductPricesRead {

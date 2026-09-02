@@ -59,13 +59,16 @@ describe("Product details rendering", () => {
     expect(screen.getByText("Lowest verified price")).toBeInTheDocument();
     expect(screen.getByText("Current best price")).toBeInTheDocument();
     expect(screen.getByText("All retailer offers")).toBeInTheDocument();
-    expect(screen.getByText("Price history snapshot")).toBeInTheDocument();
+    expect(screen.getByText("Current price intelligence")).toBeInTheDocument();
     expect(screen.getByText("7-day average")).toBeInTheDocument();
     expect(screen.getAllByText("30-day average").length).toBeGreaterThan(0);
     expect(screen.getAllByText("90-day average").length).toBeGreaterThan(0);
     expect(screen.getByText("180-day average")).toBeInTheDocument();
     expect(screen.getAllByText("Historical low").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Historical high").length).toBeGreaterThan(0);
     expect(screen.getByText("Trend")).toBeInTheDocument();
+    expect(screen.getAllByText("₹61,000.00").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("₹62,000.00").length).toBeGreaterThan(0);
     expect(
       screen.getByText("This is the lowest verified price among current offers."),
     ).toBeInTheDocument();
@@ -140,6 +143,10 @@ describe("Product details rendering", () => {
           ...pricesFixture.variants[0],
           offers: extraOffers,
           lowest_verified_offer: extraOffers[0],
+          offer_count: 4,
+          distinct_retailer_count: 4,
+          displayed_price_min: extraOffers[0].displayed_price,
+          displayed_price_max: extraOffers[3].displayed_price,
         },
       ],
       lowest_verified_offer: extraOffers[0],

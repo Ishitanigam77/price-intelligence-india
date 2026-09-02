@@ -207,9 +207,10 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
             </p>
           </div>
           <p className="text-sm text-ink-muted">
-            {new Set(offers.map((offer) => offer.retailer_id)).size} distinct retailer
-            {new Set(offers.map((offer) => offer.retailer_id)).size === 1 ? "" : "s"} ·{" "}
-            {offers.length} offer{offers.length === 1 ? "" : "s"}.
+            {selected?.priceVariant?.distinct_retailer_count ?? 0} distinct retailer
+            {(selected?.priceVariant?.distinct_retailer_count ?? 0) === 1 ? "" : "s"} ·{" "}
+            {selected?.priceVariant?.offer_count ?? offers.length} offer
+            {(selected?.priceVariant?.offer_count ?? offers.length) === 1 ? "" : "s"}.
           </p>
         </div>
         {offers.length === 0 ? (
@@ -233,7 +234,7 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 className="font-display text-2xl">Price history snapshot</h2>
+          <h2 className="font-display text-2xl">Current price intelligence</h2>
           <Link
             href={`/products/${product.id}/price-history${selected?.variantId ? `?variant=${selected.variantId}` : ""}`}
             className="text-sm font-semibold text-brand underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
@@ -241,6 +242,11 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
             Open full price history
           </Link>
         </div>
+        <p className="text-sm text-ink-muted">
+          Window averages, extrema, and trend are CALCULATED by the backend from stored
+          PriceSnapshot rows via GET /api/v1/products/{"{id}"}/history. The browser formats
+          those fields for display and does not average, min/max, or trend prices itself.
+        </p>
         <p className="flex flex-wrap gap-2 text-sm text-ink-muted">
           <ValueKindBadge kind="OBSERVED" /> observations · <ValueKindBadge kind="CALCULATED" />{" "}
           aggregates · <ValueKindBadge kind="PREDICTED" available={false} />
@@ -256,6 +262,7 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
               <MetricCard title="90-day average" metric={historyVariant.average_90d} />
               <MetricCard title="180-day average" metric={historyVariant.average_180d} />
               <MetricCard title="Historical low" metric={historyVariant.historical_low} />
+              <MetricCard title="Historical high" metric={historyVariant.historical_high} />
               <MetricCard title="Trend" metric={historyVariant.trend} />
             </div>
             <DataFreshness freshness={historyVariant.data_freshness} />

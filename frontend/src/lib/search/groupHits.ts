@@ -1,5 +1,4 @@
 import { bestAvailability } from "@/lib/format/availability";
-import { parseMoney } from "@/lib/format/money";
 import type {
   AvailabilityStatus,
   ComparedOfferRead,
@@ -60,37 +59,16 @@ export function groupSearchHits(hits: ProductSearchHit[]): GroupedSearchCard[] {
 }
 
 function finalizeGroup(group: GroupedSearchCard): GroupedSearchCard {
-  const retailerIds = new Set(group.hits.map((hit) => hit.retailer.id));
-  const prices = group.hits
-    .map((hit) => parseMoney(hit.displayed_price))
-    .filter((value): value is number => value !== null);
   const timestamps = group.hits.map((hit) => hit.observed_at).filter(Boolean);
   timestamps.sort();
-  const min = prices.length ? Math.min(...prices) : null;
-  const max = prices.length ? Math.max(...prices) : null;
-
-  const cheapestFromHits = [...group.hits].sort((left, right) => {
-    const leftPrice = parseMoney(left.effective_price) ?? parseMoney(left.displayed_price);
-    const rightPrice = parseMoney(right.effective_price) ?? parseMoney(right.displayed_price);
-    if (leftPrice === null && rightPrice === null) {
-      return 0;
-    }
-    if (leftPrice === null) {
-      return 1;
-    }
-    if (rightPrice === null) {
-      return -1;
-    }
-    return leftPrice - rightPrice;
-  })[0];
 
   return {
     ...group,
-    retailerCount: retailerIds.size,
+    retailerCount: new Set(group.hits.map((hit) => hit.retailer.id)).size,
     offerCount: group.hits.length,
-    cheapestRetailerName: cheapestFromHits?.retailer.name ?? null,
-    observedMinPrice: min,
-    observedMaxPrice: max,
+    cheapestRetailerName: null,
+    observedMinPrice: null,
+    observedMaxPrice: null,
     currency: group.hits[0]?.currency ?? group.currency,
     availability: bestAvailability(group.hits.map((hit) => hit.availability)),
     lastUpdated: timestamps.at(-1) ?? null,
@@ -106,13 +84,13 @@ export function attachVerifiedPrices(
     if (!prices) {
       return card;
     }
-    const retailerIds = new Set(prices.offers.map((offer) => offer.retailer_id));
     return {
       ...card,
-      retailerCount: retailerIds.size || card.retailerCount,
-      offerCount: prices.offers.length || card.offerCount,
-      cheapestRetailerName:
-        prices.lowest_verified_offer?.retailer_name ?? card.cheapestRetailerName,
+      retailerCount: prices.distinct_retailer_count,
+      offerCount: prices.offer_count,
+      cheapestRetailerName: prices.lowest_verified_offer?.retailer_name ?? null,
+      observedMinPrice: prices.displayed_price_min,
+      observedMaxPrice: prices.displayed_price_max,
       lowestVerifiedOffer: prices.lowest_verified_offer ?? null,
     };
   });

@@ -158,6 +158,10 @@ def test_no_offers_has_explainable_empty_ranking() -> None:
     assert result.lowest_verified_offer is None
     assert result.ranking.criterion is RankingCriterion.NO_APPLICABLE_OFFER
     assert result.offers == ()
+    assert result.offer_count == 0
+    assert result.distinct_retailer_count == 0
+    assert result.displayed_price_min is None
+    assert result.displayed_price_max is None
 
 
 def test_one_retailer_is_returned() -> None:
@@ -194,7 +198,13 @@ def test_four_and_ten_retailers_are_not_capped_at_three() -> None:
     four_result = engine().compare_variant(VARIANT_A, four)
     ten_result = engine().compare_variant(VARIANT_A, ten)
     assert len(four_result.offers) == 4
+    assert four_result.offer_count == 4
+    assert four_result.distinct_retailer_count == 4
+    assert four_result.displayed_price_min == Decimal("900.00")
+    assert four_result.displayed_price_max == Decimal("903.00")
     assert len(ten_result.offers) == 10
+    assert ten_result.offer_count == 10
+    assert ten_result.distinct_retailer_count == 10
     assert {item.offer_id for item in four_result.offers} == {f"four-{index}" for index in range(4)}
     assert {item.offer_id for item in ten_result.offers} == {f"ten-{index}" for index in range(10)}
     assert {item.rank for item in ten_result.offers} == set(range(1, 11))
@@ -227,6 +237,10 @@ def test_two_sellers_on_one_retailer_are_two_offers_not_two_retailers() -> None:
         ],
     )
     assert len(result.offers) == 3
+    assert result.offer_count == 3
+    assert result.distinct_retailer_count == 2
+    assert result.displayed_price_min == Decimal("980.00")
+    assert result.displayed_price_max == Decimal("1100.00")
     assert {item.retailer_slug for item in result.offers} == {
         "fictional-mart-a",
         "fictional-mart-b",
