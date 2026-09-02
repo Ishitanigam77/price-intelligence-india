@@ -139,7 +139,17 @@ for **DEVELOPMENT FIXTURE: Demo Phone Z** live in `docs/phase-19/screenshots/`.
 
 | File | What it shows |
 |---|---|
-| `01-product-search.png` | Search results for Demo Phone Z (128GB + 256GB variants) |
+| `01-search-results.png` | Search: 6 retailers / 7 offers, cheapest F ₹18,179, range from GET /prices |
+| `02-all-retailer-offers.png` | All 7 offers (ranks 1–7, retailers A–F) — no 3-offer cap |
+| `03-price-intelligence.png` | Backend 7/30/90/180 averages, historical low/high, trend, observation counts |
+| `04-monthly-intelligence.png` | Monthly min/avg/median/max plus retailer-month stats |
+| `05-upcoming-sale.png` | MAJOR CONFIRMED Demo Seasonal Mega Sale 2026 |
+| `06-predicted-sale-price.png` | PREDICTED — NOT AVAILABLE |
+| `07-expected-retailer.png` | Current F vs expected A ₹16,024 CALCULATED |
+| `08-ordinary-vs-major.png` | Ordinary insufficient; major CALCULATED |
+| `09-recommendation.png` | Phase 11 WAIT (default urgency) |
+| `10-urgency.png` | Urgency “I need it soon” → backend BUY_NOW |
+| `11-network-api.png` | Chrome DevTools: frontend → localhost:8000 history/prices/sale-intelligence/recommendation |
 | `02-all-retailer-offers-1.png` | Full offer list in one image: 6 retailers / 7 offers (ranks 1–7) |
 | `03-all-retailer-offers-2.png` | Lower ranks including Rank 7 Demo Retailer A |
 | `04-current-best-price.png` | Current best ₹18,179 OBSERVED, Demo Retailer F, 128GB |
