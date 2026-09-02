@@ -214,6 +214,11 @@ def test_compares_multiple_retailers_sellers_and_keeps_variants_separate(
     assert str(seed["retailer_a"].id) in retailers
     assert str(seed["retailer_b"].id) in retailers
     assert str(seed["retailer_c"].id) in retailers
+    assert v128["offer_count"] == len(v128["offers"])
+    assert v128["distinct_retailer_count"] == len(retailers)
+    assert v128["displayed_price_min"] is not None
+    assert v128["displayed_price_max"] is not None
+    assert Decimal(v128["displayed_price_min"]) <= Decimal(v128["displayed_price_max"])
 
     assert v128["ranking_reason"]["reason"]
     assert v128["data_freshness"]["stale_offer_count"] >= 1

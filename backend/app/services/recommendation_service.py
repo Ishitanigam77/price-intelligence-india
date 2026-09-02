@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.api.errors import NotFoundError
 from app.db.models import PriceSnapshot, Product, ProductVariant
+from app.domain.enums import ConfidenceLevel
 from app.observability.logging import get_logger
 from app.observability.metrics import MetricsSink, NullMetricsSink
 from app.pricing.config import PricingConfig, get_pricing_config
@@ -23,15 +24,18 @@ from app.pricing.history import PriceHistoryEngine
 from app.pricing.history_models import HistoricalObservationPoint
 from app.recommendation.config import RecommendationConfig, get_recommendation_config
 from app.recommendation.engine import RecommendationEngine, input_from_variant_history
-from app.recommendation.models import PredictionInput, UpcomingSaleInput
+from app.recommendation.enums import Urgency
+from app.recommendation.models import OpportunitySnapshot, PredictionInput, UpcomingSaleInput
 from app.repositories.price_snapshot_repository import PriceSnapshotRepository
 from app.repositories.product_repository import ProductRepository
 from app.repositories.product_variant_repository import ProductVariantRepository
 from app.repositories.sale_event_repository import SaleEventRepository
 from app.sales.engine import SaleEventEngine
+from app.sales.timing_models import SaleOpportunity
 from app.schemas.prediction import SalePricePredictionRead
 from app.schemas.recommendation import ProductRecommendationRead, product_recommendation_read
 from app.services.sale_event_service import SaleEventService
+from app.services.sale_intelligence_service import SaleIntelligenceService
 from app.services.sale_price_prediction_service import SalePricePredictionService
 
 logger = get_logger(__name__)
@@ -54,6 +58,7 @@ class RecommendationService:
         sale_engine: SaleEventEngine | None = None,
         recommendation_engine: RecommendationEngine | None = None,
         prediction_service: SalePricePredictionService | None = None,
+        intelligence_service: SaleIntelligenceService | None = None,
     ) -> None:
         self._session = session
         self._products = ProductRepository(session)
@@ -89,6 +94,12 @@ class RecommendationService:
             metrics_sink=self._metrics,
             clock=self._clock,
         )
+        self._intelligence = intelligence_service or SaleIntelligenceService(
+            session,
+            metrics_sink=self._metrics,
+            clock=self._clock,
+            prediction_service=self._prediction,
+        )
 
     def recommend_product(
         self,
@@ -97,6 +108,7 @@ class RecommendationService:
         variant_id: uuid.UUID | None = None,
         as_of: datetime | None = None,
         model_version: str | None = None,
+        urgency: Urgency | None = None,
     ) -> ProductRecommendationRead:
         product = self._products.get_by_id(product_id)
         if product is None:
@@ -158,17 +170,32 @@ class RecommendationService:
             variant_keys=variant_keys,
             as_of=at,
         )
+        intelligence = self._intelligence.compute_product(
+            product,
+            variants,
+            as_of=at,
+            model_version=model_version,
+            variant_id=variant_id,
+        )
+        intel_by_variant = {item.product_variant_id: item for item in intelligence.variants}
+
         results = []
         for variant_history in history.variants:
             prediction_input = _prediction_for_current(
                 predictions.predictions, variant_history.current_observation
             )
+            intel = intel_by_variant.get(variant_history.product_variant_id)
             payload = input_from_variant_history(
                 variant_history,
                 prediction=prediction_input,
                 upcoming_events=upcoming,
                 as_of=at,
                 pricing_config=self._pricing_config,
+                urgency=urgency,
+                ordinary_opportunity=(
+                    _opportunity_snapshot(intel.ordinary) if intel is not None else None
+                ),
+                major_opportunity=_opportunity_snapshot(intel.major) if intel is not None else None,
             )
             results.append(self._engine.recommend(payload))
 
@@ -219,6 +246,43 @@ class RecommendationService:
             availability=snapshot.availability,
             confidence=snapshot.confidence,
         )
+
+
+_CONFIDENCE_FLOAT = {
+    ConfidenceLevel.HIGH: 0.85,
+    ConfidenceLevel.MEDIUM: 0.60,
+    ConfidenceLevel.LOW: 0.35,
+}
+
+
+def _opportunity_snapshot(opportunity: SaleOpportunity | None) -> OpportunitySnapshot | None:
+    """Project a Phase 19 opportunity into the recommendation engine. Never invents prices."""
+    if opportunity is None:
+        return None
+    confidence = None
+    if opportunity.confidence is not None:
+        confidence = _CONFIDENCE_FLOAT.get(opportunity.confidence)
+    return OpportunitySnapshot(
+        sale_type=opportunity.sale_type.value,
+        display_name=opportunity.window.display_name,
+        evidence_status=opportunity.window.evidence_status.value,
+        expected_start_date=opportunity.window.expected_start_date,
+        expected_end_date=opportunity.window.expected_end_date,
+        days_until_start=opportunity.days_until_start,
+        expected_price=opportunity.expected_price,
+        expected_price_value_kind=opportunity.expected_price_value_kind,
+        expected_saving=opportunity.expected_saving,
+        expected_saving_percentage=opportunity.expected_saving_percentage,
+        expected_saving_value_kind=opportunity.expected_saving_value_kind,
+        likely_best_retailer_name=opportunity.likely_best_retailer_name,
+        confidence=confidence,
+        historical_reliability=(
+            opportunity.historical_reliability.value
+            if opportunity.historical_reliability is not None
+            else None
+        ),
+        status=opportunity.status.value,
+    )
 
 
 def _days_until(start: datetime, *, at: datetime) -> int:

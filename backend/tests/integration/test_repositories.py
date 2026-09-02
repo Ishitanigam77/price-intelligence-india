@@ -58,6 +58,18 @@ def test_product_repository_lookups(db_session: Session) -> None:
     assert [p.id for p in product_repo.list_by_category(category.id)] == [product.id]
 
 
+def test_product_repository_search_active_by_name(db_session: Session) -> None:
+    product_repo = ProductRepository(db_session)
+    visible = product_repo.add(make_product(name="DEVELOPMENT FIXTURE Searchable Phone Z"))
+    product_repo.add(make_product(name="Unrelated Fixture Speaker"))
+    hidden = make_product(name="DEVELOPMENT FIXTURE Hidden Phone Z", is_active=False)
+    product_repo.add(hidden)
+
+    found = product_repo.search_active_by_name("Searchable Phone")
+    assert [item.id for item in found] == [visible.id]
+    assert product_repo.search_active_by_name("   ") == []
+
+
 def test_product_variant_repository_get_by_attributes(db_session: Session) -> None:
     product_repo = ProductRepository(db_session)
     variant_repo = ProductVariantRepository(db_session)

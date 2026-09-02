@@ -16,8 +16,14 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.pricing.enums import FreshnessStatus, TrendDirection, ValueKind
 from app.recommendation.config import RECOMMENDATION_DISCLAIMER
-from app.recommendation.enums import InsufficientRecommendationReason, Recommendation, RuleId
-from app.recommendation.models import RecommendationResult
+from app.recommendation.enums import (
+    BuyingWindow,
+    InsufficientRecommendationReason,
+    Recommendation,
+    RuleId,
+    Urgency,
+)
+from app.recommendation.models import OpportunitySnapshot, RecommendationResult
 
 
 class RecommendationProvenanceRead(BaseModel):
@@ -42,6 +48,35 @@ class RecommendationEvidenceRead(BaseModel):
     upcoming_sale_days: int | None = None
     freshness_status: FreshnessStatus
     qualifying_observation_count: int
+    expected_saving_basis: str | None = None
+    urgency: Urgency | None = None
+    buying_window: BuyingWindow | None = None
+    ordinary_sale_name: str | None = None
+    ordinary_sale_days: int | None = None
+    major_sale_name: str | None = None
+    major_sale_days: int | None = None
+
+
+class OpportunitySnapshotRead(BaseModel):
+    """Additive Phase 19 sale opportunity. Absent when evidence is insufficient."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    sale_type: str
+    display_name: str | None = None
+    evidence_status: str | None = None
+    expected_start_date: datetime | None = None
+    expected_end_date: datetime | None = None
+    days_until_start: int | None = None
+    expected_price: Decimal | None = None
+    expected_price_value_kind: ValueKind | None = None
+    expected_saving: Decimal | None = None
+    expected_saving_percentage: Decimal | None = None
+    expected_saving_value_kind: Literal[ValueKind.CALCULATED] | None = None
+    likely_best_retailer_name: str | None = None
+    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    historical_reliability: str | None = None
+    status: str | None = None
 
 
 class VariantRecommendationRead(BaseModel):
@@ -52,6 +87,7 @@ class VariantRecommendationRead(BaseModel):
     product_variant_id: uuid.UUID
     recommendation: Recommendation
     expected_saving: Decimal | None = None
+    expected_saving_percentage: Decimal | None = None
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     reasons: list[str]
     triggered_rule_ids: list[RuleId]
@@ -60,6 +96,10 @@ class VariantRecommendationRead(BaseModel):
     insufficient: InsufficientRecommendationReason | None = None
     provenance: RecommendationProvenanceRead
     evidence: RecommendationEvidenceRead
+    buying_window: BuyingWindow | None = None
+    urgency: Urgency | None = None
+    ordinary_opportunity: OpportunitySnapshotRead | None = None
+    major_opportunity: OpportunitySnapshotRead | None = None
 
 
 class ProductRecommendationRead(BaseModel):
@@ -73,12 +113,19 @@ class ProductRecommendationRead(BaseModel):
     variants: list[VariantRecommendationRead]
 
 
+def _opportunity_read(snapshot: OpportunitySnapshot | None) -> OpportunitySnapshotRead | None:
+    if snapshot is None:
+        return None
+    return OpportunitySnapshotRead.model_validate(snapshot)
+
+
 def variant_recommendation_read(result: RecommendationResult) -> VariantRecommendationRead:
     predicted_kind = ValueKind.PREDICTED if result.prediction_used else None
     return VariantRecommendationRead(
         product_variant_id=result.product_variant_id,
         recommendation=result.recommendation,
         expected_saving=result.expected_saving,
+        expected_saving_percentage=result.expected_saving_percentage,
         confidence=result.confidence,
         reasons=list(result.reasons),
         triggered_rule_ids=list(result.triggered_rule_ids),
@@ -105,7 +152,18 @@ def variant_recommendation_read(result: RecommendationResult) -> VariantRecommen
             upcoming_sale_days=result.evidence.upcoming_sale_days,
             freshness_status=result.evidence.freshness_status,
             qualifying_observation_count=result.evidence.qualifying_observation_count,
+            expected_saving_basis=result.evidence.expected_saving_basis,
+            urgency=result.evidence.urgency,
+            buying_window=result.evidence.buying_window,
+            ordinary_sale_name=result.evidence.ordinary_sale_name,
+            ordinary_sale_days=result.evidence.ordinary_sale_days,
+            major_sale_name=result.evidence.major_sale_name,
+            major_sale_days=result.evidence.major_sale_days,
         ),
+        buying_window=result.buying_window,
+        urgency=result.urgency,
+        ordinary_opportunity=_opportunity_read(result.ordinary_opportunity),
+        major_opportunity=_opportunity_read(result.major_opportunity),
     )
 
 

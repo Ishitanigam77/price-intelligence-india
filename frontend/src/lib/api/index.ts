@@ -6,6 +6,9 @@ export {
   getProduct,
   getProductHistory,
   getProductPrices,
+  getProductRecommendation,
+  getProductSaleIntelligence,
+  getProductSalePricePrediction,
   listProductVariants,
   searchProducts,
 } from "@/lib/api/products";

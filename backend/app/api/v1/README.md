@@ -18,7 +18,8 @@ and including its router there — nothing else needs to change.
   and `GET /products/{product_id}/sale-price-prediction` (Phase 10 labeled prediction or
   `INSUFFICIENT_DATA` via `SalePricePredictionService`) and
   `GET /products/{product_id}/recommendation` (Phase 11 BUY_NOW / WAIT / WATCH /
-  INSUFFICIENT_DATA via `RecommendationService`).
+  INSUFFICIENT_DATA via `RecommendationService`, with optional Phase 19 urgency) and
+  `GET /products/{product_id}/sale-intelligence` (Phase 19 sale timing).
 - `retailers.py` — read-only routes over `Retailer`/`Seller` (list/get, list sellers for a
   retailer).
 - `prices.py` — read-only routes over `PriceSnapshot` via `app.services.price_service`
@@ -27,7 +28,8 @@ and including its router there — nothing else needs to change.
   depends on price-drop detection (Phase 4) and sale-event intelligence (Phase 7), neither of
   which exist yet.
 - `sale_events.py` — Phase 9 sale-event intelligence: `GET /sale-events`,
-  `GET /sale-events/upcoming`, and `GET /sale-events/{event_id}`.
+  `GET /sale-events/upcoming`, `GET /sale-events/calendar` (Phase 19 expected windows),
+  and `GET /sale-events/{event_id}`.
 - `me.py`, `watchlists.py`, `saved_products.py`, `target_prices.py`, `alerts.py` — Phase 12
   authenticated personalization. Identity is derived from the verified Clerk token; owner ids
   in the request body are rejected.
@@ -42,5 +44,6 @@ computes historical aggregates from stored verified observations.
 `GET /products/{id}/sale-history` and `/sale-events*` are thin typed wrappers over
 `SaleEventService`. `GET /products/{id}/sale-price-prediction` is a thin typed wrapper over
 `SalePricePredictionService` (Phase 10). `GET /products/{id}/recommendation` is a thin typed
-wrapper over `RecommendationService` (Phase 11). The route does not train models or call an
-LLM.
+wrapper over `RecommendationService` (Phase 11). `GET /products/{id}/sale-intelligence` and
+`GET /sale-events/calendar` are thin typed wrappers over `SaleIntelligenceService` (Phase 19).
+The route does not train models or call an LLM.

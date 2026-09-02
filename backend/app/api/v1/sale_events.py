@@ -6,13 +6,15 @@ stored. This module does not invent real-world campaigns or predict prices.
 """
 
 import uuid
+from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
-from app.api.deps import SaleEventServiceDep
+from app.api.deps import SaleEventServiceDep, SaleIntelligenceServiceDep
 from app.domain.enums import SaleEventSource, SaleEventStatus, SaleEventType
 from app.schemas.common import Page
+from app.schemas.intelligence import SaleCalendarPage
 from app.schemas.pagination import PaginationParams, pagination_params
 from app.schemas.sale_event import SaleEventRead
 
@@ -56,6 +58,28 @@ def list_upcoming_sale_events(
         retailer_id=retailer_id,
         category_id=category_id,
         brand_id=brand_id,
+        limit=pagination.limit,
+        offset=pagination.offset,
+    )
+
+
+@router.get("/calendar", response_model=SaleCalendarPage)
+def list_sale_calendar(
+    service: SaleIntelligenceServiceDep,
+    pagination: Annotated[PaginationParams, Depends(pagination_params)],
+    as_of: Annotated[
+        datetime | None,
+        Query(description="Optional analysis instant. Defaults to now."),
+    ] = None,
+) -> SaleCalendarPage:
+    """Expected current-year sale windows mapped from historical events.
+
+    Projected dates are evidence-based estimates and are not guaranteed retailer
+    announcements. CONFIRMED is used only when a persisted permitted/curated future
+    event exists.
+    """
+    return service.list_calendar(
+        as_of=as_of,
         limit=pagination.limit,
         offset=pagination.offset,
     )

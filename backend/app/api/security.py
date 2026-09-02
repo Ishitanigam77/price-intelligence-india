@@ -24,6 +24,7 @@ _EXPENSIVE_MARKERS = (
     "/products/search",
     "/sale-price-prediction",
     "/recommendation",
+    "/sale-intelligence",
 )
 
 CORS_ALLOW_METHODS = ["GET", "POST", "PATCH", "DELETE", "OPTIONS", "HEAD"]

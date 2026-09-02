@@ -1,5 +1,4 @@
 import { bestAvailability } from "@/lib/format/availability";
-import { parseMoney } from "@/lib/format/money";
 import type {
   AvailabilityStatus,
   ComparedOfferRead,
@@ -16,6 +15,8 @@ export interface GroupedSearchCard {
   variant: ProductVariantRead;
   hits: ProductSearchHit[];
   retailerCount: number;
+  offerCount: number;
+  cheapestRetailerName: string | null;
   observedMinPrice: MoneyAmount | null;
   observedMaxPrice: MoneyAmount | null;
   currency: string;
@@ -43,6 +44,8 @@ export function groupSearchHits(hits: ProductSearchHit[]): GroupedSearchCard[] {
       variant: hit.variant,
       hits: [hit],
       retailerCount: 0,
+      offerCount: 0,
+      cheapestRetailerName: null,
       observedMinPrice: null,
       observedMaxPrice: null,
       currency: hit.currency,
@@ -56,20 +59,16 @@ export function groupSearchHits(hits: ProductSearchHit[]): GroupedSearchCard[] {
 }
 
 function finalizeGroup(group: GroupedSearchCard): GroupedSearchCard {
-  const retailerIds = new Set(group.hits.map((hit) => hit.retailer.id));
-  const prices = group.hits
-    .map((hit) => parseMoney(hit.displayed_price))
-    .filter((value): value is number => value !== null);
   const timestamps = group.hits.map((hit) => hit.observed_at).filter(Boolean);
   timestamps.sort();
-  const min = prices.length ? Math.min(...prices) : null;
-  const max = prices.length ? Math.max(...prices) : null;
 
   return {
     ...group,
-    retailerCount: retailerIds.size,
-    observedMinPrice: min,
-    observedMaxPrice: max,
+    retailerCount: new Set(group.hits.map((hit) => hit.retailer.id)).size,
+    offerCount: group.hits.length,
+    cheapestRetailerName: null,
+    observedMinPrice: null,
+    observedMaxPrice: null,
     currency: group.hits[0]?.currency ?? group.currency,
     availability: bestAvailability(group.hits.map((hit) => hit.availability)),
     lastUpdated: timestamps.at(-1) ?? null,
@@ -82,9 +81,17 @@ export function attachVerifiedPrices(
 ): GroupedSearchCard[] {
   return cards.map((card) => {
     const prices = variantPricesByKey.get(priceKey(card.product.id, card.variant.id));
+    if (!prices) {
+      return card;
+    }
     return {
       ...card,
-      lowestVerifiedOffer: prices?.lowest_verified_offer ?? null,
+      retailerCount: prices.distinct_retailer_count,
+      offerCount: prices.offer_count,
+      cheapestRetailerName: prices.lowest_verified_offer?.retailer_name ?? null,
+      observedMinPrice: prices.displayed_price_min,
+      observedMaxPrice: prices.displayed_price_max,
+      lowestVerifiedOffer: prices.lowest_verified_offer ?? null,
     };
   });
 }

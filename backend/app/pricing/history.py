@@ -34,6 +34,7 @@ from app.pricing.history_models import (
     VariantHistory,
 )
 from app.pricing.money import quantize_money, quantize_ratio
+from app.pricing.monthly import compute_monthly_intelligence
 
 logger = get_logger(__name__)
 
@@ -659,6 +660,7 @@ class PriceHistoryEngine:
                 min_count=self._config.min_observations_for_trend,
                 stable_percent=Decimal(str(self._config.trend_stable_percent)),
             ),
+            monthly=compute_monthly_intelligence(qualifying, as_of=now, config=self._config),
             data_freshness=variant_freshness(ordered, as_of=now, config=self._config),
             provenance=provenance,
             calculated_at=now,

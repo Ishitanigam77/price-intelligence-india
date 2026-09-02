@@ -87,8 +87,18 @@ export function ProductCard({ card, className }: ProductCardProps) {
         ) : null}
         <dl className="grid grid-cols-2 gap-3 text-sm">
           <div>
-            <dt className="text-xs uppercase tracking-wide text-ink-muted">Retailers</dt>
+            <dt className="text-xs uppercase tracking-wide text-ink-muted">Available retailers</dt>
             <dd className="mt-1 font-medium text-ink">{card.retailerCount}</dd>
+          </div>
+          <div>
+            <dt className="text-xs uppercase tracking-wide text-ink-muted">Cheapest retailer</dt>
+            <dd className="mt-1 font-medium text-ink">
+              {card.lowestVerifiedOffer?.retailer_name ?? card.cheapestRetailerName ?? "UNKNOWN"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs uppercase tracking-wide text-ink-muted">Offers</dt>
+            <dd className="mt-1 font-medium text-ink">{card.offerCount || card.hits.length}</dd>
           </div>
           <div>
             <dt className="text-xs uppercase tracking-wide text-ink-muted">Observed price range</dt>
@@ -108,6 +118,10 @@ export function ProductCard({ card, className }: ProductCardProps) {
             <dd className="mt-1 font-medium text-ink">{formatDateTime(card.lastUpdated)}</dd>
           </div>
         </dl>
+        <p className="text-xs text-ink-muted">
+          Full retailer comparison is on the product details page. This card does not list every
+          offer.
+        </p>
         <Link
           href={detailsHref}
           className="mt-auto inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"

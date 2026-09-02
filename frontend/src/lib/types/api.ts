@@ -262,6 +262,10 @@ export interface VariantPricesRead {
   lowest_verified_offer: ComparedOfferRead | null;
   ranking_reason: RankingReasonRead;
   data_freshness: DataFreshnessRead;
+  offer_count: number;
+  distinct_retailer_count: number;
+  displayed_price_min: MoneyAmount | null;
+  displayed_price_max: MoneyAmount | null;
 }
 
 export interface ProductPricesRead {
@@ -287,7 +291,36 @@ export interface CalculatedMetricRead {
   observation_count: number;
   calculated_at: string;
   insufficient: InsufficientHistoryRead | null;
-  extra: Record<string, MoneyAmount | string | null>;
+  extra: Record<string, MoneyAmount | number | string | null>;
+}
+
+export interface MonthlyBucketRead {
+  month: number;
+  month_name: string;
+  retailer_id: string | null;
+  retailer_slug: string | null;
+  retailer_name: string | null;
+  years_used: number[];
+  observation_count: number;
+  minimum: CalculatedMetricRead;
+  average: CalculatedMetricRead;
+  median: CalculatedMetricRead;
+  maximum: CalculatedMetricRead;
+  historical_low: CalculatedMetricRead;
+  historical_high: CalculatedMetricRead;
+  volatility: CalculatedMetricRead;
+}
+
+export interface MonthlyPriceIntelligenceRead {
+  value_kind: "CALCULATED";
+  months: MonthlyBucketRead[];
+  retailer_months: MonthlyBucketRead[];
+  best_buying_month: MonthlyBucketRead | null;
+  best_buying_month_price: CalculatedMetricRead;
+  qualifying_observation_count: number;
+  calculated_at: string;
+  method: string;
+  predicted: null;
 }
 
 export interface ExtremaMetricRead extends CalculatedMetricRead {
@@ -386,6 +419,7 @@ export interface VariantHistoryRead {
   percentage_change: CalculatedMetricRead;
   price_drop: PriceDropRead;
   trend: TrendRead;
+  monthly: MonthlyPriceIntelligenceRead;
   data_freshness: DataFreshnessRead;
   provenance: HistoryProvenanceRead;
   calculated_at: string;
@@ -398,6 +432,235 @@ export interface ProductHistoryRead {
   provenance: HistoryProvenanceRead;
   calculated_at: string;
   predicted: null;
+}
+
+export type SaleSeverity = "MAJOR" | "ORDINARY" | "UNKNOWN";
+
+export type SaleEvidenceStatus = "confirmed" | "expected" | "inferred" | "unknown";
+
+export type SaleMappingMethod =
+  | "fixed_calendar"
+  | "festival_relative"
+  | "recurring"
+  | "retailer_specific"
+  | "confirmed_schedule"
+  | "insufficient";
+
+export type RecommendationDecision = "BUY_NOW" | "WAIT" | "WATCH" | "INSUFFICIENT_DATA";
+
+export type BuyingWindow =
+  | "BUY_NOW"
+  | "BUY_IN_ORDINARY_SALE"
+  | "WAIT_FOR_MAJOR_SALE"
+  | "WAIT"
+  | "WATCH"
+  | "INSUFFICIENT_DATA";
+
+export type Urgency = "urgent" | "patient";
+
+export type PredictionStatus = "PREDICTED" | "TRAINED" | "INSUFFICIENT_DATA";
+
+export interface ExpectedSaleWindowRead {
+  sale_family: string;
+  display_name: string;
+  sale_type: SaleSeverity;
+  evidence_status: SaleEvidenceStatus;
+  mapping_method: SaleMappingMethod;
+  expected_start_date: string | null;
+  expected_end_date: string | null;
+  confidence: ConfidenceLevel;
+  evidence_count: number;
+  historical_years_used: number[];
+  retailer_id: string | null;
+  occasion_id: string | null;
+  duration_days: number | null;
+  reason: string;
+  predicted: null;
+}
+
+export interface RetailerSaleOutlookRead {
+  retailer_id: string;
+  retailer_slug: string;
+  retailer_name: string;
+  current_price: MoneyAmount | null;
+  current_price_value_kind: ValueKind | null;
+  availability: AvailabilityStatus | null;
+  is_current_cheapest: boolean;
+  expected_sale_price: MoneyAmount | null;
+  expected_sale_price_value_kind: ValueKind | null;
+  predicted_sale_price: MoneyAmount | null;
+  predicted_lower_bound: MoneyAmount | null;
+  predicted_upper_bound: MoneyAmount | null;
+  predicted_confidence: number | null;
+  historical_sale_price: MoneyAmount | null;
+  historical_occurrence_count: number;
+  expected_saving: MoneyAmount | null;
+  expected_saving_percentage: MoneyAmount | null;
+  expected_saving_value_kind: ValueKind | null;
+  confidence: ConfidenceLevel | null;
+  reliability: ConfidenceLevel | null;
+  status: MetricStatus;
+  insufficient_reason: string | null;
+}
+
+export interface SaleOpportunityRead {
+  sale_type: SaleSeverity;
+  window: ExpectedSaleWindowRead;
+  expected_price: MoneyAmount | null;
+  expected_price_value_kind: ValueKind | null;
+  expected_saving: MoneyAmount | null;
+  expected_saving_percentage: MoneyAmount | null;
+  expected_saving_value_kind: ValueKind | null;
+  days_until_start: number | null;
+  likely_best_retailer_id: string | null;
+  likely_best_retailer_slug: string | null;
+  likely_best_retailer_name: string | null;
+  retailer_outlooks: RetailerSaleOutlookRead[];
+  confidence: ConfidenceLevel | null;
+  historical_reliability: ConfidenceLevel | null;
+  status: MetricStatus;
+  insufficient_reason: string | null;
+}
+
+export interface VariantSaleIntelligenceRead {
+  product_id: string;
+  product_variant_id: string;
+  variant_key: string | null;
+  current_cheapest_retailer_id: string | null;
+  current_cheapest_retailer_slug: string | null;
+  current_cheapest_retailer_name: string | null;
+  current_cheapest_price: MoneyAmount | null;
+  current_effective_price: MoneyAmount | null;
+  current_availability: AvailabilityStatus | null;
+  calendar: ExpectedSaleWindowRead[];
+  ordinary: SaleOpportunityRead | null;
+  major: SaleOpportunityRead | null;
+  expected_best_retailer: RetailerSaleOutlookRead | null;
+  disclaimer: string;
+  calculated_at: string;
+  predicted: null;
+}
+
+export interface ProductSaleIntelligenceRead {
+  product_id: string;
+  as_of: string;
+  disclaimer: string;
+  variants: VariantSaleIntelligenceRead[];
+  predicted: null;
+}
+
+export interface OpportunitySnapshotRead {
+  sale_type: string;
+  display_name: string | null;
+  evidence_status: string | null;
+  expected_start_date: string | null;
+  expected_end_date: string | null;
+  days_until_start: number | null;
+  expected_price: MoneyAmount | null;
+  expected_price_value_kind: ValueKind | null;
+  expected_saving: MoneyAmount | null;
+  expected_saving_percentage: MoneyAmount | null;
+  expected_saving_value_kind: "CALCULATED" | null;
+  likely_best_retailer_name: string | null;
+  confidence: number | null;
+  historical_reliability: string | null;
+  status: string | null;
+}
+
+export interface VariantRecommendationRead {
+  product_variant_id: string;
+  recommendation: RecommendationDecision;
+  expected_saving: MoneyAmount | null;
+  expected_saving_percentage: MoneyAmount | null;
+  confidence: number | null;
+  reasons: string[];
+  triggered_rule_ids: string[];
+  disclaimer: string;
+  prediction_used: boolean;
+  insufficient: string | null;
+  provenance: {
+    current_price_value_kind: ValueKind | null;
+    historical_value_kind: "CALCULATED";
+    predicted_value_kind: "PREDICTED" | null;
+    expected_saving_value_kind: "CALCULATED" | null;
+    expected_saving_basis: string | null;
+  };
+  evidence: {
+    current_effective_price: MoneyAmount | null;
+    historical_percentile: MoneyAmount | null;
+    historical_low: MoneyAmount | null;
+    average_30d: MoneyAmount | null;
+    average_90d: MoneyAmount | null;
+    trend_direction: TrendDirection | null;
+    predicted_sale_price: MoneyAmount | null;
+    prediction_confidence: number | null;
+    prediction_used: boolean;
+    upcoming_sale_name: string | null;
+    upcoming_sale_days: number | null;
+    freshness_status: FreshnessStatus;
+    qualifying_observation_count: number;
+    expected_saving_basis: string | null;
+    urgency: Urgency | null;
+    buying_window: BuyingWindow | null;
+    ordinary_sale_name: string | null;
+    ordinary_sale_days: number | null;
+    major_sale_name: string | null;
+    major_sale_days: number | null;
+  };
+  buying_window: BuyingWindow | null;
+  urgency: Urgency | null;
+  ordinary_opportunity: OpportunitySnapshotRead | null;
+  major_opportunity: OpportunitySnapshotRead | null;
+}
+
+export interface ProductRecommendationRead {
+  product_id: string;
+  as_of: string;
+  disclaimer: string;
+  phase10_status: string | null;
+  phase10_model_version: string | null;
+  variants: VariantRecommendationRead[];
+}
+
+export interface InsufficientDataRead {
+  code: string;
+  reason: string;
+}
+
+export interface SalePricePredictionRead {
+  value_kind: "PREDICTED";
+  is_prediction: true;
+  disclaimer: string;
+  status: PredictionStatus;
+  predicted_price: MoneyAmount | null;
+  lower_bound: MoneyAmount | null;
+  upper_bound: MoneyAmount | null;
+  confidence: number | null;
+  model_version: string | null;
+  training_data_size: number | null;
+  currency: string;
+  as_of: string;
+  product_id: string | null;
+  product_variant_id: string | null;
+  retailer_id: string | null;
+  seller_id: string | null;
+  feature_version: string | null;
+  insufficient: InsufficientDataRead | null;
+  uncertainty_method: string | null;
+}
+
+export interface ProductSalePricePredictionRead {
+  product_id: string;
+  as_of: string;
+  value_kind: "PREDICTED";
+  is_prediction: true;
+  disclaimer: string;
+  status: PredictionStatus;
+  model_version: string | null;
+  training_data_size: number | null;
+  feature_version: string | null;
+  predictions: SalePricePredictionRead[];
+  insufficient: InsufficientDataRead | null;
 }
 
 /** Placeholder deal schema. The backend currently always returns an empty page. */

@@ -123,6 +123,10 @@ class VariantPricesRead(BaseModel):
     lowest_verified_offer: ComparedOfferRead | None = None
     ranking_reason: RankingReasonRead
     data_freshness: DataFreshnessRead
+    offer_count: int
+    distinct_retailer_count: int
+    displayed_price_min: Decimal | None = None
+    displayed_price_max: Decimal | None = None
 
 
 class ProductPricesRead(BaseModel):
@@ -220,6 +224,10 @@ def variant_prices_read(variant: VariantComparison) -> VariantPricesRead:
         ),
         ranking_reason=_ranking_read(variant.ranking),
         data_freshness=_freshness_read(variant.data_freshness),
+        offer_count=variant.offer_count,
+        distinct_retailer_count=variant.distinct_retailer_count,
+        displayed_price_min=variant.displayed_price_min,
+        displayed_price_max=variant.displayed_price_max,
     )
 
 

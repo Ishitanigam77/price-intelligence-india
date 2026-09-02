@@ -12,6 +12,24 @@ class Recommendation(StrEnum):
     INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
 
 
+class BuyingWindow(StrEnum):
+    """Additive Phase 19 buying-window label. Does not replace `Recommendation`."""
+
+    BUY_NOW = "BUY_NOW"
+    BUY_IN_ORDINARY_SALE = "BUY_IN_ORDINARY_SALE"
+    WAIT_FOR_MAJOR_SALE = "WAIT_FOR_MAJOR_SALE"
+    WAIT = "WAIT"
+    WATCH = "WATCH"
+    INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
+
+
+class Urgency(StrEnum):
+    """Optional shopper urgency. Absent urgency preserves Phase 11 decisions."""
+
+    URGENT = "urgent"
+    PATIENT = "patient"
+
+
 class RuleId(StrEnum):
     """Stable identifiers for every explicit recommendation rule.
 
@@ -36,6 +54,8 @@ class RuleId(StrEnum):
     WAIT_PREDICTED_SAVINGS = "WAIT_PREDICTED_SAVINGS"
     WAIT_UPCOMING_SALE = "WAIT_UPCOMING_SALE"
     WAIT_RISING_TREND = "WAIT_RISING_TREND"
+    WAIT_ORDINARY_SALE_SOON = "WAIT_ORDINARY_SALE_SOON"
+    WAIT_MAJOR_SALE_WORTHWHILE = "WAIT_MAJOR_SALE_WORTHWHILE"
 
     WATCH_NEUTRAL_HISTORY = "WATCH_NEUTRAL_HISTORY"
     WATCH_CONFLICTING_SIGNALS = "WATCH_CONFLICTING_SIGNALS"

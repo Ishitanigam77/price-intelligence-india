@@ -40,11 +40,13 @@ def test_create_app_mounts_every_v1_resource_route() -> None:
     assert "/api/v1/products/{product_id}/sale-history" in paths
     assert "/api/v1/products/{product_id}/sale-price-prediction" in paths
     assert "/api/v1/products/{product_id}/recommendation" in paths
+    assert "/api/v1/products/{product_id}/sale-intelligence" in paths
     assert any(path.startswith("/api/v1/retailers") for path in paths)
     assert any(path.startswith("/api/v1/prices") for path in paths)
     assert "/api/v1/deals" in paths
     assert "/api/v1/sale-events" in paths
     assert "/api/v1/sale-events/upcoming" in paths
+    assert "/api/v1/sale-events/calendar" in paths
     assert "/api/v1/me" in paths
     assert "/api/v1/watchlists" in paths
     assert "/api/v1/saved-products" in paths

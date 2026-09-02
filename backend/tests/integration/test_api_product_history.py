@@ -194,10 +194,14 @@ def test_history_api_returns_observations_and_calculated_aggregates(
     assert v128["average_7d"]["status"] == "available"
     assert Decimal(v128["average_7d"]["value"]) == Decimal("160.00")
     assert v128["average_7d"]["value_kind"] == "CALCULATED"
+    assert v128["average_7d"]["observation_count"] == 3
     assert v128["average_30d"]["status"] == "available"
     assert Decimal(v128["average_30d"]["value"]) == Decimal("195.00")
+    assert v128["average_30d"]["observation_count"] >= 2
     assert v128["average_90d"]["status"] == "available"
+    assert v128["average_90d"]["observation_count"] >= 2
     assert v128["average_180d"]["status"] == "available"
+    assert v128["average_180d"]["observation_count"] >= 2
 
     assert Decimal(v128["historical_low"]["value"]) == Decimal("100.00")
     assert Decimal(v128["historical_high"]["value"]) == Decimal("400.00")
@@ -208,6 +212,9 @@ def test_history_api_returns_observations_and_calculated_aggregates(
     assert "retailer listing" in v128["price_drop"]["baseline_description"]
     assert v128["trend"]["value_kind"] == "CALCULATED"
     assert v128["trend"]["direction"] in {"falling", "rising", "stable"}
+    assert v128["monthly"]["value_kind"] == "CALCULATED"
+    assert len(v128["monthly"]["months"]) == 12
+    assert v128["monthly"]["predicted"] is None
     assert v128["data_freshness"]["newest_observation"] is not None
     assert v128["data_freshness"]["as_of"] == body["calculated_at"]
 

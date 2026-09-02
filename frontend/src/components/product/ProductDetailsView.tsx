@@ -7,13 +7,23 @@ import { MetricCard } from "@/components/price/MetricCard";
 import { PriceDisplay } from "@/components/price/PriceDisplay";
 import { PriceHistoryChart } from "@/components/price/PriceHistoryChart";
 import { ValueKindBadge } from "@/components/price/ValueKindBadge";
+import { MonthlyIntelligencePanel } from "@/components/product/MonthlyIntelligencePanel";
 import { RetailerOfferCard } from "@/components/product/RetailerOfferCard";
+import { SaleTimingPanel } from "@/components/product/SaleTimingPanel";
 import { AvailabilityBadge } from "@/components/status/AvailabilityBadge";
 import { DataFreshness } from "@/components/status/DataFreshness";
 import { EmptyState } from "@/components/status/EmptyState";
 import { ErrorState } from "@/components/status/ErrorState";
 import { LoadingSkeleton } from "@/components/status/LoadingSkeleton";
-import { getProduct, getProductHistory, getProductPrices, listProductVariants } from "@/lib/api";
+import {
+  getProduct,
+  getProductHistory,
+  getProductPrices,
+  getProductRecommendation,
+  getProductSaleIntelligence,
+  getProductSalePricePrediction,
+  listProductVariants,
+} from "@/lib/api";
 import { formatRankingSummary } from "@/lib/format/offer";
 import { formatVariant } from "@/lib/format/variant";
 import { useAsync } from "@/lib/hooks/useAsync";
@@ -21,7 +31,11 @@ import type {
   ProductHistoryRead,
   ProductPricesRead,
   ProductRead,
+  ProductRecommendationRead,
+  ProductSaleIntelligenceRead,
+  ProductSalePricePredictionRead,
   ProductVariantRead,
+  Urgency,
   VariantHistoryRead,
   VariantPricesRead,
 } from "@/lib/types/api";
@@ -57,6 +71,7 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     initialVariantId ?? null,
   );
+  const [urgency, setUrgency] = useState<Urgency | "">("");
   const state = useAsync(async (): Promise<DetailsPayload> => {
     const [product, variantPage, prices, history] = await Promise.all([
       getProduct(productId),
@@ -66,6 +81,22 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
     ]);
     return { product, variants: variantPage.items, prices, history };
   }, [productId]);
+
+  const timingState = useAsync(
+    async (): Promise<{
+      intelligence: ProductSaleIntelligenceRead;
+      recommendation: ProductRecommendationRead;
+      prediction: ProductSalePricePredictionRead;
+    }> => {
+      const [intelligence, recommendation, prediction] = await Promise.all([
+        getProductSaleIntelligence(productId),
+        getProductRecommendation(productId, { urgency: urgency || undefined }),
+        getProductSalePricePrediction(productId),
+      ]);
+      return { intelligence, recommendation, prediction };
+    },
+    [productId, urgency],
+  );
 
   const selected = useMemo(() => {
     if (state.status !== "success") {
@@ -142,15 +173,21 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
       )}
 
       <section className="grid gap-6 rounded-2xl bg-paper-card p-5 shadow-card lg:grid-cols-2">
-        <PriceDisplay
-          label="Lowest verified price"
-          amount={lowest?.effective_price ?? lowest?.displayed_price}
-          currency={lowest?.currency ?? "INR"}
-          kind={lowest?.price_kind === "verified_effective" ? "CALCULATED" : "OBSERVED"}
-          size="lg"
-        />
+        <div className="space-y-3">
+          <h2 className="font-display text-2xl">Current best price</h2>
+          <PriceDisplay
+            label="Lowest verified price"
+            amount={lowest?.effective_price ?? lowest?.displayed_price}
+            currency={lowest?.currency ?? "INR"}
+            kind={lowest?.price_kind === "verified_effective" ? "CALCULATED" : "OBSERVED"}
+            size="lg"
+          />
+        </div>
         <div className="space-y-3">
           {lowest ? <AvailabilityBadge status={lowest.availability} /> : null}
+          <p className="text-sm text-ink">
+            Current best retailer: {lowest?.retailer_name ?? "NOT_AVAILABLE"}
+          </p>
           <p className="text-sm text-ink-muted">
             {formatRankingSummary(selected?.priceVariant?.ranking_reason)}
           </p>
@@ -162,9 +199,18 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 className="font-display text-2xl">Retailer offers</h2>
+          <div>
+            <h2 className="font-display text-2xl">All retailer offers</h2>
+            <p className="text-sm text-ink-muted">
+              A retailer is a store identity. A seller/listing is one offer on that store. Multiple
+              sellers on the same retailer still count as one retailer.
+            </p>
+          </div>
           <p className="text-sm text-ink-muted">
-            {offers.length} retailer offer{offers.length === 1 ? "" : "s"}.
+            {selected?.priceVariant?.distinct_retailer_count ?? 0} distinct retailer
+            {(selected?.priceVariant?.distinct_retailer_count ?? 0) === 1 ? "" : "s"} ·{" "}
+            {selected?.priceVariant?.offer_count ?? offers.length} offer
+            {(selected?.priceVariant?.offer_count ?? offers.length) === 1 ? "" : "s"}.
           </p>
         </div>
         {offers.length === 0 ? (
@@ -188,7 +234,7 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 className="font-display text-2xl">Price history snapshot</h2>
+          <h2 className="font-display text-2xl">Current price intelligence</h2>
           <Link
             href={`/products/${product.id}/price-history${selected?.variantId ? `?variant=${selected.variantId}` : ""}`}
             className="text-sm font-semibold text-brand underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
@@ -196,6 +242,11 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
             Open full price history
           </Link>
         </div>
+        <p className="text-sm text-ink-muted">
+          Window averages, extrema, and trend are CALCULATED by the backend from stored
+          PriceSnapshot rows via GET /api/v1/products/{"{id}"}/history. The browser formats
+          those fields for display and does not average, min/max, or trend prices itself.
+        </p>
         <p className="flex flex-wrap gap-2 text-sm text-ink-muted">
           <ValueKindBadge kind="OBSERVED" /> observations · <ValueKindBadge kind="CALCULATED" />{" "}
           aggregates · <ValueKindBadge kind="PREDICTED" available={false} />
@@ -211,6 +262,7 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
               <MetricCard title="90-day average" metric={historyVariant.average_90d} />
               <MetricCard title="180-day average" metric={historyVariant.average_180d} />
               <MetricCard title="Historical low" metric={historyVariant.historical_low} />
+              <MetricCard title="Historical high" metric={historyVariant.historical_high} />
               <MetricCard title="Trend" metric={historyVariant.trend} />
             </div>
             <DataFreshness freshness={historyVariant.data_freshness} />
@@ -223,6 +275,41 @@ export function ProductDetailsView({ productId, initialVariantId }: ProductDetai
           />
         )}
       </section>
+
+      <section className="space-y-4">
+        <h2 className="font-display text-2xl">Monthly price intelligence</h2>
+        <p className="text-sm text-ink-muted">
+          Calculated from stored observations by calendar month. This does not replace 7/30/90/180-day
+          history and is not a forecast.
+        </p>
+        {historyVariant?.monthly ? (
+          <MonthlyIntelligencePanel monthly={historyVariant.monthly} />
+        ) : (
+          <EmptyState
+            title="Monthly price intelligence is not available"
+            description="Monthly statistics are never fabricated for display."
+          />
+        )}
+      </section>
+
+      {timingState.status === "loading" || timingState.status === "idle" ? (
+        <LoadingSkeleton label="Loading sale timing intelligence" rows={4} />
+      ) : timingState.status === "error" ? (
+        <ErrorState
+          title="Sale timing intelligence could not be loaded"
+          error={timingState.error}
+          onRetry={timingState.reload}
+        />
+      ) : (
+        <SaleTimingPanel
+          intelligence={timingState.data.intelligence}
+          recommendation={timingState.data.recommendation}
+          prediction={timingState.data.prediction}
+          variantId={selected?.variantId ?? null}
+          urgency={urgency}
+          onUrgencyChange={setUrgency}
+        />
+      )}
     </div>
   );
 }

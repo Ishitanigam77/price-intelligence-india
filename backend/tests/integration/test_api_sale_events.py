@@ -139,3 +139,37 @@ def test_empty_sale_events_is_an_empty_page_not_fabricated_campaigns(
     response = client.get("/api/v1/sale-events")
     assert response.status_code == 200
     assert response.json() == {"items": [], "total": 0, "limit": 50, "offset": 0}
+
+
+def test_sale_calendar_maps_historical_families_without_inventing_announcements(
+    client: TestClient, db_session: Session
+) -> None:
+    now = datetime.now(UTC)
+    for year in (now.year - 2, now.year - 1):
+        start = datetime(year, 3, 15, tzinfo=UTC)
+        db_session.add(
+            make_sale_event(
+                name=f"FIXTURE: Mid-March Sale {year}",
+                event_type=SaleEventType.SEASONAL,
+                source=SaleEventSource.MANUAL_CURATION,
+                start_date=start,
+                end_date=start + timedelta(days=3),
+            )
+        )
+    db_session.flush()
+    response = client.get("/api/v1/sale-events/calendar")
+    assert response.status_code == 200
+    body = response.json()
+    assert "not guaranteed retailer announcements" in body["disclaimer"].lower()
+    assert body["total"] >= 1
+    assert body["predicted"] is None if "predicted" in body else True
+    item = body["items"][0]
+    assert item["evidence_status"] in {"confirmed", "expected", "inferred", "unknown"}
+    if item["evidence_status"] != "confirmed":
+        assert item["mapping_method"] in {
+            "fixed_calendar",
+            "festival_relative",
+            "recurring",
+            "retailer_specific",
+            "insufficient",
+        }

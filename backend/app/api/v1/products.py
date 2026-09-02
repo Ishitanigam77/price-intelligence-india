@@ -12,7 +12,10 @@ Sale-price prediction (`GET /products/{id}/sale-price-prediction`) returns a lab
 PREDICTED effective sale price (or INSUFFICIENT_DATA) through
 `SalePricePredictionService`. Recommendation (`GET /products/{id}/recommendation`) returns
 a deterministic BUY_NOW / WAIT / WATCH / INSUFFICIENT_DATA decision per variant through
-`RecommendationService`. Different variants are always returned as distinct resources,
+`RecommendationService`, with optional urgency-aware Phase 19 buying windows.
+Sale-timing intelligence (`GET /products/{id}/sale-intelligence`) returns monthly-adjacent
+calendar mapping, major vs ordinary comparison, and expected retailers through
+`SaleIntelligenceService`. Different variants are always returned as distinct resources,
 never merged (`PROJECT_ARCHITECTURE.md` §5).
 """
 
@@ -32,13 +35,16 @@ from app.api.deps import (
     ProductVariantRepositoryDep,
     RecommendationServiceDep,
     SaleEventServiceDep,
+    SaleIntelligenceServiceDep,
     SalePricePredictionServiceDep,
 )
 from app.api.errors import NotFoundError
+from app.recommendation.enums import Urgency
 from app.schemas.common import Page
 from app.schemas.comparison import ProductPricesRead
 from app.schemas.discovery import ProductSearchPage
 from app.schemas.history import ProductHistoryRead
+from app.schemas.intelligence import ProductSaleIntelligenceRead
 from app.schemas.pagination import PaginationParams, pagination_params
 from app.schemas.prediction import ProductSalePricePredictionRead
 from app.schemas.product import ProductRead, ProductVariantRead
@@ -106,9 +112,7 @@ def list_products(
     """List products, optionally filtered by category or brand."""
     if category_id is not None:
         total = repo.count_by_category(category_id)
-        items = repo.list_by_category(
-            category_id, limit=pagination.limit, offset=pagination.offset
-        )
+        items = repo.list_by_category(category_id, limit=pagination.limit, offset=pagination.offset)
     elif brand_id is not None:
         total = repo.count_by_brand(brand_id)
         items = repo.list_by_brand(brand_id, limit=pagination.limit, offset=pagination.offset)
@@ -233,12 +237,49 @@ def get_product_sale_price_prediction(
     )
 
 
+@router.get("/{product_id}/sale-intelligence", response_model=ProductSaleIntelligenceRead)
+def get_product_sale_intelligence(
+    product_id: uuid.UUID,
+    service: SaleIntelligenceServiceDep,
+    variant_id: uuid.UUID | None = None,
+    as_of: datetime | None = None,
+    model_version: Annotated[
+        str | None,
+        Query(
+            max_length=128,
+            pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            description="Trained model version directory name. Path segments are rejected.",
+        ),
+    ] = None,
+) -> ProductSaleIntelligenceRead:
+    """Return current vs expected-sale intelligence for each exact variant.
+
+    Projected sale dates and prices are evidence-based estimates and are not guaranteed
+    retailer announcements. Missing evidence is `UNKNOWN` / `insufficient_history`.
+    """
+    return service.get_product_intelligence(
+        product_id,
+        variant_id=variant_id,
+        as_of=as_of,
+        model_version=model_version,
+    )
+
+
 @router.get("/{product_id}/recommendation", response_model=ProductRecommendationRead)
 def get_product_recommendation(
     product_id: uuid.UUID,
     service: RecommendationServiceDep,
     variant_id: uuid.UUID | None = None,
     as_of: datetime | None = None,
+    urgency: Annotated[
+        Urgency | None,
+        Query(
+            description=(
+                "Optional shopper urgency. Absent urgency preserves Phase 11 BUY_NOW / "
+                "WAIT / WATCH / INSUFFICIENT_DATA behaviour."
+            ),
+        ),
+    ] = None,
     model_version: Annotated[
         str | None,
         Query(
@@ -252,13 +293,15 @@ def get_product_recommendation(
 
     Decisions are rule-based and explainable. They are not guaranteed outcomes. Phase 10
     predictions are optional labeled inputs; missing or low-confidence predictions fall back
-    to historical/current-price signals and are never invented.
+    to historical/current-price signals and are never invented. Optional `urgency` may select
+    an ordinary or major sale buying window without replacing the Phase 11 decision field.
     """
     return service.recommend_product(
         product_id,
         variant_id=variant_id,
         as_of=as_of,
         model_version=model_version,
+        urgency=urgency,
     )
 
 

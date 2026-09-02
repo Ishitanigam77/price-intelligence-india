@@ -87,6 +87,22 @@ export function RetailerOfferCard({ offer, priceHistoryHref, className }: Retail
           <dd className="mt-1">{formatDateTime(offer.observation_timestamp)}</dd>
         </div>
         <div>
+          <dt className="text-xs uppercase tracking-wide text-ink-muted">Delivery</dt>
+          <dd className="mt-1">
+            {offer.delivery_fee == null
+              ? "NOT_AVAILABLE"
+              : formatMoneyOrUnavailable(offer.delivery_fee, offer.currency)}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs uppercase tracking-wide text-ink-muted">Discount</dt>
+          <dd className="mt-1">
+            {offer.discount_percentage == null
+              ? "NOT_AVAILABLE"
+              : `${offer.discount_percentage}%`}
+          </dd>
+        </div>
+        <div>
           <dt className="text-xs uppercase tracking-wide text-ink-muted">Listing source</dt>
           <dd className="mt-1">{formatSourceType(offer.source_type)}</dd>
         </div>

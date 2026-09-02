@@ -21,6 +21,8 @@ from app.pricing.history_models import (
     ExtremaMetric,
     HistoricalObservationPoint,
     HistoryProvenance,
+    MonthlyBucket,
+    MonthlyPriceIntelligence,
     ProductHistory,
     VariantHistory,
 )
@@ -136,6 +138,41 @@ class HistoryObservationRead(BaseModel):
     qualifies_for_calculations: bool
 
 
+class MonthlyBucketRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    month: int
+    month_name: str
+    retailer_id: uuid.UUID | None = None
+    retailer_slug: str | None = None
+    retailer_name: str | None = None
+    years_used: list[int]
+    observation_count: int
+    minimum: CalculatedMetricRead
+    average: CalculatedMetricRead
+    median: CalculatedMetricRead
+    maximum: CalculatedMetricRead
+    historical_low: CalculatedMetricRead
+    historical_high: CalculatedMetricRead
+    volatility: CalculatedMetricRead
+
+
+class MonthlyPriceIntelligenceRead(BaseModel):
+    """CALCULATED month-of-year view. Does not replace rolling 7/30/90/180-day windows."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    value_kind: Literal[ValueKind.CALCULATED] = ValueKind.CALCULATED
+    months: list[MonthlyBucketRead]
+    retailer_months: list[MonthlyBucketRead] = Field(default_factory=list)
+    best_buying_month: MonthlyBucketRead | None = None
+    best_buying_month_price: CalculatedMetricRead
+    qualifying_observation_count: int
+    calculated_at: datetime
+    method: str
+    predicted: None = None
+
+
 class VariantHistoryRead(BaseModel):
     product_id: uuid.UUID
     product_variant_id: uuid.UUID
@@ -155,6 +192,7 @@ class VariantHistoryRead(BaseModel):
     percentage_change: CalculatedMetricRead
     price_drop: PriceDropRead
     trend: TrendRead
+    monthly: MonthlyPriceIntelligenceRead
     data_freshness: DataFreshnessRead
     provenance: HistoryProvenanceRead
     calculated_at: datetime
@@ -213,6 +251,43 @@ def _provenance_read(provenance: HistoryProvenance) -> HistoryProvenanceRead:
     return HistoryProvenanceRead.model_validate(provenance)
 
 
+def _monthly_bucket_read(bucket: MonthlyBucket) -> MonthlyBucketRead:
+    return MonthlyBucketRead(
+        month=bucket.month,
+        month_name=bucket.month_name,
+        retailer_id=bucket.retailer_id,
+        retailer_slug=bucket.retailer_slug,
+        retailer_name=bucket.retailer_name,
+        years_used=list(bucket.years_used),
+        observation_count=bucket.observation_count,
+        minimum=_metric_read(bucket.minimum),
+        average=_metric_read(bucket.average),
+        median=_metric_read(bucket.median),
+        maximum=_metric_read(bucket.maximum),
+        historical_low=_metric_read(bucket.historical_low),
+        historical_high=_metric_read(bucket.historical_high),
+        volatility=_metric_read(bucket.volatility),
+    )
+
+
+def _monthly_read(monthly: MonthlyPriceIntelligence) -> MonthlyPriceIntelligenceRead:
+    return MonthlyPriceIntelligenceRead(
+        value_kind=ValueKind.CALCULATED,
+        months=[_monthly_bucket_read(item) for item in monthly.months],
+        retailer_months=[_monthly_bucket_read(item) for item in monthly.retailer_months],
+        best_buying_month=(
+            _monthly_bucket_read(monthly.best_buying_month)
+            if monthly.best_buying_month is not None
+            else None
+        ),
+        best_buying_month_price=_metric_read(monthly.best_buying_month_price),
+        qualifying_observation_count=monthly.qualifying_observation_count,
+        calculated_at=monthly.calculated_at,
+        method=monthly.method,
+        predicted=None,
+    )
+
+
 def variant_history_read(
     variant: VariantHistory,
     observations: Page[HistoricalObservationPoint],
@@ -245,6 +320,7 @@ def variant_history_read(
         percentage_change=_metric_read(variant.percentage_change),
         price_drop=PriceDropRead.model_validate(variant.price_drop),
         trend=TrendRead.model_validate(variant.trend),
+        monthly=_monthly_read(variant.monthly),
         data_freshness=DataFreshnessRead.model_validate(variant.data_freshness),
         provenance=_provenance_read(variant.provenance),
         calculated_at=variant.calculated_at,

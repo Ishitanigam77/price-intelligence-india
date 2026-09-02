@@ -39,6 +39,7 @@ from app.services.price_service import PriceService
 from app.services.product_discovery_service import ProductDiscoveryService
 from app.services.recommendation_service import RecommendationService
 from app.services.sale_event_service import SaleEventService
+from app.services.sale_intelligence_service import SaleIntelligenceService
 from app.services.sale_price_prediction_service import SalePricePredictionService
 from app.services.saved_product_service import SavedProductService
 from app.services.target_price_service import TargetPriceService
@@ -192,6 +193,18 @@ def get_recommendation_service(
 
 
 RecommendationServiceDep = Annotated[RecommendationService, Depends(get_recommendation_service)]
+
+
+def get_sale_intelligence_service(
+    db: DbSession,
+    metrics_sink: MetricsSinkDep,
+) -> SaleIntelligenceService:
+    return SaleIntelligenceService(db, metrics_sink=metrics_sink)
+
+
+SaleIntelligenceServiceDep = Annotated[
+    SaleIntelligenceService, Depends(get_sale_intelligence_service)
+]
 
 
 def get_user_repository(db: DbSession) -> UserRepository:

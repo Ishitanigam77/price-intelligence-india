@@ -45,6 +45,12 @@ class RecommendationConfig(BaseSettings):
     upcoming_horizon_days: int = Field(default=30, ge=1, le=365)
     #: Minimum qualifying stored observations before a recommendation is attempted.
     min_observations: int = Field(default=3, ge=1, le=1000)
+    #: When urgency=urgent, sales further than this many days are not ordinary-sale targets.
+    urgent_horizon_days: int = Field(default=14, ge=1, le=90)
+    #: When urgency=patient, major sales further than this many days are not wait targets.
+    patient_horizon_days: int = Field(default=90, ge=1, le=365)
+    #: Additional saving (major minus ordinary) as a percent of current to prefer waiting.
+    min_additional_major_savings_percent: float = Field(default=5.0, ge=0.0, le=100.0)
 
     @model_validator(mode="after")
     def _thresholds_are_ordered(self) -> "RecommendationConfig":

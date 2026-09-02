@@ -17,12 +17,15 @@ application foundation.
 - `comparison.py` — DTOs for `GET /api/v1/products/{product_id}/prices` (offers, verified
   effective price, ranking reason, data freshness, adjustment provenance).
 - `history.py` — DTOs for `GET /api/v1/products/{product_id}/history` (observed snapshots plus
-  calculated aggregates; insufficient history is explicit; predicted values are absent).
+  calculated aggregates including monthly intelligence; insufficient history is explicit;
+  predicted values are absent).
+- `intelligence.py` — DTOs for `GET /api/v1/products/{product_id}/sale-intelligence` and
+  `GET /api/v1/sale-events/calendar`.
 - `deal.py` — an intentionally empty placeholder schema; there is no `Deal` entity yet (see
   `ROADMAP.md` Phase 4/7).
 - `prediction.py` — DTOs for `GET /api/v1/products/{product_id}/sale-price-prediction`.
 - `recommendation.py` — DTOs for `GET /api/v1/products/{product_id}/recommendation`
-  (BUY_NOW / WAIT / WATCH / INSUFFICIENT_DATA plus reasons).
+  (BUY_NOW / WAIT / WATCH / INSUFFICIENT_DATA plus additive Phase 19 buying-window fields).
 
 These are deliberately kept separate from `app/db/models/` so the API contract never depends on
 ORM internals (lazy-loaded relationships, mixins, column types) and can evolve independently of
